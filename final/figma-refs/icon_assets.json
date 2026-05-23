@@ -1,0 +1,208 @@
+{
+  "version": "0.1.0",
+  "description": "Catalog of One UI Design Kit (Figma Community) icon assets. Each entry preserves the Figma node ID and the auto-derived category so the generator can reference icons consistently across all scenarios without hardcoding.",
+  "source": {
+    "fileKey": "kxDvBUif6pV502Si4RPidK",
+    "fileName": "One UI Design Kit (Community)",
+    "capturedAt": "2026-04-18",
+    "frames": [
+      { "name": "Categories",       "nodeId": "341:287",  "count": 24 },
+      { "name": "Status Bar Icons", "nodeId": "547:9705", "count": 32 },
+      { "name": "File types",       "nodeId": "798:2120", "count": 32 },
+      { "name": "SIMs",             "nodeId": "799:2099", "count": 27 }
+    ]
+  },
+
+  "categories": {
+    "category":     "Settings-screen category icons (36dp). Prefix: category_*",
+    "status-bar":   "Top system bar icons (18dp): wifi / cellular / battery variants.",
+    "file-type":    "File manager / storage icons (24dp). Prefix: file_type_*",
+    "sim":          "Contact / call / SIM label icons (24dp). Prefix: sim_* with fill/outline variants.",
+    "ui":           "Shared UI icons reused across surfaces (AI sparkle, fold/unfold arrows, etc.)."
+  },
+
+  "ui": {
+    "ai-star": {
+      "nodeId": "449:385",
+      "figmaName": "ai-colour",
+      "dimensions": { "width": 24, "height": 24 },
+      "description": "Galaxy AI sparkle. Used anywhere the UI expresses AI (AI Generate buttons, AI wallpaper, AI hints).",
+      "usage": "IconLibrary.aiStar({ size: 18, monochrome: false })"
+    },
+    "arrow-down": {
+      "nodeId": "515:493",
+      "figmaName": "arrow down",
+      "dimensions": { "width": 24, "height": 24 },
+      "description": "Chevron pointing down. Used in design-section headers for expanded state (rotates -90deg when .collapsed → becomes arrow-right)."
+    },
+    "arrow-right": {
+      "nodeId": "515:491",
+      "figmaName": "arrow right",
+      "dimensions": { "width": 24, "height": 24 },
+      "description": "Chevron pointing right. In practice, not rendered separately — we reuse arrow-down rotated via CSS."
+    }
+  },
+
+
+  "assets": {
+    "category": {
+      "dimensions": { "width": 36, "height": 36 },
+      "frameNodeId": "341:287",
+      "items": [
+        { "name": "accessibility",   "nodeId": "341:235" },
+        { "name": "accounts_backup", "nodeId": "341:234" },
+        { "name": "advanced_options","nodeId": "341:233" },
+        { "name": "apps",            "nodeId": "341:232" },
+        { "name": "attic",           "nodeId": "341:231" },
+        { "name": "battery",         "nodeId": "341:230" },
+        { "name": "beans",           "nodeId": "341:229" },
+        { "name": "berry",           "nodeId": "341:228" },
+        { "name": "bixby_voice",     "nodeId": "341:227" },
+        { "name": "budspro",         "nodeId": "341:237" },
+        { "name": "connections",     "nodeId": "341:226" },
+        { "name": "display",         "nodeId": "341:225" },
+        { "name": "effect",          "nodeId": "341:224" },
+        { "name": "functions",       "nodeId": "341:223" },
+        { "name": "galaxy_bud_plus", "nodeId": "341:222" },
+        { "name": "galaxy_watch",    "nodeId": "341:221" },
+        { "name": "location",        "nodeId": "341:220" },
+        { "name": "lockscreen",      "nodeId": "341:219" },
+        { "name": "music",           "nodeId": "341:218" },
+        { "name": "my_routines",     "nodeId": "341:236" },
+        { "name": "notifications",   "nodeId": "341:217" },
+        { "name": "security",        "nodeId": "341:216" },
+        { "name": "smartthings",     "nodeId": "341:215" },
+        { "name": "sounds",          "nodeId": "341:214" }
+      ]
+    },
+
+    "status-bar": {
+      "dimensions": { "width": 18, "height": 18 },
+      "frameNodeId": "547:9705",
+      "themes": ["dark", "light"],
+      "wifi": {
+        "description": "4 strength levels (0-3) × 2 themes",
+        "items": [
+          { "strength": 3, "theme": "dark",  "nodeId": "408:375" },
+          { "strength": 2, "theme": "dark",  "nodeId": "408:373" },
+          { "strength": 1, "theme": "dark",  "nodeId": "408:372" },
+          { "strength": 0, "theme": "dark",  "nodeId": "408:371" },
+          { "strength": 3, "theme": "light", "nodeId": "408:370" },
+          { "strength": 2, "theme": "light", "nodeId": "408:369" },
+          { "strength": 1, "theme": "light", "nodeId": "408:368" },
+          { "strength": 0, "theme": "light", "nodeId": "408:374" }
+        ]
+      },
+      "cellular": {
+        "description": "5 strength levels (0-4) × 2 themes",
+        "items": [
+          { "strength": 4, "theme": "dark",  "nodeId": "402:464" },
+          { "strength": 3, "theme": "dark",  "nodeId": "402:466" },
+          { "strength": 2, "theme": "dark",  "nodeId": "402:468" },
+          { "strength": 1, "theme": "dark",  "nodeId": "402:474" },
+          { "strength": 0, "theme": "dark",  "nodeId": "402:476" },
+          { "strength": 4, "theme": "light", "nodeId": "402:486" },
+          { "strength": 3, "theme": "light", "nodeId": "402:500" },
+          { "strength": 2, "theme": "light", "nodeId": "402:510" },
+          { "strength": 1, "theme": "light", "nodeId": "402:516" },
+          { "strength": 0, "theme": "light", "nodeId": "402:514" }
+        ]
+      },
+      "battery": {
+        "description": "7 states × 2 themes",
+        "items": [
+          { "state": "default",       "theme": "dark",  "nodeId": "470:995"  },
+          { "state": "charging",      "theme": "dark",  "nodeId": "470:994"  },
+          { "state": "low",           "theme": "dark",  "nodeId": "470:997"  },
+          { "state": "very-low",      "theme": "dark",  "nodeId": "470:1025" },
+          { "state": "battery-saver", "theme": "dark",  "nodeId": "470:1033" },
+          { "state": "battery-protect","theme": "dark", "nodeId": "470:1053" },
+          { "state": "fully-charged", "theme": "dark",  "nodeId": "474:600"  },
+          { "state": "default",       "theme": "light", "nodeId": "470:1071" },
+          { "state": "charging",      "theme": "light", "nodeId": "470:1080" },
+          { "state": "low",           "theme": "light", "nodeId": "470:1090" },
+          { "state": "very-low",      "theme": "light", "nodeId": "470:1098" },
+          { "state": "battery-saver", "theme": "light", "nodeId": "470:1104" },
+          { "state": "battery-protect","theme": "light","nodeId": "470:1114" },
+          { "state": "fully-charged", "theme": "light", "nodeId": "474:604"  }
+        ]
+      }
+    },
+
+    "file-type": {
+      "dimensions": { "width": 24, "height": 24 },
+      "frameNodeId": "798:2120",
+      "items": [
+        { "name": "folder",        "nodeId": "341:213" },
+        { "name": "ftp",           "nodeId": "341:212" },
+        { "name": "gltf",          "nodeId": "341:211" },
+        { "name": "hangul",        "nodeId": "341:210" },
+        { "name": "html",          "nodeId": "341:209" },
+        { "name": "image",         "nodeId": "341:208" },
+        { "name": "memo",          "nodeId": "341:207" },
+        { "name": "ppt",           "nodeId": "341:206" },
+        { "name": "raw",           "nodeId": "341:205" },
+        { "name": "rtf",           "nodeId": "341:204" },
+        { "name": "scrapbook",     "nodeId": "341:203" },
+        { "name": "sdoc",          "nodeId": "341:202" },
+        { "name": "sftp",          "nodeId": "341:201" },
+        { "name": "smb",           "nodeId": "341:200" },
+        { "name": "snb",           "nodeId": "341:199" },
+        { "name": "spd",           "nodeId": "341:198" },
+        { "name": "story_album",   "nodeId": "341:197" },
+        { "name": "svc",           "nodeId": "341:196" },
+        { "name": "task_manager",  "nodeId": "341:195" },
+        { "name": "txt",           "nodeId": "341:194" },
+        { "name": "video",         "nodeId": "341:193" },
+        { "name": "word",          "nodeId": "341:192" },
+        { "name": "adobe",         "nodeId": "341:190" },
+        { "name": "amr",           "nodeId": "341:189" },
+        { "name": "apk",           "nodeId": "341:188" },
+        { "name": "audio",         "nodeId": "341:187" },
+        { "name": "contact",       "nodeId": "341:186" },
+        { "name": "eml",           "nodeId": "341:185" },
+        { "name": "etc",           "nodeId": "341:184" },
+        { "name": "excel",         "nodeId": "341:183" },
+        { "name": "zip",           "nodeId": "341:191" },
+        { "name": "stickers",      "nodeId": "798:2214" }
+      ]
+    },
+
+    "sim": {
+      "dimensions": { "width": 24, "height": 24 },
+      "frameNodeId": "799:2099",
+      "description": "SIM / contact label icons with fill and outline variants",
+      "items": [
+        { "name": "heart",         "variant": "fill",    "nodeId": "799:2021" },
+        { "name": "heart",         "variant": "outline", "nodeId": "799:2081" },
+        { "name": "plane",         "variant": "fill",    "nodeId": "799:2080" },
+        { "name": "plane",         "variant": "outline", "nodeId": "799:2079" },
+        { "name": "business_trip", "variant": "fill",    "nodeId": "799:2078" },
+        { "name": "internet",      "variant": "fill",    "nodeId": "799:2077" },
+        { "name": "internet",      "variant": "outline", "nodeId": "799:2076" },
+        { "name": "contact",       "variant": "fill",    "nodeId": "799:2075" },
+        { "name": "contact",       "variant": "outline", "nodeId": "799:2074" },
+        { "name": "office",        "variant": "fill",    "nodeId": "799:2073" },
+        { "name": "office",        "variant": "outline", "nodeId": "799:2072" },
+        { "name": "call",          "variant": "fill",    "nodeId": "799:2071" },
+        { "name": "call",          "variant": "outline", "nodeId": "799:2070" },
+        { "name": "message",       "variant": "fill",    "nodeId": "799:2069" },
+        { "name": "message",       "variant": "outline", "nodeId": "799:2068" },
+        { "name": "message_alt",   "variant": "fill",    "nodeId": "799:2067" },
+        { "name": "message_alt",   "variant": "outline", "nodeId": "799:2066" },
+        { "name": "sim_1",         "variant": "fill",    "nodeId": "799:2065" },
+        { "name": "sim_1",         "variant": "outline", "nodeId": "799:2064" },
+        { "name": "sim_2",         "variant": "fill",    "nodeId": "799:2063" },
+        { "name": "sim_2",         "variant": "outline", "nodeId": "799:2062" },
+        { "name": "sim_3",         "variant": "fill",    "nodeId": "799:2061" },
+        { "name": "sim_3",         "variant": "outline", "nodeId": "799:2060" },
+        { "name": "org",           "variant": "fill",    "nodeId": "799:2059" },
+        { "name": "org",           "variant": "outline", "nodeId": "799:2058" },
+        { "name": "home",          "variant": "fill",    "nodeId": "799:2057" },
+        { "name": "home",          "variant": "fill-alt","nodeId": "799:2056" }
+      ]
+    }
+  },
+
+  "refetchNote": "Figma MCP asset URLs expire after 7 days. Use node IDs from this catalog to re-fetch via get_design_context when the inline SVG cache is stale. The Generator uses icon_library.js for authoritative paint-at-runtime rendering."
+}

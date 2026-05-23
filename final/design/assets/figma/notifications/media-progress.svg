@@ -1,0 +1,15 @@
+<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 356 19.5" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Group 51">
+<path id="Vector 47" d="M4.5 11.5L351.5 11.6697" stroke="var(--stroke-0, white)" stroke-opacity="0.5" stroke-width="9" stroke-linecap="round"/>
+<path id="Vector 49" d="M4.5 11.5H167.582" stroke="var(--stroke-0, #B9B9B9)" stroke-width="9" stroke-linecap="round"/>
+<path id="Vector 48" opacity="0.7" d="M163.188 7.50741H4.5C4.5 7.50741 27.8104 1.34368 43.0733 1.00741C58.6322 0.664607 67.0656 6.40617 82.6232 6.00741C96.9134 5.64112 104.462 0.235407 118.755 0.00740602C136.339 -0.273092 163.188 7.50741 163.188 7.50741Z" fill="var(--fill-0, #B9B9B9)"/>
+<g id="Vector 46" opacity="0.7">
+<path d="M80.6701 2.01725C64.6823 2.35288 40.1437 8.01725 40.1437 8.01725H128.032C128.032 8.01725 99.3032 1.62609 80.6701 2.01725Z" fill="var(--fill-0, #B9B9B9)"/>
+<path d="M4.5 8.01725H40.1437M163.676 8.01725H128.032M40.1437 8.01725C40.1437 8.01725 64.6823 2.35288 80.6701 2.01725C99.3032 1.62609 128.032 8.01725 128.032 8.01725M40.1437 8.01725H128.032" stroke="var(--stroke-0, #B9B9B9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g id="Rectangle 58">
+<rect x="157.817" y="3.5" width="15.6246" height="16" rx="7.81232" fill="var(--fill-0, #B9B9B9)"/>
+<rect x="158.117" y="3.8" width="15.0246" height="15.4" rx="7.51232" stroke="var(--stroke-0, #6A6B73)" stroke-opacity="0.29" stroke-width="0.6"/>
+</g>
+</g>
+</svg>

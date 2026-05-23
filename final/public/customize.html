@@ -1,0 +1,3702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Theme Customizer · One UI GenUI</title>
+<style>
+  :root {
+    --pg-bg:     #0a0a0c;
+    --panel:     rgba(23, 23, 26, 0.6);
+    --panel-2:   rgba(35, 35, 40, 0.7);
+    --border:    rgba(255, 255, 255, 0.08);
+    --text:      #efeef2;
+    --text-2:    rgba(239, 238, 242, 0.7);
+    --text-3:    rgba(239, 238, 242, 0.45);
+    --primary:   #0381FE;
+    --positive:  #34D399;
+    --warning:   #F59E0B;
+    --font:      -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+    --preview-bg: #FFFEF1;
+  }
+  /* Theme variable defaults ??overridden in real-time by the dropdown.
+     Mirrors figma-refs/themes.json#default. */
+  :root {
+    --oneui-theme-style: base;
+    --surface-bg: rgba(23,23,26,0.60);
+    --surface-border: 1px solid rgba(255,255,255,0.12);
+    --surface-shadow: none;
+    --surface-filter: blur(48px);
+    --surface-overlay: transparent;
+    --surface-overlay-opacity: 0;
+    --surface-bg-size: auto;
+    --surface-animation: none;
+    --qs-tile-bg: rgba(23,23,26,0.80);
+    --card-radius: 20px;
+    --card-padding-v: 14px;
+    --card-padding-h: 16px;
+    --card-gap: 6px;
+    --card-weather-accent: #FBBF24;
+    --card-weather-temp-size: 52px;
+    --card-weather-temp-weight: 600;
+    --card-weather-temp-color: #fff;
+    --card-weather-temp-letterspacing: -1.5px;
+    --card-weather-icon-size: 44px;
+    --card-calendar-accent: #A78BFA;
+    --card-calendar-time-size: 22px;
+    --card-calendar-time-weight: 600;
+    --card-reminder-accent: #F59E0B;
+    --card-reminder-task-size: 16px;
+    --card-message-avatar-grad: linear-gradient(135deg,#34D399,#10B981);
+    --card-message-avatar-size: 32px;
+    --card-eta-accent: #14B8A6;
+    --card-eta-size: 40px;
+    --card-eta-icon-size: 32px;
+    --card-nav-accent: #14B8A6;
+    --card-nav-distance-size: 22px;
+    --card-nav-arrow-bg: rgba(20,184,166,0.25);
+    --card-ai-grad: linear-gradient(120deg, rgba(102,161,243,0.45) 0%, rgba(167,139,250,0.45) 50%, rgba(34,201,166,0.45) 100%);
+    --card-ai-shimmer-speed: 3.6s;
+    --card-input-topic-size: 20px;
+
+    /* ?? Typography ??design_rules.json typeScale 5??(meta/label/body/title/display, 理쒖냼 14px) */
+    --font-family-display: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-family-body:    'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-family-mono:    'Space Mono', 'SF Mono', Menlo, monospace;
+    --font-size-xs:        14px;  /* meta */
+    --font-size-sm:        16px;  /* label */
+    --font-size-md:        18px;  /* body */
+    --font-size-lg:        22px;  /* title */
+    --font-size-xl:        26px;  /* display */
+    --font-size-display:   26px;
+    --font-weight-regular:  400;
+    --font-weight-medium:   500;
+    --font-weight-semibold: 600;
+    --font-weight-bold:     700;
+    --letter-spacing-tight:  -0.5px;
+    --letter-spacing-normal: 0;
+    --letter-spacing-wide:   0.5px;
+    --line-height-tight:    1.2;
+    --line-height-normal:   1.45;
+    --line-height-relaxed:  1.6;
+
+    /* ?? Spacing scale (new) ?? */
+    --space-xxs: 4px;
+    --space-xs:  8px;
+    --space-sm:  12px;
+    --space-md:  16px;
+    --space-lg:  24px;
+    --space-xl:  32px;
+
+    /* ?? Composition (screen-level, new) ?? */
+    --screen-padding-v: 10px;
+    --screen-padding-h: 12px;
+    --gap-screen:       16px;   /* between groups */
+    --gap-cards:        12px;   /* within a group */
+    --container-margin-bottom: 12px;
+    --screen-grid-columns: 1;   /* 1 | 2 | 3 | "1fr 2fr" */
+    --screen-grid-gap:     16px;
+  }
+  @keyframes aiShimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+  @keyframes oneuiSurfaceShift {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
+  }
+
+  * { box-sizing: border-box; }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary, #0381FE) rgba(10, 10, 12, 0.82);
+  }
+  *::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+  *::-webkit-scrollbar-track {
+    background: rgba(10, 10, 12, 0.86);
+    border-left: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  *::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--primary, #0381FE), #35B7FF);
+    border: 3px solid rgba(10, 10, 12, 0.86);
+    border-radius: 999px;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #35B7FF, var(--primary, #0381FE));
+  }
+  *::-webkit-scrollbar-corner {
+    background: rgba(10, 10, 12, 0.86);
+  }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--page-bg, var(--pg-bg));
+    color: var(--text-primary, var(--text));
+    font-family: var(--font);
+    font-size: 14px; line-height: 1.45;
+    min-height: 100vh;
+  }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ==========================================================================
+     DOT cards (for post-animation data swap)
+     - class-based markup
+     - animation hook via [data-state]
+     ========================================================================== */
+  .dot-card {
+    position: relative;
+    background: #FFFFFF;
+    border-radius: 93px;
+    color: #1B1C21;
+    font-family: 'Pretendard', var(--font), -apple-system, BlinkMacSystemFont, sans-serif;
+    overflow: hidden;
+    contain: paint;
+    transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), opacity 0.2s;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .dot-card:active {
+    transform: scale(0.96);
+    opacity: 0.9;
+  }
+  .dot-card[data-state="enter"] { animation: dotEnter 420ms cubic-bezier(0.2,0,0,1) both; }
+  .dot-card[data-state="exit"]  { animation: dotExit  260ms cubic-bezier(0.2,0,0,1) both; }
+  @keyframes dotEnter { from { opacity: 0; transform: translateY(6px) scale(0.985); } to { opacity: 1; transform: none; } }
+  @keyframes dotExit  { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(6px) scale(0.985); } }
+
+  /* Dot Running (297×75) */
+  .dot-running {
+    width: 297px;
+    height: 75px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 13px 18px 13px 15px;
+  }
+  .dot-running__icon {
+    width: 50px;
+    height: 50px;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .dot-running__icon-bg {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: #FFB01C;
+  }
+  /* placeholder mark (swap to svg/bg-image later) */
+  .dot-running__icon-mark {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 42px;
+    height: 38.65px;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+  }
+  .dot-running__text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    min-width: 0;
+    flex: 1;
+  }
+  .dot-running__title {
+    font-weight: 600;
+    font-size: 15px;
+    line-height: 110%;
+    font-feature-settings: 'pnum' on, 'lnum' on;
+    color: #1B1C21;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .dot-running__subtitle {
+    font-weight: 600;
+    font-size: 12.6px;
+    line-height: 110%;
+    font-feature-settings: 'pnum' on, 'lnum' on;
+    color: #949494;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .dot-running__dots {
+    width: 28px;
+    height: 28px;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2.4px;
+    flex-shrink: 0;
+    cursor: pointer;
+    transform: rotate(90deg);
+  }
+  .dot-running__dots span {
+    width: 4.2px;
+    height: 4.2px;
+    border-radius: 999px;
+    background: #1B1C21;
+    display: block;
+  }
+
+  /* Dot Running compact (164×82) */
+  .dot-running2 {
+    width: 164px;
+    height: 82px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    gap: 12px;
+  }
+  .dot-running2__human {
+    width: 18px;
+    height: 23px;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .dot-running2__human::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle, #FFB01C 62%, transparent 64%) 0 40%/6px 6px,
+      radial-gradient(circle, #FFB01C 62%, transparent 64%) 0 87%/6px 6px,
+      radial-gradient(circle, #FFB01C 62%, transparent 64%) 17% 26%/6px 6px,
+      radial-gradient(circle, #FFB01C 62%, transparent 64%) 17% 74%/6px 6px,
+      radial-gradient(circle, #FFB01C 62%, transparent 64%) 33% 0%/6px 6px,
+      radial-gradient(circle, #FFB01C 62%, transparent 64%) 33% 13%/6px 6px,
+      radial-gradient(circle, #FFB01C 62%, transparent 64%) 33% 26%/6px 6px,
+      radial-gradient(circle, #FFB01C 62%, transparent 64%) 33% 39%/6px 6px,
+      radial-gradient(circle, #FFB01C 62%, transparent 64%) 33% 52%/6px 6px,
+      radial-gradient(circle, #FFB01C 62%, transparent 64%) 33% 65%/6px 6px,
+      radial-gradient(circle, #FFB01C 62%, transparent 64%) 50% 0%/6px 6px,
+      radial-gradient(circle, #FFB01C 62%, transparent 64%) 50% 13%/6px 6px,
+      radial-gradient(circle, #FFB01C 62%, transparent 64%) 50% 39%/6px 6px,
+      radial-gradient(circle, #FFB01C 62%, transparent 64%) 50% 65%/6px 6px,
+      radial-gradient(circle, #FFB01C 62%, transparent 64%) 66% 39%/6px 6px,
+      radial-gradient(circle, #FFB01C 62%, transparent 64%) 66% 74%/6px 6px,
+      radial-gradient(circle, #FFB01C 62%, transparent 64%) 83% 87%/6px 6px,
+      radial-gradient(circle, #FFB01C 62%, transparent 64%) 100% 87%/6px 6px;
+    background-repeat: no-repeat;
+  }
+  .dot-running2__text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    padding: 0;
+    min-width: 0;
+    flex: 1;
+  }
+  .dot-running2__label,
+  .dot-running2__time {
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 130%;
+    text-align: right;
+    font-feature-settings: 'pnum' on, 'lnum' on;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .dot-running2__label { color: #191919; }
+  .dot-running2__time  { color: #FFB01C; }
+
+  header {
+    padding: 20px 32px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 16px;
+  }
+  header h1 { margin: 0; font-size: 18px; font-weight: 600; }
+  header .sub { color: var(--text-3); font-size: 14px; }
+  header .nav { margin-left: auto; display: flex; gap: 12px; }
+  header .nav a {
+    padding: 6px 12px; border-radius: 8px;
+    background: var(--panel); border: 1px solid var(--border);
+    color: var(--text-2); font-size: 14px;
+  }
+
+  /* Toolbar (sticky theme dropdown + actions) */
+  .toolbar {
+    position: sticky; top: 0; z-index: 10;
+    padding: 14px 32px;
+    background: rgba(10, 10, 12, 0.95);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .toolbar-back {
+    display: inline-flex; align-items: center;
+    padding: 6px 12px; border-radius: 8px;
+    background: var(--panel); border: 1px solid var(--border);
+    color: var(--text-2); font-size: 14px; font-weight: 600;
+    text-decoration: none; margin-right: 4px;
+  }
+  .toolbar-back:hover { color: var(--text); border-color: var(--accent-primary, #0381FE); }
+
+  .toolbar label { font-size: 14px; color: var(--text-3); margin-right: 4px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .preview-bg-swatches {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .preview-bg-swatches .swatch-label {
+    font-size: 14px;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .preview-bg-swatch {
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.22);
+    background: var(--swatch);
+    box-shadow: inset 0 0 0 2px rgba(0,0,0,0.18);
+  }
+  .preview-bg-swatch[aria-pressed="true"] {
+    outline: 2px solid var(--primary, #0381FE);
+    outline-offset: 3px;
+  }
+  .flat-scheme-toggle {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    padding-left: 4px;
+  }
+  .flat-scheme-toggle.visible { display: inline-flex; }
+  .flat-scheme-toggle .scheme-label {
+    font-size: 14px;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .flat-scheme-btn {
+    padding: 7px 11px;
+    border-radius: 999px;
+    background: var(--panel-2);
+    color: var(--text-2);
+    border: 1px solid var(--border);
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .flat-scheme-btn[aria-pressed="true"] {
+    background: var(--primary);
+    color: #fff;
+    border-color: transparent;
+  }
+  select.theme-select {
+    background: var(--panel-2); color: var(--text);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 36px 8px 12px;
+    font-family: inherit; font-size: 14px; font-weight: 500;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    cursor: pointer;
+    min-width: 240px;
+  }
+  .toolbar .spacer { flex: 1; }
+
+  button {
+    background: var(--primary); color: #fff;
+    border: 0; border-radius: 10px;
+    padding: 9px 18px; font-size: 14px; font-weight: 500;
+    cursor: pointer; font-family: inherit;
+  }
+  button:hover { opacity: 0.9; }
+  button.secondary { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  main {
+    padding: 18px 24px 64px;
+    max-width: 1720px; margin: 0 auto;
+  }
+
+  /* Two-pane layout: editor (left, sticky-scroll) + preview (right).
+     The editor used to be collapsed and tucked under the preview, so
+     users couldn't tell the page was meant for editing. With the
+     editor as the LEFT primary pane and preview live on the right,
+     edits and their visual effect are visible at the same time. */
+  .layout-row {
+    display: grid;
+    grid-template-columns: minmax(260px, 300px) 1fr;
+    gap: 14px;
+    align-items: start;
+  }
+  .editor-col {
+    position: sticky;
+    top: 80px;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .preview-col {
+    min-width: 0;          /* lets the grid shrink children */
+    background: var(--preview-bg, #FFFEF1);
+    border: 1px solid rgba(255, 255, 255, 0.055);
+    border-radius: 28px;
+    padding: 14px;
+  }
+  .preview-theme-scope {
+    min-width: 0;
+    /* Inherits nothing; receives all live theme vars via inline style in applyThemeVars */
+  }
+  @media (max-width: 820px) {
+    /* 醫곸? 酉고룷?몄뿉???먮뵒?걔룻봽由щ럭 ?몃줈 ?ㅽ깮. */
+    .layout-row { grid-template-columns: 1fr; }
+    .editor-col { position: static; max-height: none; }
+  }
+
+  .preview-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    position: relative;
+    padding: 0;
+  }
+
+  /* Mode toggle (Cards / Screen). Lives above the preview pane. */
+  .preview-mode-toggle {
+    display: inline-flex;
+    border-radius: 999px;
+    background: var(--panel, rgba(23,23,26,0.6));
+    border: 1px solid var(--border, rgba(255,255,255,0.08));
+    padding: 3px;
+    gap: 2px;
+  }
+  .preview-mode-btn {
+    background: transparent;
+    color: var(--text-3, rgba(239,238,242,0.45));
+    border: 0;
+    border-radius: 999px;
+    padding: 5px 14px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .preview-mode-btn.active {
+    background: var(--primary, #0381FE);
+    color: #fff;
+  }
+  .preview-mode-btn:not(.active):hover {
+    color: var(--text, #efeef2);
+  }
+
+  /* Screen-mode preview: 3횞2 grid of S26-ratio phones (19.5:9). Each
+     phone runs a DIFFERENT scenario (cooking / weather / calendar / ??
+     so the designer can see how the theme works across screen types
+     at a glance, not just on a single layout. All phones share the
+     same :root tokens, so a slider tweak changes every phone in unison. */
+  .preview-screen-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 8px 0 32px;
+  }
+  .preview-screen-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+    width: 100%;
+  }
+  @media (max-width: 1080px) {
+    .preview-screen-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 720px) {
+    .preview-screen-grid { grid-template-columns: 1fr; }
+  }
+  .preview-phone-frame {
+    width: 100%;
+    /* Galaxy S26 aspect ratio: 1080 횞 2340 = 19.5:9 = 9/19.5 portrait. */
+    aspect-ratio: 9 / 19.5;
+    border-radius: 28px;
+    background: var(--page-bg, #0a0a0c);
+    border: 4px solid #1a1a1c;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.40), inset 0 0 0 1px rgba(255,255,255,0.05);
+    position: relative;
+    overflow: hidden;
+    font-family: var(--font-family-body, 'Inter', sans-serif);
+    color: var(--text-primary, #efeef2);
+  }
+  .preview-phone-frame .preview-phone-label {
+    position: absolute;
+    top: 6px; left: 50%;
+    transform: translateX(-50%);
+    font-size: var(--font-size-xs, 14px);
+    font-weight: 600;
+    color: var(--text-3, rgba(239,238,242,0.45));
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .preview-phone-canvas {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+    /* Heart of the live demo: every designer-controllable composition
+       token feeds straight into these CSS rules. Slider in /customize
+       moves ??:root var changes ??every phone repositions instantly. */
+    padding: var(--screen-padding-v, 14px) var(--screen-padding-h, 12px);
+    padding-top: 22px;   /* leave room for the tiny label */
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-screen, 14px);
+    /* Scale down the atomics so multiple cards fit inside a 9:19.5
+       phone at ~180??30px wide. The atomics author themselves at
+       fixed pixel sizes, so we apply CSS zoom which the renderer
+       respects. */
+    zoom: 0.55;
+  }
+  .preview-screen-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-cards, 12px);
+  }
+  .preview-screen-group.is-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--gap-cards, 12px);
+  }
+
+  /* Per-card kind label ??invisible by default, blue + visible when
+     the editor focus matches this card's kind. Lives inside the
+     zoomed canvas, so font-size is bumped to compensate (the canvas
+     uses zoom: 0.55, so 18px renders at ~10px).
+     Hidden via opacity (not color) because some renderer rules paint
+     text via `-webkit-text-fill-color` that bypassed the previous
+     `color: transparent` approach ??opacity always wins. */
+  .preview-card-wrap {
+    position: relative;
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+  .preview-screen-group.is-grid > .preview-card-wrap {
+    min-width: 0;
+  }
+  .preview-card-kind-label {
+    position: absolute;
+    top: -16px;
+    left: 0;
+    font-family: var(--font-family-body, 'Inter', sans-serif);
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--primary, #0381FE);
+    -webkit-text-fill-color: var(--primary, #0381FE);
+    opacity: 0;                  /* default: invisible */
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+    white-space: nowrap;
+  }
+  .preview-card-wrap[data-active="true"] .preview-card-kind-label {
+    opacity: 1;
+  }
+
+  /* Editor section heading turns blue when its section matches the
+     active inspector filter. Mirrors the right-pane card label so
+     the user sees the same blue accent on left and right. */
+  .editor-section.is-active-section .editor-section-toggle,
+  .editor-section.is-active-section .editor-section-toggle-label {
+    color: var(--primary, #0381FE);
+    -webkit-text-fill-color: var(--primary, #0381FE);
+  }
+  .preview-screen-chrome {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 2px 4px 8px;
+    color: var(--text-secondary, rgba(239,238,242,0.7));
+    font-size: var(--font-size-xs, 14px);
+    font-weight: var(--font-weight-medium, 500);
+    letter-spacing: var(--letter-spacing-normal, 0);
+  }
+  .preview-screen-header {
+    font-family: var(--font-family-display, 'Inter', sans-serif);
+    font-size: var(--font-size-lg, 22px);
+    font-weight: var(--font-weight-bold, 700);
+    line-height: var(--line-height-tight, 1.2);
+    letter-spacing: var(--letter-spacing-tight, -0.5px);
+    color: var(--text-primary, #efeef2);
+    padding: 0 4px 8px;
+  }
+  .preview-screen-hint {
+    font-size: 14px;
+    color: var(--text-3, rgba(239,238,242,0.45));
+    text-align: center;
+    line-height: 1.5;
+  }
+  .preview-screen-hint code {
+    font-family: var(--font-family-mono, monospace);
+    font-size: 13px;
+    background: rgba(255,255,255,0.06);
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+  .preview-cell {
+    background: transparent;
+    border: 0;
+    border-radius: 24px;
+    padding: 0;
+    display: flex; flex-direction: column; gap: 10px;
+    cursor: pointer;
+    transition: outline 0.15s ease, border-color 0.15s ease;
+  }
+  .preview-cell:hover .stage > * { filter: brightness(1.05); }
+  /* Selection indicator now lives in the editor's blue "Focused: ??
+     chip at the top of the left pane. The previous 2px blue outline +
+     6px offset on every selected cell read as visual noise once the
+     screen-mode 3횞2 grid was added. Click feedback comes from the
+     pointer cursor + the chip; the outline rule stays as a no-op so
+     existing JS that toggles the .selected class doesn't error. */
+  .preview-cell.selected { outline: none; }
+  .preview-cell:focus-visible {
+    outline: 2px dashed rgba(3, 129, 254, 0.7);
+    outline-offset: 2px;
+  }
+  .preview-cell.selected:focus-visible {
+    outline: 2px solid var(--primary, #0381FE);
+  }
+  .preview-cell .name {
+    font-size: var(--font-size-xs, 14px); font-weight: 600;
+    color: var(--text-3);
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .preview-cell .stage {
+    /* The card preview happens inside this stage. Width drives the
+       layout; height adapts to content (no forced min-height ??that
+       was making short cards look loose with empty space below).
+       align-items: flex-start so cards size to content naturally. */
+    display: flex; align-items: flex-start; justify-content: stretch;
+    position: relative;
+    isolation: isolate;
+  }
+  .preview-cell .stage {
+    /* Prevent transformed children from painting over neighbor cells. */
+    overflow: hidden;
+    border-radius: 24px;
+  }
+  .preview-cell .stage .stage-scale {
+    transform-origin: top left;
+  }
+  .preview-cell .stage .stage-scale > * {
+    width: 100%;
+    height: auto;
+    box-sizing: border-box;
+  }
+  .preview-cell .stage::after {
+    content: none;
+  }
+  /* Double-click inspector: highlight the exact subtree (Figma-style). */
+  .preview-cell .stage .inspector-hit {
+    outline: 2px solid var(--primary, #0381FE);
+    outline-offset: 2px;
+    border-radius: 4px;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* Editor panel ??primary surface of the page now. Always visible
+     in the left pane; was previously a collapsible hidden block. */
+  .editor-panel {
+    margin-top: 0;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .editor-panel header.editor-head {
+    padding: 14px 18px;
+    display: flex; align-items: center; gap: 12px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,10,12,0.5);
+  }
+  .editor-scope-hint {
+    font-size: 15px; font-weight: 600; color: var(--primary-light, #3E91FF);
+    line-height: 1.25;
+  }
+  .editor-scope-hint:empty { display: none; }
+  /* Nuclear option for true monochrome: filter the whole preview area. */
+  :root.is-mono-chroma .preview-grid,
+  :root.is-mono-chroma .toolbar,
+  :root.is-mono-chroma header {
+    filter: grayscale(1) contrast(1.02);
+  }
+  /* Legacy inspector tip (removed) ??hide if cached HTML still injects it */
+  #editor-scope-sub,
+  .editor-scope-sub { display: none !important; }
+  .preview-col { position: relative; }
+
+  .editor-panel-toggle {
+    display: flex; align-items: flex-start; gap: 8px;
+    margin: 0; padding: 0; border: none; background: none; cursor: pointer;
+    color: inherit; text-align: left; flex: 1; min-width: 0;
+    font: inherit;
+  }
+  .editor-panel-toggle:focus-visible {
+    outline: 2px solid var(--primary, #0381FE); outline-offset: 2px; border-radius: 6px;
+  }
+  .editor-panel.is-collapsed .editor-body { display: none; }
+  .editor-panel .toggle-arrow {
+    transition: transform 0.2s ease; opacity: 0.55;
+    font-size: 14px; flex-shrink: 0; line-height: 1.4;
+    transform: rotate(90deg);
+  }
+  .editor-panel.is-collapsed .toggle-arrow { transform: rotate(0deg); }
+  .editor-panel .editor-body {
+    padding: 16px 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    background: rgba(0, 0, 0, 0.22);
+  }
+  /* Each schema group (PAGE, Card globals, ?? reads as its own card. */
+  .editor-section {
+    margin: 0;
+    padding: 14px 16px 12px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.28);
+  }
+  .editor-section-toggle {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    width: 100%; margin: 0 0 12px; padding: 0 0 10px;
+    border: none; border-bottom: 1px solid var(--border);
+    background: none; cursor: pointer; font: inherit;
+    font-size: 14px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.55px;
+    color: var(--text-2);
+    text-align: left;
+  }
+  .editor-section-toggle:focus-visible {
+    outline: 2px solid var(--primary, #0381FE); outline-offset: 2px; border-radius: 4px;
+  }
+  .editor-section-toggle-label { min-width: 0; }
+  .editor-section-chev {
+    flex-shrink: 0; font-size: 12px; opacity: 0.65;
+    transition: transform 0.2s ease;
+  }
+  .editor-section-toggle[aria-expanded="false"] .editor-section-chev {
+    transform: rotate(-90deg);
+  }
+  .editor-section-body { padding-top: 2px; }
+  .editor-section-body[hidden] { display: none !important; }
+  .editor-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+    align-items: start;
+    gap: 12px 14px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .editor-row:last-child { border-bottom: 0; padding-bottom: 2px; }
+  .editor-row label {
+    font-size: 14px; color: var(--text-2);
+    line-height: 1.35;
+    white-space: normal;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+    min-width: 0;
+  }
+  .editor-row .input-wrap {
+    display: flex; gap: 6px; align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .editor-row input[type="color"] {
+    width: 34px; height: 28px; padding: 0;
+    border: 1px solid var(--border); border-radius: 6px;
+    background: transparent; cursor: pointer;
+  }
+  .editor-row input[type="text"],
+  .editor-row input[type="number"],
+  .editor-row select {
+    flex: 1; min-width: 0;
+    background: var(--panel-2); color: var(--text);
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 6px 8px; font-size: 14px; font-family: inherit;
+  }
+  .editor-row input[type="number"] { max-width: 80px; }
+  .editor-row input[data-role="color-text"] { min-width: 12em; flex: 2; }
+  .editor-row input[type="color"]:disabled { cursor: not-allowed; }
+  .editor-row .suffix { font-size: 14px; color: var(--text-3); }
+  .editor-actions {
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    margin: 0;
+    padding: 14px 16px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.28);
+  }
+  .editor-actions .spacer { flex: 1; }
+  .editor-actions .hint { font-size: 14px; color: var(--text-3); }
+
+  /* Save toast */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    padding: 10px 20px; background: var(--positive); color: #062;
+    border-radius: 999px; font-weight: 600; font-size: 14px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .toast.show {
+    opacity: 1; transform: translateX(-50%) translateY(-8px);
+  }
+
+  /* "active theme" hint pill on header */
+  .active-pill {
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(52, 211, 153, 0.15);
+    color: var(--positive);
+    font-size: 11.5px; font-weight: 600;
+  }
+</style>
+</head>
+<body>
+
+<!-- Standalone ?섏씠吏: ?곷떒?먯꽌 GenUI濡??뚯븘媛?· active-pill ? ??????좎뒪?몄슜 JS?? -->
+<span id="active-pill" style="display:none;"></span>
+
+<div class="toolbar">
+  <a href="genui.html" class="toolbar-back" title="GenUI 鍮뚮뜑濡??뚯븘媛湲?>??GenUI</a>
+  <label>Theme</label>
+  <select id="theme-select" class="theme-select"></select>
+  <div class="flat-scheme-toggle" id="flat-scheme-toggle" aria-label="Flat theme color scheme">
+    <span class="scheme-label">Flat</span>
+    <button type="button" class="flat-scheme-btn" data-flat-scheme="dark" aria-pressed="true">釉붾옓 諛곌꼍</button>
+    <button type="button" class="flat-scheme-btn" data-flat-scheme="light" aria-pressed="false">?붿씠??諛곌꼍</button>
+  </div>
+  <div class="preview-bg-swatches" id="preview-bg-swatches" aria-label="Preview background colors">
+    <span class="swatch-label">Preview BG</span>
+    <button type="button" class="preview-bg-swatch" data-preview-bg="#FFFEF1" style="--swatch:#FFFEF1" aria-label="아이보리 배경" aria-pressed="true"></button>
+    <button type="button" class="preview-bg-swatch" data-preview-bg="#6f7478" style="--swatch:#6f7478" aria-label="洹몃젅??諛곌꼍" aria-pressed="false"></button>
+    <button type="button" class="preview-bg-swatch" data-preview-bg="#0a0a0c" style="--swatch:#0a0a0c" aria-label="釉붾옓 諛곌꼍" aria-pressed="false"></button>
+    <button type="button" class="preview-bg-swatch" data-preview-bg="#f4f5f6" style="--swatch:#f4f5f6" aria-label="?붿씠??諛곌꼍" aria-pressed="false"></button>
+  </div>
+  <span class="spacer"></span>
+  <!-- Import HTML ??pulls theme tokens from a previously-exported file
+       (genui topbar Export HTML produces these). The file embeds a
+       JSON metadata block that this importer parses; the extracted
+       --xxx variables prefill the editor and apply live so the user
+       can Save them as a new theme. Hidden file input + visible button
+       so the styling matches the rest of the toolbar. -->
+  <button type="button" id="btn-download-template" class="secondary" title="Download a ZIP with theme.css + theme.json + theme-preview.html + README.md. Designers can edit theme.css in any editor and re-import here without site access.">Download template</button>
+  <input type="file" id="import-html-file" accept=".zip,application/zip,.html,.htm,text/html,.css,.json,application/json" multiple style="display:none;">
+  <button type="button" id="btn-import-html" class="secondary" title="Import theme · accepts the .zip you got from Download template, OR individual theme.css / theme.json files. Multiple files merge in selection order (later wins). Drag-and-drop also works.">Import theme</button>
+  <!-- Unsaved-changes indicator. Appears the moment any editor input
+       changes a CSS variable, hides again on Save / Discard / dropdown
+       change. The pill makes it explicit that edits are live-previewed
+       but not persisted until "Save" is clicked. -->
+  <span id="unsaved-pill" style="display:none;padding:4px 10px;border-radius:999px;background:rgba(245,166,35,0.18);color:#F5A623;font-size:11.5px;font-weight:600;">Unsaved changes</span>
+</div>
+
+<main>
+  <div class="layout-row">
+    <!-- LEFT ??Editor pane (sticky-scroll). The page exists to edit
+         theme tokens; the editor is the primary surface, not a hidden
+         collapsible footer like before. -->
+    <div class="editor-col">
+      <div class="editor-panel" id="editor-panel">
+        <header class="editor-head" id="editor-head">
+          <button type="button" class="editor-panel-toggle" id="editor-panel-toggle" aria-expanded="true" aria-controls="editor-body" title="?몄쭛 ?⑤꼸 ?묎린/?쇱튂湲?>
+            <span class="toggle-arrow" aria-hidden="true">??/span>
+            <span style="display:flex;flex-direction:column;gap:4px;min-width:0;text-align:left;">
+              <span id="editor-scope-hint" class="editor-scope-hint" aria-live="polite"></span>
+            </span>
+          </button>
+          <button type="button" id="btn-show-all-vars" class="secondary" style="font-size:12px;padding:6px 12px;display:none;white-space:nowrap;">紐⑤뱺 蹂??蹂닿린</button>
+        </header>
+        <div class="editor-body" id="editor-body"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT ??Live preview. Two modes:
+         (1) Cards: every themed card rendered separately (existing)
+         (2) Screen: a phone frame with multiple cards composed using
+             the theme's screen-padding / gap / grid tokens. Lets the
+             designer feel composition rules, not just card styling. -->
+    <div class="preview-col" id="preview-col">
+      <div class="preview-mode-toggle" id="preview-mode-toggle" role="tablist" aria-label="Preview mode">
+        <button type="button" class="preview-mode-btn active" data-mode="cards" aria-selected="true">Cards</button>
+        <button type="button" class="preview-mode-btn" data-mode="screen" aria-selected="false">Screen</button>
+      </div>
+      <h2 id="preview-mode-title" style="font-size:14px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin:12px 0 16px;">Live preview · all themed cards</h2>
+      <!-- Theme tokens apply here only ??left editor / header / toolbar stay on fixed chrome vars. -->
+      <div class="preview-theme-scope" id="preview-theme-scope">
+        <div class="preview-grid" id="preview-grid"></div>
+        <div class="preview-screen-wrap" id="preview-screen-wrap" style="display:none;">
+          <div class="preview-screen-grid" id="preview-screen-grid">
+            <!-- 6 S26-ratio phones populated by renderScreenPreview().
+                 Each shows a different scenario (cooking / weather /
+                 calendar / messages / navigation / search) so the
+                 designer sees the theme across types at one glance. -->
+          </div>
+          <div class="preview-screen-hint">
+            6 scenarios · S26 aspect (19.5:9) · each phone mixes 1-col and 2-col groups so the same card type
+            renders in both contexts. Uses your <code>--screen-padding-*</code>, <code>--gap-screen</code>,
+            <code>--gap-cards</code>, <code>--screen-grid-columns</code> tokens.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast">Saved · theme applied</div>
+
+<!-- The renderer needs the same atomic + surface-layout helpers used by the main app.
+     We load it AFTER our boot block so window.renderAtomicForRole becomes
+     available without disturbing main-app rendering (it's just a function
+     export ??no side effects on the customize page). -->
+<script src="typography-rules.js"></script>
+<script src="app/atomics.js"></script>
+<script src="app/surface-layout.js"></script>
+
+<!-- JSZip ??used by Download template to bundle theme.css + theme.json
+     + theme-preview.html into a single .zip download. Without this,
+     browsers throttle the 3-file burst download to just the first file
+     (the css), breaking the workflow where designers receive the pack
+     from someone else. CDN is fine ??small (~30KB minified), MIT,
+     widely cached. SRI hash pinned to the published 3.10.1 release. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
+        referrerpolicy="no-referrer"></script>
+
+<script>
+'use strict';
+
+/** Theme style + chroma stay on documentElement (renderer reads --oneui-theme-style from :root). All other preset tokens live on #preview-theme-scope so the editor chrome never inherits them. */
+var THEME_VARS_DOCUMENT_ONLY = ['--oneui-theme-style', '--oneui-chroma'];
+
+function previewThemeScopeEl() {
+  return document.getElementById('preview-theme-scope');
+}
+
+/** Element that holds --page-bg, --surface-bg, --text-*, card tokens, etc. */
+function themeTokenContext() {
+  return previewThemeScopeEl() || document.documentElement;
+}
+
+// ---------------------------------------------------------------------------
+//  Sample card variants ??what we feed each renderer to produce a preview.
+//  Each entry pairs a friendly label with the (atomic role, variant) tuple
+//  the renderer expects. See app/scenes.js _adaptForBodyAtomic for the
+//  shapes ??we hand-build them here so the customize page is self-contained.
+// ---------------------------------------------------------------------------
+const PREVIEW_CARDS = [
+  {
+    name: 'Weather',
+    editSections: ['Page', 'Card globals', 'Weather card'],
+    role: 'focus-block',
+    variant: { kind: 'weather', temp: '23°', condition: 'Partly cloudy', location: 'Seoul', feels: '21°', icon: 'cloud-sun' }
+  },
+  {
+    name: 'Calendar',
+    editSections: ['Page', 'Card globals', 'Calendar card'],
+    role: 'focus-block',
+    variant: { kind: 'calendar', section: 'Next up · Today', time: '9:30 AM', duration: '30 min', title: 'Team stand-up', location: 'Studio A' }
+  },
+  {
+    name: 'Reminder',
+    editSections: ['Page', 'Card globals', 'Reminder card'],
+    role: 'focus-block',
+    variant: { kind: 'reminder', task: 'Review proposal', due: '5 PM', count: '3', section: 'TODAY · 3 ITEMS' }
+  },
+  {
+    name: 'Message',
+    editSections: ['Page', 'Card globals', 'Message card'],
+    role: 'focus-block',
+    variant: { kind: 'message', sender: 'Alex', preview: 'see you at coffee shop', section: 'MESSAGES · 2 NEW' }
+  },
+  {
+    name: 'ETA',
+    editSections: ['Page', 'Card globals', 'ETA card'],
+    role: 'focus-block',
+    variant: { kind: 'eta', eta: '12 min', destination: 'Home', traffic: 'Light traffic', route: 'via Hangang-daero' }
+  },
+  {
+    name: 'Input summary',
+    editSections: ['Page', 'Card globals', 'Input summary card'],
+    role: 'focus-block',
+    variant: { kind: 'input', section: 'SEARCH · COFFEE SHOPS', topic: 'Found 12 nearby', detail: '', facets: ['Vegetarian', 'Within 1 km', 'Open now'] }
+  },
+  {
+    name: 'AI notification',
+    editSections: ['Page', 'Card globals', 'AI notification'],
+    role: 'notif-card-ai',
+    variant: { title: 'Galaxy AI', subtitle: 'Your morning summary is ready', body: 'Your morning summary is ready', time: '8:21 AM', glyph: 'A', kind: 'ai' }
+  },
+  {
+    name: 'Notification',
+    editSections: ['Page', 'Card globals'],
+    role: 'notif-card',
+    variant: { title: 'WhatsApp', subtitle: 'Alex: Hey, are you around?', body: 'Alex: Hey, are you around?', time: '5m', glyph: 'W', accent: '#25D366' }
+  },
+  {
+    name: 'Navigation now-bar',
+    editSections: ['Page', 'Card globals', 'Navigation now-bar'],
+    role: 'now-bar',
+    variant: { type: 'navigation', distance: '200 m', direction: 'right', instruction: 'Turn right onto Hangang-daero', eta: '8 min' }
+  },
+  {
+    name: 'Voice (single-line)',
+    editSections: ['Page', 'Card globals', 'Navigation now-bar'],
+    role: 'now-bar',
+    variant: { type: 'single-line', label: 'Listening', listening: true }
+  },
+  {
+    name: 'Charging now-bar',
+    editSections: ['Page', 'Card globals', 'Navigation now-bar'],
+    role: 'now-bar',
+    variant: { type: 'charging', percent: 69 }
+  },
+  {
+    name: 'Action chips',
+    editSections: ['Page', 'Card globals'],
+    role: 'action-row',
+    variant: { actions: [{ label: 'Save', icon: 'bookmark', kind: 'primary' }, { label: 'Share', icon: 'share' }, { label: 'Edit', icon: 'edit' }] }
+  },
+  {
+    name: 'Action chips (gallery demo)',
+    editSections: ['Page', 'Card globals'],
+    role: 'action-row',
+    variant: { previewGallery: true }
+  },
+  {
+    name: 'Quick toggles',
+    editSections: ['Page', 'Card globals'],
+    role: 'toggle-chip',
+    variant: { toggles: [
+      { name: 'Wi-Fi',      icon: 'wifi',       on: true  },
+      { name: 'Bluetooth',  icon: 'bluetooth',  on: true  },
+      { name: 'Flashlight', icon: 'flashlight', on: false },
+      { name: 'Airplane',   icon: 'airplane',   on: false }
+    ] }
+  },
+  {
+    name: 'Now playing bar',
+    editSections: ['Page', 'Card globals', 'Navigation now-bar'],
+    role: 'now-bar',
+    variant: {
+      type: 'media',
+      title: 'Blinding Lights',
+      artist: 'The Weeknd',
+      marquee: 'Blinding Lights · The Weeknd · After Hours'
+    }
+  },
+  {
+    name: 'Media card',
+    editSections: ['Page', 'Card globals'],
+    role: 'media-card',
+    variant: { title: 'After Hours', artist: 'The Weeknd', service: 'Samsung Music' }
+  },
+  {
+    name: 'Progress track',
+    editSections: ['Page', 'Card globals'],
+    role: 'progress-track',
+    variant: { left: '1:42', right: '2:18', percent: 40 }
+  },
+  // Dot cards (new dataset) — keep as separate roles so they can be animated
+  // purely via CSS (data-state) without touching legacy card renderers.
+  {
+    name: 'Running coach (dot)',
+    editSections: ['Page', 'Card globals'],
+    role: 'dot-running',
+    variant: { title: 'Running coach', subtitle: '달릴 준비 되셨나요?' }
+  },
+  {
+    name: 'Running time (dot)',
+    editSections: ['Page', 'Card globals'],
+    role: 'dot-running-compact',
+    variant: { label: '조깅', time: '10:35' }
+  }
+];
+
+const TOOLKIT_PREVIEW_SCALE = 0.72;
+
+function previewRectForCard(card) {
+  const role = card && card.role;
+  const variant = (card && card.variant) || {};
+  if (role === 'now-bar' && variant.type === 'charging') return { w: 248, h: 64, scale: TOOLKIT_PREVIEW_SCALE };
+  if (role === 'now-bar' && variant.type === 'single-line') return { w: 381, h: 58, scale: TOOLKIT_PREVIEW_SCALE };
+  // Navigation copies need width for distance + instruction + ETA; height can grow with 2-line clamp.
+  if (role === 'now-bar' && variant.type === 'navigation') return { w: 400, h: 76, scale: TOOLKIT_PREVIEW_SCALE };
+  if (role === 'now-bar' && variant.type === 'media') return { w: 360, h: 96, scale: TOOLKIT_PREVIEW_SCALE };
+  if (role === 'now-bar') return { w: 248, h: 64, scale: TOOLKIT_PREVIEW_SCALE };
+  if (role === 'notif-card' || role === 'notif-card-ai') return { w: 415, h: 86, scale: TOOLKIT_PREVIEW_SCALE };
+  if (role === 'toggle-chip') return { w: 408, h: 88, scale: TOOLKIT_PREVIEW_SCALE };
+  if (role === 'action-row' && variant.previewGallery) return { w: 415, h: 400, scale: TOOLKIT_PREVIEW_SCALE };
+  if (role === 'action-row') return { w: 408, h: 96, scale: TOOLKIT_PREVIEW_SCALE };
+  if (role === 'media-card') return { w: 360, h: 200, scale: TOOLKIT_PREVIEW_SCALE };
+  if (role === 'progress-track') return { w: 360, h: 52, scale: TOOLKIT_PREVIEW_SCALE };
+  if (role === 'dot-running') return { w: 297, h: 75, scale: TOOLKIT_PREVIEW_SCALE };
+  if (role === 'dot-running-compact') return { w: 164, h: 82, scale: TOOLKIT_PREVIEW_SCALE };
+  if (role === 'focus-block' && variant.kind === 'weather') return { w: 415, h: 218, scale: TOOLKIT_PREVIEW_SCALE };
+  if (role === 'focus-block' && variant.kind === 'calendar') return { w: 300, h: 128, scale: TOOLKIT_PREVIEW_SCALE };
+  if (role === 'focus-block' && variant.kind === 'input') return { w: 300, h: 168, scale: TOOLKIT_PREVIEW_SCALE };
+  if (role === 'focus-block') return { w: 300, h: 112, scale: TOOLKIT_PREVIEW_SCALE };
+  return { w: 415, h: 120, scale: TOOLKIT_PREVIEW_SCALE };
+}
+
+// ---------------------------------------------------------------------------
+//  Editor schema ??groups every customizable CSS variable by section and
+//  declares the appropriate input type. Adding a new var here is enough
+//  to expose it in the editor panel; no other code needs to change.
+//  Type semantics:
+//    color      ??native swatch + text (hex, rgb(a), or CSS linear/radial/conic-gradient(...))
+//    color-rgba ??<input type="text"> (free-form for rgba/oklch/etc)
+//    size       ??<input type="number"> + 'px' suffix
+//    weight     ??<select> with 400/500/600/700
+//    text       ??<input type="text"> (gradients, letter-spacing strings)
+// ---------------------------------------------------------------------------
+const THEME_EDIT_SCHEMA = [
+  {
+    section: 'Typography',
+    vars: [
+      { key: '--font-family-display',  label: 'Display family',   type: 'text' },
+      { key: '--font-family-body',     label: 'Body family',      type: 'text' },
+      { key: '--font-family-mono',     label: 'Mono family',      type: 'text' },
+      { key: '--font-size-xs',         label: 'Size · xs (meta)',     type: 'size', min: 14, max: 18, step: 1 },
+      { key: '--font-size-sm',         label: 'Size · sm (label)',    type: 'size', min: 14, max: 22, step: 1 },
+      { key: '--font-size-md',         label: 'Size · md (body)',     type: 'size', min: 14, max: 28, step: 1 },
+      { key: '--font-size-lg',         label: 'Size · lg (title)',    type: 'size', min: 16, max: 34, step: 1 },
+      { key: '--font-size-xl',         label: 'Size · xl (display)',  type: 'size', min: 18, max: 48, step: 1 },
+      { key: '--font-size-display',    label: 'Size · hero heading', type: 'size', min: 20, max: 80, step: 1 },
+      { key: '--font-weight-regular',  label: 'Weight · regular', type: 'weight' },
+      { key: '--font-weight-medium',   label: 'Weight · medium',  type: 'weight' },
+      { key: '--font-weight-semibold', label: 'Weight · semibold',type: 'weight' },
+      { key: '--font-weight-bold',     label: 'Weight · bold',    type: 'weight' },
+      { key: '--letter-spacing-tight', label: 'Letter spacing · tight',  type: 'text' },
+      { key: '--letter-spacing-normal',label: 'Letter spacing · normal', type: 'text' },
+      { key: '--letter-spacing-wide',  label: 'Letter spacing · wide',   type: 'text' },
+      { key: '--line-height-tight',    label: 'Line height · tight',     type: 'text' },
+      { key: '--line-height-normal',   label: 'Line height · normal',    type: 'text' },
+      { key: '--line-height-relaxed',  label: 'Line height · relaxed',   type: 'text' }
+    ]
+  },
+  {
+    section: 'Spacing scale',
+    vars: [
+      { key: '--space-xxs', label: 'xxs', type: 'size', min: 0, max: 12, step: 1 },
+      { key: '--space-xs',  label: 'xs',  type: 'size', min: 0, max: 16, step: 1 },
+      { key: '--space-sm',  label: 'sm',  type: 'size', min: 0, max: 20, step: 1 },
+      { key: '--space-md',  label: 'md',  type: 'size', min: 4, max: 28, step: 1 },
+      { key: '--space-lg',  label: 'lg',  type: 'size', min: 8, max: 40, step: 1 },
+      { key: '--space-xl',  label: 'xl',  type: 'size', min: 12,max: 64, step: 1 }
+    ]
+  },
+  {
+    section: 'Composition (screen-level)',
+    vars: [
+      { key: '--screen-padding-v',     label: 'Screen padding · vertical',   type: 'size', min: 0, max: 48, step: 1 },
+      { key: '--screen-padding-h',     label: 'Screen padding · horizontal', type: 'size', min: 0, max: 48, step: 1 },
+      { key: '--gap-screen',           label: 'Gap · between groups',         type: 'size', min: 0, max: 48, step: 1 },
+      { key: '--gap-cards',            label: 'Gap · between cards',          type: 'size', min: 0, max: 32, step: 1 },
+      { key: '--container-margin-bottom', label: 'Container · bottom margin', type: 'size', min: 0, max: 32, step: 1 },
+      { key: '--screen-grid-columns',  label: 'Grid columns (1/2/3 or "1fr 2fr")', type: 'text' },
+      { key: '--screen-grid-gap',      label: 'Grid gap',                     type: 'size', min: 0, max: 32, step: 1 }
+    ]
+  },
+  {
+    section: 'Page',
+    vars: [
+      { key: '--page-bg',          label: 'Background',     type: 'color' },
+      { key: '--text-primary',     label: 'Text · primary', type: 'color' },
+      { key: '--text-secondary',   label: 'Text · secondary (rgba)', type: 'color-rgba' },
+      { key: '--text-tertiary',    label: 'Text · tertiary (rgba)',  type: 'color-rgba' },
+      { key: '--accent-primary',   label: 'Accent · primary (filled)', type: 'color' },
+      { key: '--accent-on-primary',label: 'Text on filled accent', type: 'color' }
+    ]
+  },
+  {
+    section: 'Card globals',
+    vars: [
+      { key: '--card-radius',     label: 'Corner radius',     type: 'size', min: 0,  max: 40, step: 1 },
+      { key: '--card-padding-v',  label: 'Padding · vertical',type: 'size', min: 0,  max: 40, step: 1 },
+      { key: '--card-padding-h',  label: 'Padding · horizontal', type: 'size', min: 0, max: 40, step: 1 },
+      { key: '--card-gap',        label: 'Inner gap',         type: 'size', min: 0,  max: 24, step: 1 }
+    ]
+  },
+  {
+    section: 'Weather card',
+    vars: [
+      { key: '--card-weather-accent',          label: 'Accent (icon)',   type: 'color' },
+      { key: '--card-weather-temp-color',      label: 'Temp color',      type: 'color' },
+      { key: '--card-weather-temp-size',       label: 'Temp size',       type: 'size', min: 16, max: 90, step: 1 },
+      { key: '--card-weather-temp-weight',     label: 'Temp weight',     type: 'weight' },
+      { key: '--card-weather-temp-letterspacing', label: 'Temp letter-spacing', type: 'text' },
+      { key: '--card-weather-icon-size',       label: 'Icon size',       type: 'size', min: 16, max: 80, step: 1 }
+    ]
+  },
+  {
+    section: 'Calendar card',
+    vars: [
+      { key: '--card-calendar-accent',         label: 'Accent (cal icon)', type: 'color' },
+      { key: '--card-calendar-time-size',      label: 'Time size',         type: 'size', min: 14, max: 50, step: 1 },
+      { key: '--card-calendar-time-weight',    label: 'Time weight',       type: 'weight' }
+    ]
+  },
+  {
+    section: 'Reminder card',
+    vars: [
+      { key: '--card-reminder-accent',         label: 'Accent (checkbox)', type: 'color' },
+      { key: '--card-reminder-task-size',      label: 'Task size',         type: 'size', min: 14, max: 28, step: 1 }
+    ]
+  },
+  {
+    section: 'Message card',
+    vars: [
+      { key: '--card-message-avatar-grad',     label: 'Avatar gradient (CSS)', type: 'text' },
+      { key: '--card-message-avatar-size',     label: 'Avatar size',           type: 'size', min: 18, max: 56, step: 1 }
+    ]
+  },
+  {
+    section: 'ETA card',
+    vars: [
+      { key: '--card-eta-accent',              label: 'Accent (car icon)', type: 'color' },
+      { key: '--card-eta-size',                label: 'ETA size',          type: 'size', min: 18, max: 64, step: 1 },
+      { key: '--card-eta-icon-size',           label: 'Icon size',         type: 'size', min: 16, max: 60, step: 1 }
+    ]
+  },
+  {
+    section: 'Navigation now-bar',
+    vars: [
+      { key: '--card-nav-accent',              label: 'Accent (arrow)',    type: 'color' },
+      { key: '--card-nav-distance-size',       label: 'Distance size',     type: 'size', min: 12, max: 40, step: 1 },
+      { key: '--card-nav-arrow-bg',            label: 'Arrow bg (rgba)',   type: 'color-rgba' }
+    ]
+  },
+  {
+    section: 'AI notification',
+    vars: [
+      { key: '--card-ai-grad',                 label: 'Background gradient', type: 'text' },
+      { key: '--card-ai-shimmer-speed',        label: 'Shimmer speed (e.g. 3.6s)', type: 'text' }
+    ]
+  },
+  {
+    section: 'Input summary card',
+    vars: [
+      { key: '--card-input-topic-size',        label: 'Topic size',        type: 'size', min: 14, max: 36, step: 1 }
+    ]
+  }
+];
+
+// ---------------------------------------------------------------------------
+//  State
+// ---------------------------------------------------------------------------
+let THEMES = [];
+let ACTIVE_ID = null;
+/** When set, left editor shows only THEME_EDIT_SCHEMA sections listed on that preview card (`editSections`). */
+let SELECTED_PREVIEW_INDEX = null;
+/** Double-click drill-down: show only these CSS var keys in the left editor (subset of current card scope). */
+let INSPECTOR_LAYER = null;
+/** { idx: preview cell index, path: number[] } ??child indices from `.stage` to the double-clicked element (for outline after re-render). */
+let INSPECTOR_DOM_PATH = null;
+/** Per preview-cell index: CSS var overrides applied only on that cell (not :root), so edits while a card is selected do not recolor the whole page. */
+let PREVIEW_CELL_VAR_OVERRIDES = {};
+
+var _PAGE_EDIT_KEYS = ['--page-bg', '--text-primary', '--text-secondary', '--text-tertiary', '--accent-primary', '--accent-on-primary'];
+var _CARD_GLOBAL_KEYS = ['--card-radius', '--card-padding-v', '--card-padding-h', '--card-gap'];
+var _SURFACE_THEME_KEYS = [
+  '--oneui-theme-style',
+  '--surface-bg',
+  '--surface-border',
+  '--surface-shadow',
+  '--surface-filter',
+  '--surface-overlay',
+  '--surface-overlay-opacity',
+  '--surface-bg-size',
+  '--surface-animation',
+  '--qs-tile-bg',
+  '--qs-row-toggle-on-bg',
+  '--qs-row-toggle-off-bg',
+  '--qs-row-toggle-on-fg',
+  '--qs-row-toggle-off-fg',
+  '--qs-row-sheen-opacity',
+  '--qs-chip-on-bg',
+  '--qs-chip-off-bg',
+  '--qs-chip-icon-on',
+  '--qs-chip-icon-off',
+  '--flat-toggle-grid-shell-bg',
+  '--flat-toggle-grid-border',
+  '--flat-toggle-grid-chip-on-bg',
+  '--flat-toggle-grid-chip-off-bg',
+  '--flat-toggle-grid-chip-icon-on',
+  '--flat-toggle-grid-chip-icon-off',
+  '--flat-toggle-grid-text',
+  '--flat-toggle-grid-text-secondary',
+  '--accent-on-primary',
+  '--qs-fallback-toggle-on-bg',
+  '--qs-fallback-toggle-off-bg',
+  '--nowbar-charging-track-bg',
+  '--nowbar-charging-fill-bg',
+  '--nowbar-charging-bolt-fill',
+  '--nowbar-charging-percent-color',
+  '--oneui-chroma'
+];
+var FLAT_SCHEME = 'dark';
+var FLAT_ACCENT = '#a3a3a8';
+var FLAT_ACCENT_KEYS = [
+  '--card-weather-accent',
+  '--card-calendar-accent',
+  '--card-reminder-accent',
+  '--card-message-avatar-grad',
+  '--card-eta-accent',
+  '--card-nav-accent'
+];
+var FLAT_SCHEME_VARS = {
+  dark: {
+    '--page-bg': '#000000',
+    '--text-primary': '#efeef2',
+    '--text-secondary': 'rgba(242,242,244,0.68)',
+    '--text-tertiary': 'rgba(242,242,244,0.44)',
+    '--accent-primary': '#ffffff',
+    '--accent-on-primary': '#0d0d0f',
+    '--surface-bg': '#1e1e22',
+    '--surface-border': 'none',
+    '--surface-filter': 'none',
+    '--card-ai-grad': '#1e1e22',
+    '--card-nav-arrow-bg': 'rgba(255,255,255,0.14)',
+    '--qs-tile-bg': '#26262b',
+    '--qs-chip-on-bg': '#ffffff',
+    '--qs-chip-off-bg': 'rgba(255,255,255,0.14)',
+    '--qs-chip-icon-on': '#0d0d0f',
+    '--qs-chip-icon-off': '#f2f2f5',
+    '--flat-toggle-grid-shell-bg': '#e8e8ec',
+    '--flat-toggle-grid-chip-on-bg': '#0d0d0f',
+    '--flat-toggle-grid-chip-off-bg': 'rgba(13,13,15,0.08)',
+    '--flat-toggle-grid-chip-icon-on': '#f5f5f7',
+    '--flat-toggle-grid-chip-icon-off': 'rgba(13,13,15,0.55)'
+  },
+  light: {
+    '--page-bg': '#f7f7f9',
+    '--text-primary': '#0a0a0c',
+    '--text-secondary': 'rgba(10,10,12,0.68)',
+    '--text-tertiary': 'rgba(10,10,12,0.44)',
+    '--accent-primary': '#0d0d0f',
+    '--accent-on-primary': '#ffffff',
+    '--surface-bg': '#f5f5f7',
+    '--surface-border': 'none',
+    '--surface-filter': 'none',
+    '--card-ai-grad': '#f0f0f3',
+    '--card-nav-arrow-bg': 'rgba(0,0,0,0.08)',
+    '--qs-tile-bg': '#eaeaf0',
+    '--qs-chip-on-bg': '#0d0d0f',
+    '--qs-chip-off-bg': 'rgba(13,13,15,0.08)',
+    '--qs-chip-icon-on': '#fafafa',
+    '--qs-chip-icon-off': 'rgba(13,13,15,0.55)',
+    '--flat-toggle-grid-shell-bg': '#1e1e22',
+    '--flat-toggle-grid-chip-on-bg': '#ffffff',
+    '--flat-toggle-grid-chip-off-bg': 'rgba(255,255,255,0.14)',
+    '--flat-toggle-grid-chip-icon-on': '#0d0d0f',
+    '--flat-toggle-grid-chip-icon-off': '#efeef2',
+    '--flat-toggle-grid-text': '#efeef2',
+    '--flat-toggle-grid-text-secondary': 'rgba(239,238,242,0.65)'
+  }
+};
+
+function _styleChainHas(el, root, sub) {
+  if (!sub || !el || !root) return false;
+  for (var n = el; n && n !== root; n = n.parentElement) {
+    if (!n.getAttribute) continue;
+    var st = n.getAttribute('style') || '';
+    if (st.indexOf(sub) >= 0) return true;
+  }
+  return false;
+}
+function _insideSvg(el) {
+  return !!(el && el.closest && el.closest('svg'));
+}
+function _inspectorKindKey(card) {
+  if (!card) return 'generic';
+  if (card.role === 'focus-block' && card.variant && card.variant.kind) return 'fb-' + card.variant.kind;
+  if (card.role === 'notif-card-ai') return 'notif-ai';
+  if (card.role === 'notif-card') return 'notif';
+  if (card.role === 'now-bar') return 'now-' + ((card.variant && card.variant.type) || 'unknown');
+  if (card.role === 'action-row') return 'action-row';
+  if (card.role === 'toggle-chip') return 'toggle-chip';
+  return 'generic';
+}
+/**
+ * Ordered rules: first matching test wins (most specific first).
+ * Each test: (el, stageRoot) -> boolean
+ */
+var _INSPECTOR_LAYERS = {
+  'fb-weather': [
+    { label: 'Temperature', keys: ['--card-weather-temp-size', '--card-weather-temp-weight', '--card-weather-temp-color', '--card-weather-temp-letterspacing'],
+      test: function (el, root) { return _styleChainHas(el, root, 'card-weather-temp-size') || _styleChainHas(el, root, 'card-weather-temp-color') || _styleChainHas(el, root, 'card-weather-temp-letterspacing'); } },
+    { label: 'Weather icon', keys: ['--card-weather-accent', '--card-weather-icon-size'],
+      test: function (el, root) { return _styleChainHas(el, root, 'card-weather-icon-size') || (_insideSvg(el) && _styleChainHas(el, root, 'card-weather')); } },
+    { label: 'Card shell', keys: _CARD_GLOBAL_KEYS.concat(['--card-weather-accent', '--page-bg']),
+      test: function (el, root) { return _styleChainHas(el, root, 'card-radius') && !_styleChainHas(el, root, 'card-weather'); } }
+  ],
+  'fb-calendar': [
+    { label: 'Time', keys: ['--card-calendar-time-size', '--card-calendar-time-weight'],
+      test: function (el, root) { return _styleChainHas(el, root, 'card-calendar-time-size'); } },
+    { label: 'Calendar icon', keys: ['--card-calendar-accent'],
+      test: function (el, root) { return _insideSvg(el) && _styleChainHas(el, root, 'card-calendar-accent'); } },
+    { label: 'Card shell', keys: _CARD_GLOBAL_KEYS.concat(_PAGE_EDIT_KEYS),
+      test: function (el, root) { return _styleChainHas(el, root, 'card-radius') && !_styleChainHas(el, root, 'card-calendar-time'); } }
+  ],
+  'fb-reminder': [
+    { label: 'Checkbox & accent', keys: ['--card-reminder-accent'],
+      test: function (el, root) { return _insideSvg(el) && _styleChainHas(el, root, 'card-reminder-accent'); } },
+    { label: 'Task text', keys: ['--card-reminder-task-size', '--text-primary'],
+      test: function (el, root) { return _styleChainHas(el, root, 'card-reminder-task-size'); } },
+    { label: 'Card shell', keys: _CARD_GLOBAL_KEYS.concat(_PAGE_EDIT_KEYS),
+      test: function (el, root) { return _styleChainHas(el, root, 'card-radius') && !_styleChainHas(el, root, 'card-reminder'); } }
+  ],
+  'fb-message': [
+    { label: 'Avatar', keys: ['--card-message-avatar-grad', '--card-message-avatar-size'],
+      test: function (el, root) { return _styleChainHas(el, root, 'card-message-avatar'); } },
+    { label: 'Text', keys: ['--text-primary', '--text-secondary', '--text-tertiary'],
+      test: function (el, root) { return _styleChainHas(el, root, '--text-primary') || _styleChainHas(el, root, '--text-secondary'); } },
+    { label: 'Card shell', keys: _CARD_GLOBAL_KEYS.concat(_PAGE_EDIT_KEYS),
+      test: function (el, root) { return _styleChainHas(el, root, 'card-radius') && !_styleChainHas(el, root, 'card-message-avatar'); } }
+  ],
+  'fb-eta': [
+    { label: 'ETA number', keys: ['--card-eta-size', '--card-eta-accent', '--card-eta-icon-size'],
+      test: function (el, root) { return _styleChainHas(el, root, 'card-eta-size') || (_insideSvg(el) && _styleChainHas(el, root, 'card-eta-accent')); } },
+    { label: 'Card shell', keys: _CARD_GLOBAL_KEYS.concat(_PAGE_EDIT_KEYS),
+      test: function (el, root) { return _styleChainHas(el, root, 'card-radius') && !_styleChainHas(el, root, 'card-eta-size'); } }
+  ],
+  'fb-input': [
+    { label: 'Topic', keys: ['--card-input-topic-size', '--text-primary'],
+      test: function (el, root) { return _styleChainHas(el, root, 'card-input-topic-size'); } },
+    { label: 'Card shell', keys: _CARD_GLOBAL_KEYS.concat(_PAGE_EDIT_KEYS),
+      test: function (el, root) { return _styleChainHas(el, root, 'card-radius'); } }
+  ],
+  'notif-ai': [
+    { label: 'AI gradient & motion', keys: ['--card-ai-grad', '--card-ai-shimmer-speed'],
+      test: function (el, root) { return _styleChainHas(el, root, 'card-ai-grad') || _styleChainHas(el, root, 'aiShimmer'); } },
+    { label: 'Glyph area', keys: _PAGE_EDIT_KEYS.concat(['--accent-primary']),
+      test: function (el, root) { return _styleChainHas(el, root, 'width:56px;height:56px') && _styleChainHas(el, root, 'backdrop-filter'); } },
+    { label: 'Text', keys: ['--text-primary', '--text-secondary'],
+      test: function (el, root) { return el.tagName === 'SPAN' && (el.getAttribute('style') || '').indexOf('font-size:15px') >= 0; } }
+  ],
+  'notif': [
+    { label: 'App icon', keys: ['--accent-primary', '--text-primary'],
+      test: function (el, root) { return _styleChainHas(el, root, 'width:56px;height:56px') && _styleChainHas(el, root, 'border-radius:50%'); } },
+    { label: 'Title & time', keys: ['--text-primary', '--text-secondary'],
+      test: function (el, root) {
+        if (el.tagName !== 'SPAN') return false;
+        var st = el.getAttribute('style') || '';
+        return st.indexOf('font-size:15px') >= 0 || st.indexOf('--font-size-xs') >= 0;
+      } },
+    { label: 'Body', keys: ['--text-secondary', '--text-tertiary'],
+      test: function (el, root) {
+        var st = el.getAttribute('style') || '';
+        if (st.indexOf('font-size:14px') < 0) return false;
+        return el.tagName === 'SPAN' || el.tagName === 'DIV';
+      } },
+    { label: 'Card shell', keys: _CARD_GLOBAL_KEYS.concat(['--page-bg']),
+      test: function (el, root) { return _styleChainHas(el, root, 'border-radius:50px'); } }
+  ],
+  'now-navigation': [
+    { label: 'Turn arrow', keys: ['--card-nav-accent', '--card-nav-arrow-bg'],
+      test: function (el, root) { return _styleChainHas(el, root, 'card-nav-arrow-bg') || _styleChainHas(el, root, 'card-nav-accent'); } },
+    { label: 'Distance', keys: ['--card-nav-distance-size', '--text-primary'],
+      test: function (el, root) { return _styleChainHas(el, root, 'card-nav-distance-size'); } },
+    { label: 'Instruction & ETA', keys: ['--text-primary', '--text-secondary', '--text-tertiary'],
+      test: function (el, root) { return el.tagName === 'DIV' && (el.getAttribute('style') || '').indexOf('--font-size-sm') >= 0; } }
+  ],
+  'now-single-line': [
+    { label: 'Waveform & accent', keys: ['--accent-primary'],
+      test: function (el, root) { return (el.getAttribute('style') || '').indexOf('slPulse') >= 0 || (el.getAttribute('style') || '').indexOf('#0381FE') >= 0; } },
+    { label: 'Label', keys: ['--text-primary'],
+      test: function (el, root) { return el.tagName === 'DIV' && (el.getAttribute('style') || '').indexOf('font-size:15px') >= 0; } }
+  ],
+  'now-charging': [
+    { label: 'Charge fill', keys: ['--accent-primary'],
+      test: function (el, root) { return _styleChainHas(el, root, '#0FCF6E') || _styleChainHas(el, root, 'linear-gradient(to right,#0FCF6E'); } },
+    { label: 'Percent', keys: ['--text-primary'],
+      test: function (el, root) { var st = el.getAttribute('style') || ''; return st.indexOf('font-size:26px') >= 0 && (el.textContent || '').indexOf('%') >= 0; } },
+    { label: 'Lightning icon', keys: ['--text-primary', '--accent-primary'],
+      test: function (el, root) { return _insideSvg(el) && (el.getAttribute('style') || '').indexOf('fill:#fff') >= 0; } }
+  ],
+  'action-row': [
+    { label: 'Actions & chrome', keys: _PAGE_EDIT_KEYS.concat(_CARD_GLOBAL_KEYS),
+      test: function () { return true; } }
+  ],
+  'toggle-chip': [
+    { label: 'Quick toggles', keys: _PAGE_EDIT_KEYS.concat(_CARD_GLOBAL_KEYS),
+      test: function () { return true; } }
+  ],
+  'generic': [
+    { label: 'Page & cards', keys: _PAGE_EDIT_KEYS.concat(_CARD_GLOBAL_KEYS),
+      test: function () { return true; } }
+  ]
+};
+
+function _resolveInspectorLayer(card, target, stageRoot) {
+  var kind = _inspectorKindKey(card);
+  var layers = _INSPECTOR_LAYERS[kind] || _INSPECTOR_LAYERS.generic;
+  for (var i = 0; i < layers.length; i++) {
+    try {
+      if (layers[i].test(target, stageRoot)) return { label: layers[i].label, keys: layers[i].keys.slice() };
+    } catch (err) { /* ignore */ }
+  }
+  return null;
+}
+
+// Cross-cutting sections that affect EVERY card type (typography,
+// spacing scale, screen-level composition). When the inspector
+// filter is active, these sections still show in full so the
+// designer can adjust globals without dropping the focus filter.
+var ALWAYS_VISIBLE_SECTIONS = [
+  'Typography',
+  'Spacing scale',
+  'Composition (screen-level)'
+];
+
+function getActiveEditorSections() {
+  var sections = getFilteredSchema();
+  if (!INSPECTOR_LAYER || !INSPECTOR_LAYER.keys || !INSPECTOR_LAYER.keys.length) return sections;
+  var allow = {};
+  INSPECTOR_LAYER.keys.forEach(function (k) { allow[k] = 1; });
+  var out = [];
+  sections.forEach(function (sec) {
+    if (ALWAYS_VISIBLE_SECTIONS.indexOf(sec.section) >= 0) {
+      // Pass through unfiltered ??these are cross-cutting tokens.
+      out.push(sec);
+      return;
+    }
+    var vs = sec.vars.filter(function (v) { return allow[v.key]; });
+    if (vs.length) out.push({ section: sec.section, vars: vs });
+  });
+  return out.length ? out : sections;
+}
+
+// Activate the editor focus by card kind (e.g. 'fb-weather'). Picks
+// the broadest layer for that kind ("Card shell") so the user gets
+// every variable that touches the card, not just one subzone. Used
+// by the Screen-mode preview's card-click handler. Pass null to
+// clear the focus.
+function setInspectorByKind(kindKey, label) {
+  if (kindKey == null) {
+    INSPECTOR_LAYER = null;
+    INSPECTOR_DOM_PATH = null;
+    SELECTED_PREVIEW_INDEX = null;
+    buildEditorBody();
+    renderPreviewGrid();
+    return;
+  }
+  var layers = _INSPECTOR_LAYERS[kindKey] || _INSPECTOR_LAYERS.generic;
+  // The last layer in each kind's list is the broadest ("Card shell" /
+  // "Page & cards"). It captures all card-type-specific keys plus the
+  // global card shell tokens ??a sensible "show me everything that
+  // matters for this card type" default.
+  var broadest = layers[layers.length - 1];
+  INSPECTOR_LAYER = {
+    label: label || (kindKey + ' (full card)'),
+    keys:  broadest.keys.slice()
+  };
+  buildEditorBody();
+}
+
+// Map a Screen-preview spec ({role, variant}) to an inspector kind.
+function _inspectorKindForSpec(spec) {
+  if (!spec || !spec.role) return 'generic';
+  if (spec.role === 'focus-block' && spec.variant && spec.variant.kind) {
+    return 'fb-' + spec.variant.kind;
+  }
+  if (spec.role === 'now-bar' && spec.variant && spec.variant.type) {
+    return 'now-' + spec.variant.type;
+  }
+  return spec.role;   // 'action-row' / 'toggle-chip' / etc.
+}
+
+function _domPathFromStage(stage, target) {
+  if (!stage || !target || !stage.contains(target)) return null;
+  var el = target.nodeType === 3 ? target.parentElement : target;
+  if (!el || el === stage) return [];
+  var path = [];
+  for (var n = el; n && n !== stage; n = n.parentElement) {
+    if (!n.parentElement) return null;
+    var parent = n.parentElement;
+    var idx = 0;
+    var c = parent.firstElementChild;
+    while (c && c !== n) {
+      c = c.nextElementSibling;
+      idx++;
+    }
+    if (!c) return null;
+    path.unshift(idx);
+  }
+  return path;
+}
+
+function _elFromStagePath(stage, path) {
+  if (!stage || !path || !path.length) return null;
+  var cur = stage;
+  for (var i = 0; i < path.length; i++) {
+    cur = cur.children[path[i]];
+    if (!cur) return null;
+  }
+  return cur;
+}
+
+function _applyInspectorOutline() {
+  var grid = $('preview-grid');
+  if (!grid) return;
+  var marked = grid.querySelectorAll('.inspector-hit');
+  for (var m = 0; m < marked.length; m++) marked[m].classList.remove('inspector-hit');
+  if (!INSPECTOR_LAYER || !INSPECTOR_DOM_PATH || !INSPECTOR_DOM_PATH.path || !INSPECTOR_DOM_PATH.path.length) return;
+  if (INSPECTOR_DOM_PATH.idx !== SELECTED_PREVIEW_INDEX) return;
+  var cell = grid.querySelector('.preview-cell[data-preview-index="' + INSPECTOR_DOM_PATH.idx + '"]');
+  if (!cell) return;
+  var st = cell.querySelector('.stage');
+  if (!st) return;
+  var el = _elFromStagePath(st, INSPECTOR_DOM_PATH.path);
+  if (el) el.classList.add('inspector-hit');
+}
+
+// ---------------------------------------------------------------------------
+//  Helpers
+// ---------------------------------------------------------------------------
+function $(id) { return document.getElementById(id); }
+async function fetchJSON(url, opts) {
+  const res = await fetch(url, opts || {});
+  if (!res.ok) throw new Error(url + ' ??HTTP ' + res.status);
+  return res.json();
+}
+function showToast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 1500);
+}
+
+function isFlatThemeActive() {
+  return (getComputedStyle(document.documentElement).getPropertyValue('--oneui-theme-style') || '').trim().toLowerCase() === 'flat';
+}
+
+function isNeonThemeActive() {
+  return (getComputedStyle(document.documentElement).getPropertyValue('--oneui-theme-style') || '').trim().toLowerCase() === 'neon';
+}
+
+function solidForGradientValue(value) {
+  var v = String(value || '').toLowerCase();
+  var styles = getComputedStyle(themeTokenContext());
+  var accent = (styles.getPropertyValue('--accent-primary') || FLAT_ACCENT).trim();
+  var surface = (styles.getPropertyValue('--surface-bg') || 'rgba(23,23,26,0.80)').trim();
+  if (v.indexOf('98dfa9') >= 0 || v.indexOf('31ce8a') >= 0 || v.indexOf('3bd18b') >= 0) return accent;
+  return surface;
+}
+
+function stripGradientsForFlat(root) {
+  if (!root || (!isFlatThemeActive() && !isNeonThemeActive())) return;
+  const nodes = [root].concat(Array.from(root.querySelectorAll('[style]')));
+  nodes.forEach(function (el) {
+    var css = el.getAttribute('style') || '';
+    if (!/gradient\(/i.test(css)) return;
+    var isGradientText = /background-clip\s*:\s*text|-webkit-background-clip\s*:\s*text/i.test(css);
+    if (isGradientText) {
+      el.style.background = 'transparent';
+      el.style.backgroundImage = 'none';
+      el.style.color = 'var(--accent-primary, ' + FLAT_ACCENT + ')';
+      el.style.webkitTextFillColor = 'var(--accent-primary, ' + FLAT_ACCENT + ')';
+      el.style.webkitBackgroundClip = 'initial';
+      el.style.backgroundClip = 'initial';
+      return;
+    }
+    var bg = el.style.background || el.style.backgroundImage || css;
+    if (/gradient\(/i.test(bg)) {
+      el.style.background = solidForGradientValue(bg);
+      el.style.backgroundImage = 'none';
+    }
+  });
+}
+
+function normalizeFlatTextForScheme(root) {
+  var style = (getComputedStyle(document.documentElement).getPropertyValue('--oneui-theme-style') || '').trim().toLowerCase();
+  if (!root || (style !== 'flat' && style !== 'neon')) return;
+  var textPrimary = (getComputedStyle(themeTokenContext()).getPropertyValue('--text-primary') || '').trim().toLowerCase();
+  if (!/^#?0a0a0c$|^#?050805$|^#?000/.test(textPrimary)) return;
+  const nodes = [root].concat(Array.from(root.querySelectorAll('[style]')));
+  nodes.forEach(function (el) {
+    if (el.closest && el.closest('svg')) return;
+    var css = el.getAttribute('style') || '';
+    var touched = false;
+    if (/color\s*:\s*(#fff|#ffffff|rgba\(255\s*,\s*255\s*,\s*255)/i.test(css)) {
+      el.style.color = 'var(--text-primary,#0a0a0c)';
+      touched = true;
+    }
+    if (/color\s*:\s*#efeef2\b/i.test(css)) {
+      el.style.color = 'var(--text-primary,#0a0a0c)';
+      touched = true;
+    }
+    if (/color\s*:\s*#cfcccf\b/i.test(css)) {
+      el.style.color = 'var(--text-secondary,rgba(10,10,12,0.68))';
+      touched = true;
+    }
+    if (/stroke\s*:\s*#848487\b/i.test(css)) {
+      el.style.stroke = 'var(--text-tertiary,rgba(10,10,12,0.44))';
+      touched = true;
+    }
+    if (/fill\s*:\s*#848487\b/i.test(css)) {
+      el.style.fill = 'var(--text-tertiary,rgba(10,10,12,0.44))';
+      touched = true;
+    }
+    if (touched && /webkit-text-fill-color/i.test(css)) el.style.webkitTextFillColor = 'var(--text-primary,#0a0a0c)';
+  });
+}
+
+function _stripPriorInlineThemeVars() {
+  var root = document.documentElement;
+  var scope = previewThemeScopeEl();
+  ['--pg-bg', '--text', '--primary'].forEach(function (k) {
+    root.style.removeProperty(k);
+  });
+  THEME_EDIT_SCHEMA.forEach(function (section) {
+    section.vars.forEach(function (v) {
+      var k = v.key;
+      root.style.removeProperty(k);
+      if (scope && THEME_VARS_DOCUMENT_ONLY.indexOf(k) < 0) scope.style.removeProperty(k);
+    });
+  });
+}
+
+// Apply preset vars: documentElement gets style/chroma only; everything else
+// goes on #preview-theme-scope so header · toolbar · left editor stay stable.
+function applyThemeVars(vars) {
+  const root = document.documentElement;
+  const scope = previewThemeScopeEl();
+  var isMono = vars && String(vars['--oneui-chroma'] || '').trim().toLowerCase() === 'mono';
+  root.classList.toggle('is-mono-chroma', isMono);
+
+  _stripPriorInlineThemeVars();
+
+  _SURFACE_THEME_KEYS.forEach(function (key) {
+    var docOnly = THEME_VARS_DOCUMENT_ONLY.indexOf(key) >= 0;
+    if (!vars || vars[key] == null || String(vars[key]).trim() === '') {
+      if (docOnly) root.style.removeProperty(key);
+      else if (scope) scope.style.removeProperty(key);
+    }
+  });
+
+  if (!vars || !String(vars['--oneui-chroma'] || '').trim()) {
+    root.style.removeProperty('--oneui-chroma');
+  }
+
+  Object.entries(vars || {}).forEach(([k, v]) => {
+    if (THEME_VARS_DOCUMENT_ONLY.indexOf(k) >= 0) {
+      root.style.setProperty(k, v);
+    } else if (scope) {
+      scope.style.setProperty(k, v);
+    } else {
+      root.style.setProperty(k, v);
+    }
+  });
+}
+
+function flatSchemeVars(scheme) {
+  var base = Object.assign({
+    '--oneui-theme-style': 'flat',
+    '--surface-shadow': 'none',
+    '--surface-filter': 'none',
+    '--surface-overlay': 'transparent',
+    '--surface-overlay-opacity': '0',
+    '--surface-bg-size': 'auto',
+    '--surface-animation': 'none',
+    '--card-ai-shimmer-speed': '0s'
+  }, FLAT_SCHEME_VARS[scheme] || FLAT_SCHEME_VARS.dark);
+  FLAT_ACCENT_KEYS.forEach(function (key) { base[key] = FLAT_ACCENT; });
+  return base;
+}
+
+function setFlatScheme(scheme, markUnsaved) {
+  FLAT_SCHEME = scheme === 'light' ? 'light' : 'dark';
+  var vars = flatSchemeVars(FLAT_SCHEME);
+  var scope = previewThemeScopeEl();
+  Object.keys(vars).forEach(function (key) {
+    if (THEME_VARS_DOCUMENT_ONLY.indexOf(key) >= 0) {
+      document.documentElement.style.setProperty(key, vars[key]);
+    } else if (scope) {
+      scope.style.setProperty(key, vars[key]);
+      document.documentElement.style.removeProperty(key);
+    } else {
+      document.documentElement.style.setProperty(key, vars[key]);
+    }
+  });
+  updateFlatSchemeToggle();
+  renderPreviewGrid();
+  buildEditorBody();
+  if (markUnsaved) _markUnsaved(true);
+}
+
+function updateFlatSchemeToggle() {
+  var wrap = document.getElementById('flat-scheme-toggle');
+  if (!wrap) return;
+  var visible = isFlatThemeActive();
+  wrap.classList.toggle('visible', visible);
+  wrap.querySelectorAll('.flat-scheme-btn').forEach(function (btn) {
+    btn.setAttribute('aria-pressed', btn.getAttribute('data-flat-scheme') === FLAT_SCHEME ? 'true' : 'false');
+  });
+}
+
+// Render every preview card using window.renderAtomicForRole. Called once
+// at boot and whenever the theme changes (re-render is cheap; the same
+// renderer that the main app uses produces consistent output).
+// ---------------------------------------------------------------------------
+//  Screen-mode preview ??grid of S26-ratio phones, each showing a
+//  DIFFERENT scenario composed with the active theme's tokens. Every
+//  slider tweak (font, gap, padding, columns) re-renders all in unison.
+//
+//  Each scenario is a list of "groups", each group is
+//    { items: [{role, variant}, ...], gridable: bool }.
+//  Gridable groups respect the --screen-grid-columns token (typically
+//  defaults to 2); non-gridable always stack vertically (action rows,
+//  hero now-bars, anything that breaks visually in a 2-col layout).
+//
+//  Each phone intentionally MIXES 1-col and 2-col groups so a single
+//  glance shows how the same card type behaves in both contexts
+//  (full-width vs. half-width). This is the screen-mode equivalent
+//  of the cards-mode "see every card in isolation" ??it surfaces
+//  responsive issues the cards mode would hide.
+// ---------------------------------------------------------------------------
+const SCREEN_PREVIEW_SCENARIOS = [
+  {
+    label: 'Glance',
+    header: 'Today',
+    groups: [
+      // 2-col: Weather + Calendar side-by-side (the "morning glance" pattern)
+      { gridable: true, items: [
+        { role: 'focus-block', variant: { kind: 'weather', temp: '23°', condition: 'Partly cloudy', location: 'Seoul', feels: '21°', icon: 'cloud-sun' } },
+        { role: 'focus-block', variant: { kind: 'calendar', section: 'NEXT UP · TODAY', time: '9:30 AM', duration: '30 min', title: 'Team stand-up', location: 'Studio A' } }
+      ]},
+      // 1-col: full-width reminder summary
+      { gridable: false, items: [
+        { role: 'focus-block', variant: { kind: 'reminder', task: 'Review proposal', due: '5 PM', count: '3', section: 'TODAY · 3 ITEMS' } }
+      ]},
+      // 2-col: ETA + another reminder ??shows how the same card type
+      // (focus-block.reminder) sits as both full-width hero AND
+      // half-width tile in the same phone.
+      { gridable: true, items: [
+        { role: 'focus-block', variant: { kind: 'eta', label: 'COMMUTE', value: '32 min', subtext: 'via Line 2', icon: 'navigation' } },
+        { role: 'focus-block', variant: { kind: 'reminder', task: 'Pick up dry cleaning', due: '6 PM', count: '', section: 'NEARBY' } }
+      ]}
+    ]
+  },
+  {
+    label: 'Cooking',
+    header: 'Cooking Assistant',
+    groups: [
+      { gridable: false, items: [
+        { role: 'now-bar', variant: { type: 'timer', label: 'Step 3 of 7', value: '02:30', subtext: 'Saut챕 kimchi' } }
+      ]},
+      // Single summary card: step topic + ingredient chips (1/2 stays one chip via facet array, not string split)
+      { gridable: false, items: [
+        { role: 'focus-block', variant: { kind: 'input', section: 'STEP', topic: 'Add cold rice', detail: '', facets: ['Mushrooms 200 g', 'Garlic 2 cloves', 'Cream 1 cup', 'Parmesan 1/2 cup'] } }
+      ]},
+      { gridable: false, items: [
+        { role: 'action-row', variant: { actions: [
+          { label: 'Previous', icon: 'skip-back', kind: 'primary' },
+          { label: 'Repeat', icon: 'repeat' },
+          { label: 'Next', icon: 'skip-forward' }
+        ] } }
+      ]}
+    ]
+  },
+  {
+    label: 'Calendar',
+    header: 'Schedule',
+    groups: [
+      // 2-col: two events side-by-side ??typical agenda dense layout
+      { gridable: true, items: [
+        { role: 'focus-block', variant: { kind: 'calendar', section: 'TUE · 9:30', time: '9:30 AM', duration: '30 min', title: 'Stand-up', location: 'Studio A' } },
+        { role: 'focus-block', variant: { kind: 'calendar', section: 'TUE · 11:00', time: '11:00 AM', duration: '60 min', title: 'Design review', location: 'Room 4' } }
+      ]},
+      // 1-col: full-width "next event" hero
+      { gridable: false, items: [
+        { role: 'focus-block', variant: { kind: 'calendar', section: 'TUE · 14:00', time: '2:00 PM', duration: '45 min', title: 'Coffee · Sarah', location: 'Cafe Bene' } }
+      ]},
+      // 2-col: two reminders ??pre-meeting prep + travel ??that
+      // typically accompany calendar items
+      { gridable: true, items: [
+        { role: 'focus-block', variant: { kind: 'reminder', task: 'Prep slides', due: '8:45 AM', count: '', section: 'PRE-MEETING' } },
+        { role: 'focus-block', variant: { kind: 'reminder', task: 'Leave for Cafe Bene', due: '1:30 PM', count: '20 min', section: 'TRAVEL' } }
+      ]}
+    ]
+  },
+  {
+    label: 'Messages',
+    header: 'Messages',
+    groups: [
+      // 2-col: two message threads side-by-side (inbox-style)
+      { gridable: true, items: [
+        { role: 'focus-block', variant: { kind: 'message', sender: 'Sarah', preview: 'see you at coffee shop', section: 'MESSAGES · 2 NEW' } },
+        { role: 'focus-block', variant: { kind: 'message', sender: 'Mom', preview: 'Got the package ??thanks!', section: '' } }
+      ]},
+      // 1-col: full-width "newest thread" hero with longer preview
+      { gridable: false, items: [
+        { role: 'focus-block', variant: { kind: 'message', sender: 'Design team', preview: 'Anyone available for a 15-min sync on the customize panel layout?', section: 'GROUP · 3 NEW' } }
+      ]},
+      // 1-col action row
+      { gridable: false, items: [
+        { role: 'action-row', variant: { actions: [{ label: 'Reply' }, { label: 'Mark read' }, { label: 'Mute' }] } }
+      ]}
+    ]
+  },
+  {
+    label: 'Navigation',
+    header: 'Driving',
+    groups: [
+      // 1-col hero: now-bar with turn instruction (always full-width)
+      { gridable: false, items: [
+        { role: 'now-bar', variant: { type: 'navigation', distance: '200 m', instruction: 'Turn right onto Hangang-daero', eta: '8 min' } }
+      ]},
+      // 2-col: ETA card + parking reminder ??common driving HUD pair
+      { gridable: true, items: [
+        { role: 'focus-block', variant: { kind: 'eta', label: 'ARRIVAL', value: '15:24', subtext: '12 min', icon: 'navigation' } },
+        { role: 'focus-block', variant: { kind: 'reminder', task: 'Find parking near gate 3', due: 'On arrival', count: '', section: 'AT DESTINATION' } }
+      ]},
+      // 1-col action row
+      { gridable: false, items: [
+        { role: 'action-row',  variant: { actions: [{ label: 'Reroute' }, { label: 'Stop' }, { label: 'Voice' }] } }
+      ]}
+    ]
+  },
+  {
+    label: 'Search',
+    header: 'Search',
+    groups: [
+      // 1-col input summary with facet chips (chip row needs width)
+      { gridable: false, items: [
+        { role: 'focus-block', variant: { kind: 'input', section: 'SEARCH · COFFEE SHOPS', topic: 'Found 12 nearby', detail: '', facets: ['Vegetarian', '< 1 km', 'Open now'] } }
+      ]},
+      // 2-col: top 2 results side-by-side ??the typical SERP card grid
+      { gridable: true, items: [
+        { role: 'focus-block', variant: { kind: 'reminder', task: 'Cafe Bene · Hapjeong', due: '0.4 km', count: '4.6??, section: 'TOP RESULT' } },
+        { role: 'focus-block', variant: { kind: 'reminder', task: 'Blue Bottle · Yeonnam', due: '0.6 km', count: '4.7??, section: '#2' } }
+      ]},
+      // 1-col action row
+      { gridable: false, items: [
+        { role: 'action-row',  variant: { actions: [{ label: 'Open' }, { label: 'Save' }, { label: 'Call' }] } }
+      ]}
+    ]
+  },
+  {
+    label: 'Music',
+    header: 'Your Music',
+    groups: [
+      { gridable: false, items: [
+        { role: 'action-row', variant: { actions: [
+          { label: 'Previous', icon: 'skip-back', kind: 'primary' },
+          { label: 'Pause', icon: 'pause' },
+          { label: 'Next', icon: 'skip-forward' }
+        ] } }
+      ]},
+      { gridable: true, items: [
+        { role: 'notif-card', variant: { title: 'Spotify', body: 'Now playing · Blend Mix', time: 'Live', glyph: '??, accent: '#1DB954' } },
+        { role: 'progress-track', variant: { left: '1:42 elapsed', right: '2:18 left', percent: 38 } }
+      ]},
+      { gridable: false, items: [
+        { role: 'now-bar', variant: {
+          type: 'media',
+          title: 'Blinding Lights',
+          artist: 'The Weeknd',
+          marquee: 'Blinding Lights · The Weeknd · After Hours',
+          imgBg: '#E91E8C'
+        } }
+      ]}
+    ]
+  }
+];
+
+// Map screen-preview spec ??matching THEME_EDIT_SCHEMA section name.
+// Used both by the right-pane card label (so the badge above the
+// matching cards reads "Navigation now-bar" not "navigation") AND
+// by the left-pane section-heading highlighter (so we can mark the
+// section that's currently focused with the same blue accent).
+const _SECTION_FOR_KIND = {
+  'fb-weather':    'Weather card',
+  'fb-calendar':   'Calendar card',
+  'fb-reminder':   'Reminder card',
+  'fb-message':    'Message card',
+  'fb-eta':        'ETA card',
+  'fb-input':      'Input summary card',
+  'now-navigation':'Navigation now-bar',
+  'now-media':     'Now playing',
+  'now-timer':     'Timer',
+  'now-charging':  'Battery / charging',
+  'notif-ai':      'AI notification',
+  'action-row':    'Card globals',
+  'toggle-chip':   'Card globals',
+  'generic':       'Card globals'
+};
+
+function _kindReadableName(spec) {
+  if (!spec) return '';
+  const kind = _inspectorKindForSpec(spec);
+  const sectionName = _SECTION_FOR_KIND[kind];
+  if (sectionName) return sectionName;
+  if (spec.role) return String(spec.role).replace(/[-_]/g, ' ');
+  return 'card';
+}
+
+// Resolve the schema section name that goes with the currently
+// active inspector filter, so buildEditorBody can mark its heading
+// with the .is-active-section class for the blue highlight.
+function _activeSectionName() {
+  if (!INSPECTOR_LAYER) return null;
+  const k = INSPECTOR_LAYER._screenKind;
+  if (k && _SECTION_FOR_KIND[k]) return _SECTION_FOR_KIND[k];
+  return null;
+}
+
+function _renderAtomicCard(spec) {
+  if (!spec || typeof window.renderAtomicForRole !== 'function') return null;
+  const html = window.renderAtomicForRole({ role: spec.role, variant: spec.variant }, { x: 0, y: 0, w: 360, h: 120 });
+  const inner = document.createElement('div');
+  inner.innerHTML = html;
+  const atomic = inner.firstElementChild || inner;
+
+  // Wrap the atomic so we can overlay an invisible-by-default kind
+  // label that turns blue when the editor focus matches this card's
+  // kind. Click handler lives on the wrap so the entire card surface
+  // is clickable.
+  const wrap = document.createElement('div');
+  wrap.className = 'preview-card-wrap';
+  wrap.style.cursor = 'pointer';
+  wrap.dataset.previewKind = _inspectorKindForSpec(spec);
+  wrap.appendChild(atomic);
+
+  const label = document.createElement('span');
+  label.className = 'preview-card-kind-label';
+  label.textContent = _kindReadableName(spec);
+  wrap.appendChild(label);
+
+  wrap.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var kind = wrap.dataset.previewKind;
+    var displayLabel = _kindReadableName(spec) + ' · click anywhere off card to clear';
+    if (INSPECTOR_LAYER && INSPECTOR_LAYER._screenKind === kind) {
+      // Toggle off if clicking the same kind again.
+      setInspectorByKind(null);
+    } else {
+      setInspectorByKind(kind, displayLabel);
+      if (INSPECTOR_LAYER) INSPECTOR_LAYER._screenKind = kind;
+    }
+    _highlightActiveScreenCards();
+  });
+  return wrap;
+}
+
+// Show the per-card kind label in blue on every wrap whose kind
+// matches the active editor focus. Other cards stay invisible. The
+// CSS handles the actual color / visibility transition; this just
+// flips data-active on the wrappers.
+function _highlightActiveScreenCards() {
+  var grid = document.getElementById('preview-screen-grid');
+  if (!grid) return;
+  var activeKind = (INSPECTOR_LAYER && INSPECTOR_LAYER._screenKind) || null;
+  grid.querySelectorAll('.preview-card-wrap[data-preview-kind]').forEach(function (el) {
+    var match = activeKind && el.dataset.previewKind === activeKind;
+    el.dataset.active = match ? 'true' : 'false';
+  });
+}
+
+function _buildScenarioPhone(scenario, gridCols) {
+  const phone = document.createElement('div');
+  phone.className = 'preview-phone-frame';
+
+  const labelEl = document.createElement('div');
+  labelEl.className = 'preview-phone-label';
+  labelEl.textContent = scenario.label;
+  phone.appendChild(labelEl);
+
+  const canvas = document.createElement('div');
+  canvas.className = 'preview-phone-canvas';
+
+  // Status bar line + header text.
+  const chrome = document.createElement('div');
+  chrome.className = 'preview-screen-chrome';
+  chrome.innerHTML = '<span>9:41</span><span>· · · ·</span>';
+  canvas.appendChild(chrome);
+
+  if (scenario.header) {
+    const header = document.createElement('div');
+    header.className = 'preview-screen-header';
+    header.textContent = scenario.header;
+    canvas.appendChild(header);
+  }
+
+  // Unified group iteration. Each scenario declares `groups`: an array
+  // of { items, gridable } objects rendered in order. Mixing 1-col
+  // and 2-col groups inside one phone is the whole point ??it lets
+  // the designer see the same card type at full width AND half
+  // width on a single screen, surfacing responsive issues.
+  //
+  // Backward compat: if a scenario still uses the legacy
+  // primary/primaryGridable + secondary shape, synthesize a groups
+  // array from those fields so nothing breaks during migration.
+  const groups = Array.isArray(scenario.groups)
+    ? scenario.groups
+    : [
+        ...(Array.isArray(scenario.primary)   && scenario.primary.length   ? [{ items: scenario.primary,   gridable: !!scenario.primaryGridable }]   : []),
+        ...(Array.isArray(scenario.secondary) && scenario.secondary.length ? [{ items: scenario.secondary, gridable: false }] : [])
+      ];
+
+  groups.forEach(group => {
+    if (!group || !Array.isArray(group.items) || !group.items.length) return;
+    const groupEl = document.createElement('div');
+    // gridable groups respect the --screen-grid-columns token. If the
+    // token is "1" (or empty) the group stacks even when gridable ??    // honors the designer's intent when they globally set 1-column
+    // mode from the editor.
+    const useGrid = group.gridable && gridCols !== '1' && gridCols !== '';
+    groupEl.className = 'preview-screen-group' + (useGrid ? ' is-grid' : '');
+    // Custom fr-based templates (e.g. "1fr 2fr") pass through verbatim;
+    // simple numeric values use the .is-grid default of 2 cols.
+    if (useGrid && /\bfr\b/.test(gridCols)) groupEl.style.gridTemplateColumns = gridCols;
+    group.items.forEach(spec => {
+      const el = _renderAtomicCard(spec);
+      if (el) groupEl.appendChild(el);
+    });
+    canvas.appendChild(groupEl);
+  });
+
+  phone.appendChild(canvas);
+  return phone;
+}
+
+function renderScreenPreview() {
+  const grid = document.getElementById('preview-screen-grid');
+  if (!grid) return;
+  if (typeof window.renderAtomicForRole !== 'function') {
+    grid.innerHTML = '<div style="color:var(--text-3);padding:24px;font-size:12px;text-align:center;grid-column:1/-1;">renderer not yet ready</div>';
+    return;
+  }
+  const cols = (getComputedStyle(document.documentElement).getPropertyValue('--screen-grid-columns') || '1').trim();
+  grid.innerHTML = '';
+  SCREEN_PREVIEW_SCENARIOS.forEach(scenario => {
+    grid.appendChild(_buildScenarioPhone(scenario, cols));
+  });
+  // Click on the grid background (between phones) clears the focus.
+  grid.addEventListener('click', function (e) {
+    if (e.target === grid) setInspectorByKind(null);
+  }, { once: false });
+  // Restore highlight if a filter is already active (e.g. after re-render).
+  _highlightActiveScreenCards();
+}
+
+// Mode switching: toggle visibility of preview-grid vs preview-screen-wrap.
+let PREVIEW_MODE = 'cards';
+function setPreviewMode(mode) {
+  PREVIEW_MODE = mode === 'screen' ? 'screen' : 'cards';
+  const grid = document.getElementById('preview-grid');
+  const screen = document.getElementById('preview-screen-wrap');
+  const title = document.getElementById('preview-mode-title');
+  if (grid)   grid.style.display   = (PREVIEW_MODE === 'cards')  ? '' : 'none';
+  if (screen) screen.style.display = (PREVIEW_MODE === 'screen') ? '' : 'none';
+  if (title)  title.textContent    = (PREVIEW_MODE === 'cards')
+    ? 'Live preview · all themed cards'
+    : 'Live preview · screen composition';
+  // Sync button states.
+  document.querySelectorAll('.preview-mode-btn').forEach(btn => {
+    const isActive = btn.dataset.mode === PREVIEW_MODE;
+    btn.classList.toggle('active', isActive);
+    btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+  });
+  if (PREVIEW_MODE === 'screen') renderScreenPreview();
+}
+(function _wirePreviewMode() {
+  document.querySelectorAll('.preview-mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => setPreviewMode(btn.dataset.mode));
+  });
+  // URL deep-link: ?mode=screen activates the Screen preview on boot
+  // so headless-Chrome screenshot runs can capture both modes without
+  // needing to script a click.
+  try {
+    const q = new URLSearchParams(location.search);
+    if (q.get('mode') === 'screen') {
+      // Defer one tick so renderAtomicForRole (loaded by trailing
+      // <script>) has a chance to register before renderScreenPreview
+      // runs.
+      setTimeout(() => setPreviewMode('screen'), 0);
+    }
+  } catch (_) {}
+})();
+
+function renderPreviewGrid() {
+  // When screen mode is active, also re-render the screen preview so
+  // a token edit shows up in the live phone frame.
+  if (PREVIEW_MODE === 'screen') renderScreenPreview();
+  const grid = $('preview-grid');
+  grid.innerHTML = '';
+  const orderedPreviewCards = PREVIEW_CARDS
+    .map((card, idx) => ({ card, idx, rect: previewRectForCard(card) }))
+    .sort((a, b) => {
+      const h = (a.rect.h * (a.rect.scale || 1)) - (b.rect.h * (b.rect.scale || 1));
+      if (Math.abs(h) > 0.5) return h;
+      return (a.rect.w * (a.rect.scale || 1)) - (b.rect.w * (b.rect.scale || 1));
+    });
+  orderedPreviewCards.forEach(({ card, idx, rect }) => {
+    const cell = document.createElement('div');
+    cell.className = 'preview-cell' + (SELECTED_PREVIEW_INDEX === idx ? ' selected' : '');
+    cell.setAttribute('data-preview-index', String(idx));
+    cell.setAttribute('role', 'button');
+    cell.setAttribute('tabindex', '0');
+    cell.setAttribute('aria-pressed', SELECTED_PREVIEW_INDEX === idx ? 'true' : 'false');
+    cell.setAttribute('aria-label', card.name + ' \u2014 \ud074\ub9ad\ud558\uba74 \uc774 \uce74\ub4dc\uc5d0 \ud574\ub2f9\ud558\ub294 \ud14c\ub9c8 \ubcc0\uc218\ub9cc \ud45c\uc2dc');
+    const name = document.createElement('div');
+    name.className = 'name';
+    name.textContent = card.name;
+    const stage = document.createElement('div');
+    stage.className = 'stage';
+    const previewRect = rect;
+    const previewScale = previewRect.scale || 1;
+    let html = '';
+    try {
+      const comp = { role: card.role, variant: card.variant, content: card.content || {} };
+      if (typeof window.renderAtomicForRole === 'function') {
+        html = window.renderAtomicForRole(comp, { x: 0, y: 0, w: previewRect.w, h: previewRect.h });
+      } else {
+        html = '<div style="padding:20px;color:var(--text-3);">renderer not loaded</div>';
+      }
+    } catch (e) {
+      html = '<div style="padding:20px;color:var(--warning);">render error: ' + e.message + '</div>';
+    }
+    stage.innerHTML =
+      '<div class="stage-scale" style="width:' + previewRect.w + 'px;' +
+      'min-height:' + previewRect.h + 'px;height:auto;' +
+      'transform:scale(' + previewScale + ');">' + html + '</div>';
+    const scaleRoot = stage.firstElementChild;
+    const cardRoot = scaleRoot && scaleRoot.firstElementChild;
+    if (cardRoot) {
+      cardRoot.style.width = previewRect.w + 'px';
+      cardRoot.style.minHeight = previewRect.h + 'px';
+      cardRoot.style.height = 'auto';
+      cardRoot.style.maxWidth = 'none';
+      cardRoot.style.flex = 'none';
+    }
+    stripGradientsForFlat(stage);
+    normalizeFlatTextForScheme(stage);
+    if (scaleRoot) {
+      void scaleRoot.offsetHeight;
+      var crH = 0;
+      if (cardRoot && typeof cardRoot.getBoundingClientRect === 'function') {
+        crH = Math.ceil(cardRoot.getBoundingClientRect().height);
+      }
+      var logicalH = Math.max(previewRect.h, scaleRoot.scrollHeight, crH) + 12;
+      var scaledH = Math.ceil(logicalH * previewScale);
+      var scaledW = Math.ceil(previewRect.w * previewScale);
+      stage.style.width = scaledW + 'px';
+      stage.style.height = scaledH + 'px';
+    } else {
+      stage.style.width = Math.ceil(previewRect.w * previewScale) + 'px';
+      stage.style.height = Math.ceil(previewRect.h * previewScale) + 'px';
+    }
+    stage.title = 'Double-click inside the card to inspect a part (Figma-style)';
+    cell.appendChild(name);
+    cell.appendChild(stage);
+    var ovr = PREVIEW_CELL_VAR_OVERRIDES[idx];
+    if (ovr) {
+      Object.keys(ovr).forEach(function (k) {
+        var val = ovr[k];
+        if (val == null || String(val).trim() === '') return;
+        cell.style.setProperty(k, val);
+      });
+      if (ovr['--page-bg']) cell.style.setProperty('--pg-bg', ovr['--page-bg']);
+      if (ovr['--text-primary']) cell.style.setProperty('--text', ovr['--text-primary']);
+      if (ovr['--accent-primary']) cell.style.setProperty('--primary', ovr['--accent-primary']);
+    }
+    grid.appendChild(cell);
+  });
+  _applyInspectorOutline();
+}
+
+// ---------------------------------------------------------------------------
+//  Editor ??builds the property-edit panel from THEME_EDIT_SCHEMA, wires
+//  every input to live :root updates, and provides a "Save as Custom..."
+//  flow that POSTs the current var snapshot to /api/themes.
+// ---------------------------------------------------------------------------
+function _scopedPreviewCell() {
+  if (SELECTED_PREVIEW_INDEX == null || SELECTED_PREVIEW_INDEX < 0) return null;
+  var grid = $('preview-grid');
+  if (!grid) return null;
+  return grid.querySelector('.preview-cell[data-preview-index="' + SELECTED_PREVIEW_INDEX + '"]');
+}
+
+function _readVarFromRootOnly(key) {
+  if (THEME_VARS_DOCUMENT_ONLY.indexOf(key) >= 0) {
+    var root = document.documentElement;
+    var inlineDoc = root.style.getPropertyValue(key);
+    if (inlineDoc) return inlineDoc.trim();
+    return getComputedStyle(root).getPropertyValue(key).trim();
+  }
+  var scope = previewThemeScopeEl();
+  if (scope) {
+    var inl = scope.style.getPropertyValue(key);
+    if (inl) return inl.trim();
+    var fromScope = getComputedStyle(scope).getPropertyValue(key);
+    if (fromScope && fromScope.trim()) return fromScope.trim();
+  }
+  var root = document.documentElement;
+  var inline = root.style.getPropertyValue(key);
+  if (inline) return inline.trim();
+  return getComputedStyle(root).getPropertyValue(key).trim();
+}
+
+function _readVar(key) {
+  var idx = SELECTED_PREVIEW_INDEX;
+  if (idx != null && idx >= 0) {
+    var bag = PREVIEW_CELL_VAR_OVERRIDES[idx];
+    if (bag && bag[key] != null && String(bag[key]).trim() !== '') {
+      return String(bag[key]).trim();
+    }
+    var cell = _scopedPreviewCell();
+    if (cell) {
+      var fromCell = getComputedStyle(cell).getPropertyValue(key);
+      if (fromCell && fromCell.trim()) return fromCell.trim();
+    }
+  }
+  return _readVarFromRootOnly(key);
+}
+
+function _writeVar(key, value) {
+  if ((isFlatThemeActive() || isNeonThemeActive()) && _isCssGradient(value)) {
+    value = solidForGradientValue(value);
+  }
+  var idx = SELECTED_PREVIEW_INDEX;
+  if (idx != null && idx >= 0) {
+    if (!PREVIEW_CELL_VAR_OVERRIDES[idx]) PREVIEW_CELL_VAR_OVERRIDES[idx] = {};
+    PREVIEW_CELL_VAR_OVERRIDES[idx][key] = value;
+    var cell = _scopedPreviewCell();
+    if (cell) {
+      cell.style.setProperty(key, value);
+      if (key === '--page-bg') cell.style.setProperty('--pg-bg', value);
+      if (key === '--text-primary') cell.style.setProperty('--text', value);
+      if (key === '--accent-primary') cell.style.setProperty('--primary', value);
+    }
+    _markUnsaved(true);
+    return;
+  }
+  if (THEME_VARS_DOCUMENT_ONLY.indexOf(key) >= 0) {
+    document.documentElement.style.setProperty(key, value);
+  } else {
+    var scope = previewThemeScopeEl();
+    if (scope) {
+      scope.style.setProperty(key, value);
+      document.documentElement.style.removeProperty(key);
+    } else {
+      document.documentElement.style.setProperty(key, value);
+    }
+  }
+  _markUnsaved(true);
+}
+
+// Unsaved-state tracker. Toggles the toolbar pill so the user knows
+// their slider tweaks are LIVE-PREVIEWED only ??clicking the dropdown
+// to a preset, clicking Save, or clicking Discard all reset this back
+// to a clean state.
+let HAS_UNSAVED_EDITS = false;
+function _markUnsaved(flag) {
+  HAS_UNSAVED_EDITS = !!flag;
+  const pill = document.getElementById('unsaved-pill');
+  if (pill) pill.style.display = HAS_UNSAVED_EDITS ? '' : 'none';
+}
+// Convert any color expression (hex, rgb, rgba) into a 6-digit hex for
+// the <input type="color"> element. Falls back to '#000000' if it can't.
+function _toHex6(value) {
+  if (!value) return '#000000';
+  const v = value.trim();
+  if (/^#[0-9A-Fa-f]{6}$/.test(v)) return v;
+  if (/^#[0-9A-Fa-f]{3}$/.test(v)) {
+    return '#' + v.slice(1).split('').map(c => c + c).join('');
+  }
+  // Use a temporary canvas to parse rgb()/rgba()/named colors.
+  try {
+    const tmp = document.createElement('div');
+    tmp.style.color = v;
+    document.body.appendChild(tmp);
+    const c = getComputedStyle(tmp).color;
+    document.body.removeChild(tmp);
+    const m = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(c);
+    if (m) {
+      const r = (+m[1]).toString(16).padStart(2, '0');
+      const g = (+m[2]).toString(16).padStart(2, '0');
+      const b = (+m[3]).toString(16).padStart(2, '0');
+      return '#' + r + g + b;
+    }
+  } catch (e) { /* ignore */ }
+  return '#000000';
+}
+
+function _isCssGradient(str) {
+  if (!str || typeof str !== 'string') return false;
+  var s = str.trim().toLowerCase();
+  return /\b(linear|radial|conic)-gradient\s*\(/.test(s) ||
+    /\brepeating-(linear|radial|conic)-gradient\s*\(/.test(s);
+}
+
+function _syncColorPickerRow(row) {
+  var text = row.querySelector('input[data-role="color-text"]');
+  var color = row.querySelector('input[data-role="color"]');
+  if (!text || !color) return;
+  var raw = (text.value || '').trim();
+  if (_isCssGradient(raw)) {
+    color.disabled = true;
+    color.title = 'Gradient ??edit in text field, or replace with a hex solid to use the swatch again.';
+    color.style.opacity = '0.35';
+  } else {
+    color.disabled = false;
+    color.title = '';
+    color.style.opacity = '';
+    var hx = _toHex6(raw);
+    if (hx) color.value = hx;
+  }
+}
+
+// Strip 'px' from a size string for <input type="number">.
+function _toNumPx(value) {
+  if (!value) return '';
+  const m = /^(-?\d+(?:\.\d+)?)\s*px/.exec(value.trim());
+  if (m) return m[1];
+  const n = parseFloat(value);
+  return isNaN(n) ? '' : String(n);
+}
+
+function _esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function getFilteredSchema() {
+  if (SELECTED_PREVIEW_INDEX == null || SELECTED_PREVIEW_INDEX < 0 ||
+      SELECTED_PREVIEW_INDEX >= PREVIEW_CARDS.length) {
+    return THEME_EDIT_SCHEMA;
+  }
+  var card = PREVIEW_CARDS[SELECTED_PREVIEW_INDEX];
+  var names = card.editSections;
+  if (!names || !names.length) return THEME_EDIT_SCHEMA;
+  var filtered = THEME_EDIT_SCHEMA.filter(function (s) {
+    return names.indexOf(s.section) >= 0;
+  });
+  // Put card-specific sections first so e.g. "Weather card" is not buried
+  // below Page / Card globals (users thought detailed vars were missing).
+  function baseRank(sectionName) {
+    if (sectionName === 'Page') return 2;
+    if (sectionName === 'Card globals') return 1;
+    return 0;
+  }
+  filtered.sort(function (a, b) {
+    var ra = baseRank(a.section);
+    var rb = baseRank(b.section);
+    if (ra !== rb) return ra - rb;
+    var ia = names.indexOf(a.section);
+    var ib = names.indexOf(b.section);
+    if (ia !== ib) return ia - ib;
+    return THEME_EDIT_SCHEMA.indexOf(a) - THEME_EDIT_SCHEMA.indexOf(b);
+  });
+  return filtered;
+}
+
+function _purgeLegacyInspectorTipNodes() {
+  document.querySelectorAll('#editor-scope-sub, .editor-scope-sub').forEach(function (n) {
+    try { n.remove(); } catch (e) { /* ignore */ }
+  });
+}
+
+function updateEditorScopeUI() {
+  _purgeLegacyInspectorTipNodes();
+  var hint = $('editor-scope-hint');
+  var btn = $('btn-show-all-vars');
+  if (SELECTED_PREVIEW_INDEX != null && SELECTED_PREVIEW_INDEX >= 0 &&
+      SELECTED_PREVIEW_INDEX < PREVIEW_CARDS.length) {
+    var c = PREVIEW_CARDS[SELECTED_PREVIEW_INDEX];
+    var line = c.name;
+    if (INSPECTOR_LAYER && INSPECTOR_LAYER.label) line += ' · ' + INSPECTOR_LAYER.label;
+    if (hint) hint.textContent = line;
+    if (btn) btn.style.display = '';
+  } else {
+    if (hint) hint.textContent = '';
+    if (btn) btn.style.display = 'none';
+  }
+}
+
+function buildEditorBody() {
+  // Robust rebuild via innerHTML + delegated events. This avoids the
+  // earlier failure mode where el()-based DOM construction silently
+  // produced an empty panel ??easier to debug, harder to miswire.
+  var body = document.getElementById('editor-body');
+  if (!body) { console.warn('[customize] editor-body element missing'); return; }
+  try {
+    var html = '';
+
+    // Active-filter chip ??surfaces the click-to-focus state at the
+    // top of the editor so the designer always sees WHAT is being
+    // filtered and can restore the full schema with one click.
+    if (INSPECTOR_LAYER && INSPECTOR_LAYER.label) {
+      html += '<div class="editor-filter-chip" style="display:flex;align-items:center;gap:8px;padding:8px 10px;margin:0 0 12px;border-radius:10px;background:rgba(3,129,254,0.10);border:1px solid rgba(3,129,254,0.30);color:var(--primary);font-size:12px;">';
+      html += '<span style="font-weight:700;">Focused:</span>';
+      html += '<span style="opacity:0.85;">' + _esc(INSPECTOR_LAYER.label) + '</span>';
+      html += '<span style="flex:1;"></span>';
+      html += '<button type="button" id="btn-clear-focus" class="secondary" style="font-size:11px;padding:4px 10px;">Show all</button>';
+      html += '</div>';
+    }
+
+    var activeSectionName = _activeSectionName();
+    getActiveEditorSections().forEach(function (section, secIdx) {
+      var isActive = activeSectionName && section.section === activeSectionName;
+      html += '<div class="editor-section' + (isActive ? ' is-active-section' : '') + '">';
+      html += '<button type="button" class="editor-section-toggle" aria-expanded="true" aria-controls="editor-sec-body-' + secIdx + '">';
+      html += '<span class="editor-section-toggle-label">' + _esc(section.section) + '</span>';
+      html += '<span class="editor-section-chev" aria-hidden="true">\u25be</span></button>';
+      html += '<div class="editor-section-body" id="editor-sec-body-' + secIdx + '">';
+      section.vars.forEach(function (v) {
+        var current = _readVar(v.key) || '';
+        var rowHtml = '<div class="editor-row" data-var="' + _esc(v.key) + '" data-vtype="' + _esc(v.type) + '">';
+        rowHtml += '<label>' + _esc(v.label) + '</label>';
+        rowHtml += '<div class="input-wrap">';
+        if (v.type === 'color') {
+          var hex = _toHex6(_isCssGradient(current) ? '#888888' : current);
+          rowHtml += '<input data-role="color" type="color" value="' + _esc(hex) + '">';
+          rowHtml += '<input data-role="color-text" type="text" value="' + _esc(current) + '" placeholder="#hex, rgb(), or linear-gradient(...)">';
+        } else if (v.type === 'color-rgba') {
+          rowHtml += '<input data-role="text" type="text" value="' + _esc(current) + '" placeholder="rgba(255,255,255,0.7)">';
+        } else if (v.type === 'size') {
+          var n = _toNumPx(current);
+          var min = v.min != null ? String(v.min) : '0';
+          var max = v.max != null ? String(v.max) : '500';
+          var step = v.step != null ? String(v.step) : '1';
+          rowHtml += '<input data-role="size" type="number" value="' + _esc(n) +
+            '" min="' + _esc(min) + '" max="' + _esc(max) + '" step="' + _esc(step) + '">';
+          rowHtml += '<span class="suffix">px</span>';
+        } else if (v.type === 'weight') {
+          rowHtml += '<select data-role="weight">';
+          ['400', '500', '600', '700'].forEach(function (w) {
+            var sel = String(current).indexOf(w) >= 0 ? ' selected' : '';
+            rowHtml += '<option value="' + w + '"' + sel + '>' + w + '</option>';
+          });
+          rowHtml += '</select>';
+        } else {
+          rowHtml += '<input data-role="text" type="text" value="' + _esc(current) + '">';
+        }
+        rowHtml += '</div></div>';
+        html += rowHtml;
+      });
+      html += '</div></div>';
+    });
+    // Action footer ??single Save (primary) + Discard (secondary).
+    // Live preview happens in real time; this footer is only about
+    // *persisting* the current edited state (Save) or *throwing it
+    // away* (Discard) and going back to the dropdown preset.
+    html += '<div class="editor-actions">' +
+      '<button id="btn-save">Save</button>' +
+      '<button class="secondary" id="btn-discard">Discard changes</button>' +
+      '<div class="spacer"></div>' +
+      '<span class="hint">Slide / type ??live preview. Save creates a new theme.</span>' +
+    '</div>';
+    body.innerHTML = html;
+    body.querySelectorAll('.editor-row[data-vtype="color"]').forEach(function (row) {
+      _syncColorPickerRow(row);
+    });
+  } catch (e) {
+    console.error('[customize] buildEditorBody failed:', e);
+    body.innerHTML = '<div style="padding:18px;color:#EF4444;">Editor failed to render. Check console.<br>' + _esc(e.message) + '</div>';
+    return;
+  }
+  _purgeLegacyInspectorTipNodes();
+  updateEditorScopeUI();
+}
+
+// Delegated handler ??fired once per input/change event on any descendant
+// of the editor body. Uses closest('.editor-row') to find the row's
+// data-var (CSS variable key) and data-vtype (input type), then routes
+// to the right write strategy.
+function _onEditorInput(e) {
+  var t = e.target;
+  if (!t || !t.matches) return;
+  var row = t.closest('.editor-row');
+  if (!row) return;
+  var key = row.getAttribute('data-var');
+  var vtype = row.getAttribute('data-vtype');
+  if (!key) return;
+  var role = t.getAttribute('data-role');
+  if (vtype === 'color' && (role === 'color' || role === 'color-text')) {
+    var color = row.querySelector('input[data-role="color"]');
+    var text  = row.querySelector('input[data-role="color-text"]');
+    if (role === 'color' && color && text) { text.value = color.value; }
+    if (role === 'color-text' && color && text) {
+      var raw = (text.value || '').trim();
+      if (!_isCssGradient(raw)) {
+        var hex = _toHex6(raw);
+        if (hex) color.value = hex;
+      }
+    }
+    _writeVar(key, role === 'color' ? color.value : text.value);
+    _syncColorPickerRow(row);
+  } else if (vtype === 'size') {
+    if (t.value === '' || t.value == null || isNaN(Number(t.value))) return;
+    _writeVar(key, t.value + 'px');
+  } else if (vtype === 'weight') {
+    _writeVar(key, t.value);
+  } else {
+    _writeVar(key, t.value);
+  }
+  // With a preview card selected, vars go onto that cell only; otherwise :root.
+}
+
+function readAllVarsFromRoot() {
+  const out = {};
+  _SURFACE_THEME_KEYS.forEach(function (key) {
+    var val = _readVarFromRootOnly(key);
+    if (val) out[key] = val;
+  });
+  THEME_EDIT_SCHEMA.forEach(section => {
+    section.vars.forEach(v => {
+      var key = v.key;
+      var val = _readVarFromRootOnly(key);
+      for (var oi = 0; oi < PREVIEW_CARDS.length; oi++) {
+        var o = PREVIEW_CELL_VAR_OVERRIDES[oi];
+        if (o && o[key] != null && String(o[key]).trim() !== '') val = String(o[key]).trim();
+      }
+      if (val) out[v.key] = val;
+    });
+  });
+  return out;
+}
+
+async function saveAsCustom() {
+  const name = (window.prompt('Name for your custom theme?', 'My Custom Theme') || '').trim();
+  if (!name) return;
+  // Generate a kebab-case id from the name + a short hash so two saves
+  // with the same name don't collide.
+  const baseId = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 24) || 'custom';
+  const id = baseId + '-' + Math.random().toString(36).slice(2, 6);
+  const vars = readAllVarsFromRoot();
+  const description = 'Custom ??saved ' + new Date().toLocaleString();
+  const theme = { id, name, description, vars };
+  const btn = document.getElementById('btn-save');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving??; }
+  try {
+    // 1) Persist the new theme.
+    await fetchJSON('/api/themes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ theme })
+    });
+    THEMES.push(theme);
+    // 2) Activate it server-side so other open windows pick it up via
+    //    BroadcastChannel and so a fresh page load defaults to this
+    //    new theme. Previously this was a separate "Apply to Site"
+    //    button ??folded into Save now.
+    await fetchJSON('/api/themes/active', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+    ACTIVE_ID = id;
+    // 3) Refresh dropdown + active-pill so the UI reflects the new state.
+    const sel = $('theme-select');
+    const opt = document.createElement('option');
+    opt.value = id;
+    opt.textContent = name + ' (custom)';
+    sel.appendChild(opt);
+    sel.value = id;
+    $('active-pill').textContent = 'Active · ' + name;
+    showToast('Saved · "' + name + '" is now active');
+    updateOnSelect(id, false);
+    _markUnsaved(false);
+    // 4) Notify other open windows (genui main app) so their theme
+    //    picker dropdown picks up the new id and the new active theme.
+    _broadcastThemeChange('theme-saved', id);
+    _broadcastThemeChange('theme-active-changed', id);
+  } catch (e) {
+    showToast('ERROR: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Save'; }
+  }
+}
+
+// Cross-window sync helper ??fires a BroadcastChannel message any
+// time the customize page changes theme state. Other open windows
+// (genui.html main app) listen for these to refresh their picker.
+function _broadcastThemeChange(type, activeId) {
+  try {
+    if (!window.__themeChannel && typeof BroadcastChannel === 'function') {
+      window.__themeChannel = new BroadcastChannel('oneui-themes');
+    }
+    if (window.__themeChannel) {
+      window.__themeChannel.postMessage({ type, activeId, at: Date.now() });
+    }
+  } catch (e) { /* ignore */ }
+}
+
+// Discard all in-memory edits and snap back to whatever preset the
+// dropdown is currently pointing at. Used by the Discard button and
+// indirectly when the user picks a different preset (live-preview a
+// preset = clean state). Does NOT touch the server.
+function discardChanges() {
+  SELECTED_PREVIEW_INDEX = null;
+  INSPECTOR_LAYER = null;
+  INSPECTOR_DOM_PATH = null;
+  PREVIEW_CELL_VAR_OVERRIDES = {};
+  const id = $('theme-select').value;
+  const theme = THEMES.find(t => t.id === id);
+  if (!theme) return;
+  applyThemeVars(theme.vars);
+  if (isFlatThemeActive()) setFlatScheme(FLAT_SCHEME, false);
+  else updateFlatSchemeToggle();
+  buildEditorBody();   // refresh inputs to reflect current values
+  renderPreviewGrid();
+  _markUnsaved(false);
+}
+
+// ---------------------------------------------------------------------------
+//  _buildPreviewGalleryHTML ??produce the comprehensive theme-preview.html
+//
+//  Why this exists: the previous template included 5 hand-coded mock
+//  cards which barely hinted at the system's surface area. Designers
+//  couldn't validate their token edits against the full component
+//  catalogue without loading the live site. This helper snapshots the
+//  three relevant surfaces (Cards · Screens · 22 base components) plus
+//  the CSS they need, and assembles a single self-contained file.
+//
+//  Side effects: while running, may briefly toggle PREVIEW_MODE to
+//  'screen' to capture that surface, then restores the user's prior
+//  selection. The user sees no visible flicker because the toggle
+//  happens within one await tick.
+// ---------------------------------------------------------------------------
+async function _fetchText(url) {
+  try {
+    const r = await fetch(url, { cache: 'no-store' });
+    if (!r.ok) return '';
+    return await r.text();
+  } catch (_) { return ''; }
+}
+
+// Parse via DOMParser, NOT regex. Regex over the raw source picks up
+// literal <style> / </style> / <body> strings that appear inside
+// JavaScript (e.g. this very file has `'<style>'` and `'</style>'`
+// inside the template-string section that generates the gallery), and
+// the parser then sees an early </style> in the gallery's own <style>
+// block and renders half the file as body content. DOM-based parsing
+// correctly distinguishes element boundaries from script text.
+function _extractStyleBlocks(html) {
+  if (!html) return '';
+  try {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return Array.from(doc.querySelectorAll('style'))
+      .map(function (el) { return el.textContent || ''; })
+      .join('\n\n');
+  } catch (_) { return ''; }
+}
+
+function _extractBody(html) {
+  if (!html) return '';
+  try {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return doc.body ? doc.body.innerHTML : '';
+  } catch (_) { return ''; }
+}
+
+// Final-line-of-defense: strip any literal </style> tokens from CSS
+// text before we drop it into a <style> block. Even if the extractor
+// is perfectly DOM-aware, CSS comments / string content technically
+// can't contain </style> in HTML's serialization ??and the parser
+// will close the style block at the first </style> it sees regardless
+// of CSS context. Replace with the escaped form so it survives the
+// roundtrip without breaking either the CSS parser or the HTML parser.
+function _safeCssForInlineStyle(css) {
+  if (!css) return '';
+  return String(css).replace(/<\/style/gi, '<\\/style');
+}
+
+async function _buildPreviewGalleryHTML(theme) {
+  // === (1) Snapshot Cards mode ==============================================
+  // Force a fresh render so the snapshot reflects whatever tokens the
+  // designer has just edited (even unsaved ones ??they're in computed
+  // styles already).
+  try { if (typeof renderPreviewGrid === 'function') renderPreviewGrid(); } catch (_) {}
+  const cardsInner = ($('preview-grid') && $('preview-grid').innerHTML) || '';
+  const cardsCount = (($('preview-grid') && $('preview-grid').querySelectorAll('.preview-cell')) || []).length;
+
+  // === (2) Snapshot Screen mode (temporarily switch, then restore) ==========
+  const wasMode = PREVIEW_MODE;
+  try { setPreviewMode('screen'); } catch (_) {}
+  // Two animation frames + a short timeout give the renderer time to
+  // populate the screen grid even on slower machines.
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(r, 60))));
+  const screensInner = ($('preview-screen-grid') && $('preview-screen-grid').innerHTML) || '';
+  const screensCount = (($('preview-screen-grid') && $('preview-screen-grid').querySelectorAll('.preview-phone-frame')) || []).length;
+  if (wasMode !== 'screen') {
+    try { setPreviewMode(wasMode || 'cards'); } catch (_) {}
+  }
+
+  // === (3) Fetch the 22-component One UI page + its inline styles ==========
+  const componentsRaw = await _fetchText('components.html');
+  const componentsStyle = _extractStyleBlocks(componentsRaw);
+  let componentsBody    = _extractBody(componentsRaw);
+  // Components page has a <header>/<nav> we don't need in the gallery;
+  // strip it so the section flows cleanly under our own H1.
+  componentsBody = componentsBody
+    .replace(/<header[\s\S]*?<\/header>/i, '')
+    .replace(/<nav[\s\S]*?<\/nav>/i, '');
+  const componentsCount = (componentsRaw.match(/class="comp-title"/g) || []).length;
+
+  // === (4) Fetch base styles needed by the rendered atomic HTML ============
+  const customizeRaw = await _fetchText('customize.html');
+  const customizeStyle = _extractStyleBlocks(customizeRaw);
+  const genuiCss = await _fetchText('css/genui.css');
+
+  // === (5) Theme metadata ===================================================
+  const themeName = theme.name || 'Theme preview';
+  const safeName  = _esc(themeName);
+
+  // === (6) Assemble the file ===============================================
+  // CSS load order:
+  //   1) genui.css  (atomic component rules, theme variable bridge)
+  //   2) customize.html inline styles (preview-grid / screen-grid layout)
+  //   3) components.html inline styles (22-component styles)
+  //   4) gallery-specific overrides (TOC, sections)
+  //   5) theme.css via <link>  ??designer's edits win the cascade
+  return [
+    '<!DOCTYPE html>',
+    '<html lang="en"><head>',
+    '<meta charset="UTF-8">',
+    '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
+    '<title>' + safeName + ' ??preview gallery</title>',
+    '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">',
+    '<style>',
+    '/* === [1] Inlined: css/genui.css (atomic components + theme bridge) === */',
+    _safeCssForInlineStyle(genuiCss),
+    '/* === [2] Inlined: customize.html <style> (preview-grid + screen-grid) === */',
+    _safeCssForInlineStyle(customizeStyle),
+    '/* === [3] Inlined: components.html <style> (22 OneUI components) === */',
+    _safeCssForInlineStyle(componentsStyle),
+    '/* === [4] Gallery layout overrides ===================================== */',
+    /* High-specificity selectors (`html body.tp-page ...`) so this block
+       wins regardless of where it falls in the cascade vs. the three
+       inlined source stylesheets above. Without the extra body class
+       we observed the gallery layout being clobbered by .section /
+       container rules from components.html. */
+    'html, body.tp-page { margin: 0; padding: 0; background: var(--page-bg, #0a0a0c); color: var(--text-primary, #efeef2); font-family: var(--font-family-body, "Inter", sans-serif); line-height: var(--line-height-normal, 1.45); min-height: 100vh; overflow-x: hidden; overflow-y: auto; }',
+    'body.tp-page * { box-sizing: border-box; }',
+    'body.tp-page .tp-shell { max-width: 1480px; margin: 0 auto; padding: 56px 48px 96px; display: block; }',
+    'body.tp-page .tp-meta { margin: 0 0 28px; display: block; }',
+    'body.tp-page .tp-meta h1 { font-family: var(--font-family-display, "Inter", sans-serif); font-size: 34px; font-weight: 700; letter-spacing: -0.6px; margin: 0 0 8px; display: block; color: var(--text-primary, #efeef2); }',
+    'body.tp-page .tp-meta p  { color: var(--text-secondary, rgba(239,238,242,0.7)); font-size: 14px; margin: 0; display: block; max-width: 760px; line-height: 1.55; }',
+    'body.tp-page .tp-toc { display: flex; gap: 10px; flex-wrap: wrap; margin: 22px 0 36px; padding: 0; list-style: none; }',
+    'body.tp-page .tp-toc a { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10); color: var(--text-primary, #efeef2); text-decoration: none; font-size: 12.5px; font-weight: 500; transition: background 0.15s ease, border-color 0.15s ease; }',
+    'body.tp-page .tp-toc a:hover { background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.18); }',
+    'body.tp-page .tp-toc a .count { color: var(--text-tertiary, rgba(239,238,242,0.50)); font-weight: 400; margin-left: 4px; }',
+    'body.tp-page .tp-section { margin: 56px 0 0; padding: 36px 0 0; border-top: 1px solid rgba(255,255,255,0.08); display: block; }',
+    'body.tp-page .tp-section > h2 { font-family: var(--font-family-display, "Inter", sans-serif); font-size: 22px; font-weight: 700; margin: 0 0 8px; letter-spacing: -0.3px; display: block; color: var(--text-primary, #efeef2); }',
+    'body.tp-page .tp-section > .tp-hint { color: var(--text-tertiary, rgba(239,238,242,0.55)); font-size: 13px; margin: 0 0 28px; max-width: 760px; display: block; line-height: 1.55; }',
+    'body.tp-page .tp-cards-scope { background: var(--preview-bg, #FFFEF1); border-radius: 28px; padding: 24px; }',
+    'body.tp-page .tp-cards-scope .preview-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; padding: 0; }',
+    'body.tp-page .tp-screens-wrap { padding: 0; }',
+    'body.tp-page .tp-screens-wrap .preview-screen-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }',
+    '@media (max-width: 980px) { body.tp-page .tp-cards-scope .preview-grid, body.tp-page .tp-screens-wrap .preview-screen-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } body.tp-page .tp-shell { padding: 40px 24px 80px; } }',
+    '@media (max-width: 620px) { body.tp-page .tp-cards-scope .preview-grid, body.tp-page .tp-screens-wrap .preview-screen-grid { grid-template-columns: 1fr; } body.tp-page .tp-shell { padding: 28px 16px 80px; } }',
+    '/* Components page has its own design system on a light surface ??keep it isolated visually */',
+    'body.tp-page .tp-components-host { background: #f5f6f7; color: #111; border-radius: 24px; padding: 16px 24px 40px; margin: 0; }',
+    'body.tp-page .tp-components-host .section { padding: 36px 0; margin: 0; background: transparent; }',
+    'body.tp-page .tp-components-host .footer, body.tp-page .tp-components-host .nav, body.tp-page .tp-components-host .hero { display: none !important; }',
+    '</style>',
+    '<link rel="stylesheet" href="theme.css">',  // designer's edits ??LAST so they win
+    '</head><body class="tp-page">',
+    '<div class="tp-shell">',
+    '  <header class="tp-meta">',
+    '    <h1>' + safeName + ' · preview gallery</h1>',
+    '    <p>Self-contained theme preview · edit <code>theme.css</code> &amp; refresh to verify · re-import via <code>/customize ??Import theme</code></p>',
+    '  </header>',
+    '  <nav class="tp-toc">',
+    '    <a href="#tp-cards">Cards <span class="count">' + cardsCount + '</span></a>',
+    '    <a href="#tp-screens">Screen compositions <span class="count">' + screensCount + '</span></a>',
+    '    <a href="#tp-oneui">One UI base components <span class="count">' + componentsCount + '</span></a>',
+    '  </nav>',
+    '  <section id="tp-cards" class="tp-section">',
+    '    <h2>All themed cards</h2>',
+    '    <p class="tp-hint">Every card from Customize ??Cards mode. Re-render with your theme tokens to see how each surface reacts.</p>',
+    '    <div class="tp-cards-scope preview-theme-scope">',
+    '      <div class="preview-grid">' + cardsInner + '</div>',
+    '    </div>',
+    '  </section>',
+    '  <section id="tp-screens" class="tp-section">',
+    '    <h2>Screen compositions</h2>',
+    '    <p class="tp-hint">Six S26-ratio phones ??each mixes 1-col and 2-col groups so the same card type renders in both contexts. Validate <code>--screen-padding-*</code>, <code>--gap-screen</code>, <code>--gap-cards</code>, <code>--screen-grid-columns</code>.</p>',
+    '    <div class="tp-screens-wrap preview-screen-wrap">',
+    '      <div class="preview-screen-grid">' + screensInner + '</div>',
+    '    </div>',
+    '  </section>',
+    '  <section id="tp-oneui" class="tp-section">',
+    '    <h2>One UI 8.5 · base components</h2>',
+    '    <p class="tp-hint">The full primitive set from the standalone <code>components.html</code> reference ??buttons, FAB, switches, checkboxes, inputs, chips, cards, dialogs, sliders, etc. Theme tokens that match (radii, accent colors, typography) will flow through.</p>',
+    '    <div class="tp-components-host">',
+    componentsBody,
+    '    </div>',
+    '  </section>',
+    '</div>',
+    '</body></html>'
+  ].join('\n');
+}
+
+// ---------------------------------------------------------------------------
+//  Download template ??comprehensive starter pack
+//
+//  Designers click this once, get a working baseline of the currently
+//  active theme as a small bundle of files.
+//
+//  Files inside the .zip:
+//    theme.css          editable variable file (the actual edit surface)
+//    theme.json         machine-readable mirror, same vars + metadata
+//    theme-preview.html ??self-contained gallery ??opens any browser to show:
+//                         (1) all themed cards from customize Cards mode
+//                         (2) all 6 screen compositions from Screen mode
+//                         (3) the 22 base One UI 8.5 components
+//                         All three sections render with the user's
+//                         theme.css applied, so the designer can verify
+//                         every component / every screen at one glance
+//                         without needing access to the live site.
+//    README.md          30-second orientation for the recipient
+//
+//  Designer edits `theme.css` in VS Code / Cursor, refreshes
+//  `theme-preview.html` to see the result, then sends `theme.css` back
+//  via /customize ??Import theme to round-trip into the site.
+// ---------------------------------------------------------------------------
+async function downloadThemeTemplate() {
+  const themeId = $('theme-select').value;
+  const theme = THEMES.find(t => t.id === themeId);
+  if (!theme) { showToast('Pick a theme first'); return; }
+
+  // Read every editable variable's current value (computed) so any
+  // unsaved tweaks the designer made get baked into the template.
+  const computed = getComputedStyle(document.documentElement);
+  const themeVars = {};
+  THEME_EDIT_SCHEMA.forEach(section => {
+    section.vars.forEach(v => {
+      const val = (computed.getPropertyValue(v.key) || '').trim();
+      if (val) themeVars[v.key] = val;
+    });
+  });
+
+  // (1) theme.css ??annotated, designer-friendly. Sections grouped
+  //     and labeled so a designer scanning the file sees the structure.
+  let css = '/*!\n';
+  css += ' * ' + (theme.name || 'Theme template') + ' ??One UI GenUI theme\n';
+  css += ' * Base: ' + (theme.id || 'unknown') + ' · Exported: ' + new Date().toISOString() + '\n';
+  css += ' *\n';
+  css += ' * Edit any --variable below. Save as theme.css and re-import\n';
+  css += ' * via /customize ??Import HTML to register a new theme.\n';
+  css += ' *\n';
+  css += ' * Optional metadata (parsed by the importer):\n';
+  css += ' *   oneui-theme: { "name": "My Theme", "author": "you", "baseThemeId": "' + (theme.id || '') + '" }\n';
+  css += ' */\n\n';
+  css += ':root {\n';
+  THEME_EDIT_SCHEMA.forEach((section, secIdx) => {
+    if (secIdx > 0) css += '\n';
+    css += '  /* ?? ' + section.section + ' ?? */\n';
+    section.vars.forEach(v => {
+      const val = themeVars[v.key] || '';
+      if (val) css += '  ' + v.key + ': ' + val + ';\n';
+    });
+  });
+  css += '}\n';
+
+  // (2) theme.json ??machine-readable counterpart. Same vars, plus
+  //     metadata. The importer reads this directly when present.
+  const meta = {
+    schema:        'oneui.export/v1',
+    exportedAt:    new Date().toISOString(),
+    name:          theme.name || 'My Theme',
+    baseThemeId:   theme.id || null,
+    description:   theme.description || '',
+    themeVars:     themeVars
+  };
+  const json = JSON.stringify(meta, null, 2);
+
+  // (3) theme-preview.html ??comprehensive offline gallery.
+  //
+  //     Composed from three live sources, captured at download time so
+  //     the designer's current edits + active theme are baked in:
+  //
+  //       a) Cards-mode preview  ??every themed card from #preview-grid
+  //       b) Screen-mode preview ??6 phone compositions w/ 1-col + 2-col mix
+  //       c) components.html     ??the 22 base One UI 8.5 components
+  //
+  //     Plus the three sources' inlined CSS (genui.css atomic styles,
+  //     customize.html preview layout, components.html component styles)
+  //     so the file renders standalone from any folder. theme.css is
+  //     <link>ed LAST so the designer's tokens override the bases.
+  const html = await _buildPreviewGalleryHTML(theme);
+
+  // README inside the ZIP ??gives any designer who receives the file
+  // pack a 30-second orientation without needing access to the site.
+  const readme =
+    '# ' + (theme.name || 'Theme') + ' template\n\n' +
+    'A self-contained bundle for tweaking the theme tokens of Samsung One UI GenUI.\n\n' +
+    '## Files\n\n' +
+    '- `theme.css` ??the editable variables. Open in any code editor.\n' +
+    '- `theme.json` ??machine-readable mirror (the tool reads this on import).\n' +
+    '- `theme-preview.html` ??drag into a browser to verify your edits. Has three sections:\n' +
+    '    1. **Cards** ??every themed card from Customize ??Cards mode\n' +
+    '    2. **Screen compositions** ??6 S26-ratio phones with mixed 1-col + 2-col groups\n' +
+    '    3. **One UI 8.5 base components** ??the full primitive set (Buttons, FAB,\n' +
+    '       Toggle Switches, Checkboxes, Radios, Inputs, Search, Chips, Tabs, App Bar,\n' +
+    '       Bottom Nav, Cards, List Items, Dialogs, Bottom Sheet, Sliders, Progress,\n' +
+    '       Snackbar, Tooltips, Badges, Menus, Dividers ??22 in total)\n\n' +
+    '## Edit\n\n' +
+    'Open `theme.css`, change any `--variable` value, save, refresh\n' +
+    '`theme-preview.html` to verify.\n\n' +
+    'Optional metadata at the top of `theme.css`:\n\n' +
+    '```css\n' +
+    '/*! oneui-theme: { "name": "Sunset Glow", "author": "you" } */\n' +
+    '```\n\n' +
+    '## Apply\n\n' +
+    'Send the updated `theme.css` (or all three files) to whoever runs\n' +
+    'the One UI GenUI site ??they import via `/customize ??Import theme`\n' +
+    'and click Save to register your work as a new theme preset.\n';
+
+  // Single ZIP download ??bundling all three files dodges the browser's
+  // multi-download throttle that previously delivered only the first
+  // (theme.css), leaving designers without the json + preview files
+  // they need to verify their work locally.
+  if (typeof window.JSZip !== 'function') {
+    showToast('ERROR: ZIP library not loaded yet ??refresh and retry');
+    return;
+  }
+  try {
+    const zip = new window.JSZip();
+    zip.file('theme.css',          css);
+    zip.file('theme.json',         json);
+    zip.file('theme-preview.html', html);
+    zip.file('README.md',          readme);
+    const baseId = (theme.id || 'theme').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'oneui-' + baseId + '-template.zip';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    showToast('Downloaded · oneui-' + baseId + '-template.zip (4 files inside)');
+  } catch (e) {
+    console.error('[customize] zip generation failed:', e);
+    showToast('ERROR: zip generation failed (' + e.message + ')');
+  }
+}
+
+// ---------------------------------------------------------------------------
+//  Import HTML ??load theme from a self-contained export
+//
+//  The genui Export HTML button writes a file that embeds (a) all of
+//  css/genui.css inline, (b) the active <style id="theme-vars">
+//  block, (c) any unsaved inline overrides, and (d) a JSON metadata
+//  comment of the form:
+//
+//    <!-- ONEUI_EXPORT_META:{"schema":"oneui.export/v1",...}:END -->
+//
+//  This handler reads the file as text, extracts that JSON block first
+//  (cheapest path), falls back to regex-scraping `:root { --xxx: ?? }`
+//  if metadata is missing, applies each --xxx via _writeVar so the
+//  preview updates live, and marks the editor unsaved so a Save
+//  persists it as a brand-new theme.
+// ---------------------------------------------------------------------------
+// Whitelist of theme variable prefixes ??used to filter out base
+// design-system tokens (--primary, --bg, etc.) that live in the
+// inlined genui.css inside the new gallery HTML. Without this filter
+// an unsuspecting designer who imports theme-preview.html would
+// accidentally overwrite their theme tokens with the base palette.
+// The whitelist matches the prefixes used by THEME_EDIT_SCHEMA in
+// this same file.
+const _THEME_VAR_PREFIXES = [
+  '--font-', '--letter-spacing', '--line-height',
+  '--space-', '--screen-', '--gap-', '--container-',
+  '--card-', '--qs-', '--nowbar-', '--fab-',
+  '--surface-', '--text-primary', '--text-secondary', '--text-tertiary',
+  '--accent-', '--primary-', '--oneui-theme-style', '--preview-bg'
+];
+function _isThemeVar(key) {
+  if (!key || typeof key !== 'string') return false;
+  return _THEME_VAR_PREFIXES.some(p => key.startsWith(p));
+}
+
+// ZIP path ??accept the whole download bundle as-is. Designer drops
+// `oneui-<theme>-template.zip` directly without unpacking. We read
+// the embedded theme.json (preferred) or theme.css; theme-preview.html
+// + README.md are intentionally skipped.
+async function _parseZipFile(file) {
+  if (typeof window.JSZip !== 'function') {
+    return { vars: {}, source: 'skipped · JSZip not loaded', name: file.name, error: 'JSZip missing' };
+  }
+  let zip;
+  try {
+    const ab = await file.arrayBuffer();
+    zip = await window.JSZip.loadAsync(ab);
+  } catch (e) {
+    return { vars: {}, source: 'skipped · not a valid zip', name: file.name, error: e.message };
+  }
+  // Find candidate files inside (case-insensitive, allow nested folders).
+  const entries = Object.keys(zip.files);
+  const findEntry = (pattern) => entries.find(p => pattern.test(p));
+  const jsonEntry = findEntry(/(^|\/)theme\.json$/i);
+  const cssEntry  = findEntry(/(^|\/)theme\.css$/i);
+
+  // Prefer theme.json ??exact values, no parsing risk.
+  if (jsonEntry) {
+    const txt = await zip.files[jsonEntry].async('string');
+    try {
+      const meta = JSON.parse(txt);
+      if (meta && meta.themeVars && typeof meta.themeVars === 'object') {
+        return {
+          vars: meta.themeVars,
+          source: 'zip · ' + jsonEntry + ' (' + Object.keys(meta.themeVars).length + ' vars)',
+          name: file.name,
+          themeName: meta.name || null
+        };
+      }
+    } catch (e) { /* fall through to CSS */ }
+  }
+  // Fall back to theme.css inside the zip.
+  if (cssEntry) {
+    const txt = await zip.files[cssEntry].async('string');
+    const vars = _scrapeCssRootVars(txt);
+    if (Object.keys(vars).length > 0) {
+      return {
+        vars,
+        source: 'zip · ' + cssEntry + ' (' + Object.keys(vars).length + ' vars)',
+        name: file.name
+      };
+    }
+  }
+  return {
+    vars: {},
+    source: 'zip · no theme.json or theme.css found',
+    name: file.name,
+    error: 'expected theme.json or theme.css inside the zip'
+  };
+}
+
+// Scrape `:root { --xxx: value; }` blocks from a CSS-ish text and
+// return them as an object. Shared by CSS files and the legacy
+// inline-CSS HTML export fallback.
+function _scrapeCssRootVars(text) {
+  const out = {};
+  if (!text) return out;
+  const rootBlockRe = /:root[^{]*\{([^}]*)\}/g;
+  let block;
+  while ((block = rootBlockRe.exec(text)) !== null) {
+    const varRe = /(--[a-z0-9-]+)\s*:\s*([^;]+);/gi;
+    let m;
+    while ((m = varRe.exec(block[1])) !== null) {
+      out[m[1].trim()] = m[2].trim();
+    }
+  }
+  return out;
+}
+
+// Parse a single file ??its themeVars + a tag describing the source.
+// Pure function ??does NOT touch :root or the editor. Caller (the
+// multi-file import handler) merges the maps and applies them.
+async function _parseThemeFile(file) {
+  if (!file) return { vars: {}, source: '(empty)', name: '(empty)' };
+  const MAX_BYTES = 8 * 1024 * 1024;   // bumped to 8 MB to fit the comprehensive gallery zip + preview html
+  if (file.size > MAX_BYTES) {
+    return { vars: {}, source: 'skipped · too large', name: file.name, error: 'too large (' + Math.round(file.size / 1024) + ' KB)' };
+  }
+
+  // ZIP-aware path ??bypass text parsing entirely for .zip files.
+  const fname = (file.name || '').toLowerCase();
+  if (fname.endsWith('.zip')) {
+    return await _parseZipFile(file);
+  }
+
+  let text = '';
+  try { text = await file.text(); }
+  catch (e) { return { vars: {}, source: 'skipped · read failure', name: file.name, error: e.message }; }
+
+  // Format detection ??same handler accepts .html (full export with
+  // metadata comment), .css (just the theme vars), or .json (machine
+  // export from /customize ??Download template). Detection is by
+  // extension first, then by content sniffing as a safety net.
+  const looksJSON = fname.endsWith('.json') ||
+                    /^\s*\{[\s\S]*"themeVars"\s*:/m.test(text);
+  const looksCSS  = fname.endsWith('.css')  ||
+                    (/:root[^{]*\{/.test(text) && !/<!DOCTYPE|<html/i.test(text) && !looksJSON);
+
+  let themeVars = null;
+  let importedFrom = null;
+
+  // (1a) JSON path ??parse the file as a metadata document directly.
+  if (looksJSON && !themeVars) {
+    try {
+      const meta = JSON.parse(text);
+      if (meta && meta.themeVars && typeof meta.themeVars === 'object') {
+        themeVars = meta.themeVars;
+        importedFrom = 'json · ' + (meta.name || meta.baseThemeId || 'theme.json');
+      }
+    } catch (e) {
+      console.warn('[import] JSON parse failed:', e.message);
+    }
+  }
+
+  // (1b) HTML metadata comment path ??fast, structured. Old genui
+  // Export HTML used this; new gallery preview omits it.
+  if (!themeVars) {
+    const metaMatch = text.match(/<!--\s*ONEUI_EXPORT_META:([\s\S]*?):END\s*-->/);
+    if (metaMatch) {
+      try {
+        const meta = JSON.parse(metaMatch[1]);
+        if (meta && meta.themeVars && typeof meta.themeVars === 'object') {
+          themeVars = meta.themeVars;
+          importedFrom = 'metadata · ' + (meta.exportedAt || 'unknown date');
+        }
+      } catch (e) {
+        console.warn('[import] metadata JSON parse failed, falling back to CSS scan:', e.message);
+      }
+    }
+  }
+
+  // (1c) GALLERY PREVIEW DETECTION ??the new theme-preview.html links to
+  // an external theme.css and inlines the base genui.css. Importing it
+  // alone would scrape the base :root tokens (wrong: not the user's
+  // theme). Tell the user what to do instead.
+  if (!themeVars && fname.endsWith('.html')) {
+    const isGalleryPreview = /<link[^>]+href="theme\.css"/i.test(text) ||
+                             /body class="tp-page"/.test(text);
+    if (isGalleryPreview) {
+      return {
+        vars: {},
+        source: 'gallery preview · cannot import alone',
+        name: file.name,
+        error: 'theme-preview.html links to theme.css externally. Drop the .zip or theme.css/theme.json instead.'
+      };
+    }
+  }
+
+  // (1d) CSS comment metadata ??designer-authored .css files MAY include
+  //   /*! oneui-theme: { "name": "...", "baseThemeId": "...", ... } */
+  //  We don't need it for the vars themselves but capture the name.
+  let cssMetaName = null;
+  if (looksCSS) {
+    const cssMeta = text.match(/oneui-theme\s*:\s*(\{[\s\S]*?\})/);
+    if (cssMeta) {
+      try { cssMetaName = JSON.parse(cssMeta[1]).name || null; }
+      catch (_) { /* optional, ignore */ }
+    }
+  }
+
+  // (2) Fallback: scrape every `:root { --xxx: VALUE; }` block. Works
+  // for raw CSS files AND for legacy HTML exports lacking the metadata
+  // comment. For HTML inputs we additionally filter by theme-var
+  // prefix so an accidental import of a file that bundles base CSS
+  // (e.g. a self-contained genui export) doesn't bring in --primary /
+  // --bg / etc. ??only tokens the editor actually owns.
+  if (!themeVars) {
+    const scraped = _scrapeCssRootVars(text);
+    if (looksCSS) {
+      // CSS files are trusted ??designer wrote them, no filter.
+      themeVars = scraped;
+    } else {
+      // HTML scan ??filter to theme-token prefixes only.
+      themeVars = {};
+      Object.keys(scraped).forEach(k => {
+        if (_isThemeVar(k)) themeVars[k] = scraped[k];
+      });
+    }
+    const sourceTag = looksCSS ? 'css' : 'html-scan';
+    importedFrom = sourceTag + (cssMetaName ? (' · ' + cssMetaName) : '') +
+                   ' · ' + Object.keys(themeVars).length + ' vars';
+  }
+
+  return { vars: themeVars || {}, source: importedFrom || '(unknown)', name: file.name };
+}
+
+// Top-level handler ??accepts ONE OR MANY files, parses each, then
+// merges them in selection order (later files win on conflicts) and
+// applies the merged map in one pass. Designers can split their work
+// into multiple .css files (theme-base.css + theme-overrides.css) or
+// drop a {.css, .json, .html} bundle and have it merge cleanly.
+async function importThemeFiles(files) {
+  const list = Array.from(files || []);
+  if (list.length === 0) return;
+
+  const reports = [];
+  const merged = {};
+  for (const file of list) {
+    const r = await _parseThemeFile(file);
+    reports.push(r);
+    if (r.vars) {
+      // Later files overwrite earlier on conflict.
+      Object.keys(r.vars).forEach(k => {
+        if (r.vars[k]) merged[k] = r.vars[k];
+      });
+    }
+  }
+
+  const keys = Object.keys(merged);
+  if (keys.length === 0) {
+    const errs = reports.filter(r => r.error).map(r => r.name + ': ' + r.error).join('; ');
+    showToast('ERROR: no theme variables found' + (errs ? ' (' + errs + ')' : ''));
+    return;
+  }
+
+  // Apply the merged map. _writeVar already marks unsaved + the
+  // editor input listeners trigger a preview re-render on the next
+  // tick. We still rebuild the editor body explicitly so all inputs
+  // reflect the new values immediately.
+  let applied = 0;
+  keys.forEach(k => {
+    if (!merged[k]) return;
+    _writeVar(k, merged[k]);
+    applied += 1;
+  });
+  buildEditorBody();
+  renderPreviewGrid();
+
+  // Build a friendly summary toast ??single-file shows the source tag,
+  // multi-file shows file count + total var count.
+  let summary;
+  if (reports.length === 1) {
+    summary = 'Imported ' + applied + ' theme var(s) from ' + reports[0].name;
+  } else {
+    summary = 'Merged ' + reports.length + ' files · ' + applied + ' theme var(s)';
+  }
+  showToast(summary + ' ??name + Save to keep');
+  console.log('[import] ' + summary);
+  reports.forEach(r => console.log('   · ' + r.name + ' (' + r.source + ')' + (r.error ? ' [error: ' + r.error + ']' : '')));
+}
+
+// Back-compat alias ??older code paths or external scripts may still
+// call importHTMLFile() with a single file. Forwards to the multi
+// handler so behavior is identical.
+async function importHTMLFile(file) { return importThemeFiles(file ? [file] : []); }
+
+// Wire up the file input + button. Hidden input pattern keeps the
+// styling consistent with the rest of the toolbar. The input has the
+// `multiple` attribute, so e.target.files can hold any number of
+// files; the handler merges them in selection order.
+(function _wireImportTheme() {
+  const btn = document.getElementById('btn-import-html');
+  const input = document.getElementById('import-html-file');
+  if (!btn || !input) return;
+  btn.addEventListener('click', () => input.click());
+  input.addEventListener('change', async (e) => {
+    const files = e.target.files;
+    if (files && files.length) await importThemeFiles(files);
+    input.value = '';   // reset so re-picking the same files still fires
+  });
+})();
+
+// Drag-and-drop: any file dropped anywhere in the customize window
+// triggers the import path. While a drag is in progress we show a
+// fullscreen overlay so the user knows it's a valid drop target.
+//
+// Implementation details:
+//   - dragenter/dragleave use a counter pattern because dragleave
+//     fires every time the cursor crosses a child element, not just
+//     when leaving the window
+//   - we only react when the drag carries actual files (not text,
+//     selected divs, etc.) ??that's the `types.includes('Files')` check
+//   - the overlay is created on first dragenter so the markup cost is
+//     deferred until the user actually drags something in
+(function _wireImportDragDrop() {
+  let dragDepth = 0;
+  let overlay = null;
+  function ensureOverlay() {
+    if (overlay) return overlay;
+    overlay = document.createElement('div');
+    overlay.id = 'import-dropzone-overlay';
+    overlay.innerHTML =
+      '<div class="dropzone-card">' +
+      '  <div class="dropzone-icon" aria-hidden="true">&#8615;</div>' +
+      '  <div class="dropzone-title">Drop to import theme</div>' +
+      '  <div class="dropzone-hint">accepts .zip / .css / .json / .html · drop multiple files to merge</div>' +
+      '</div>';
+    Object.assign(overlay.style, {
+      position: 'fixed', inset: '0', zIndex: '9999',
+      background: 'rgba(3, 129, 254, 0.10)',
+      backdropFilter: 'blur(6px)', webkitBackdropFilter: 'blur(6px)',
+      display: 'none', alignItems: 'center', justifyContent: 'center',
+      pointerEvents: 'none', /* let the drop event reach the body */
+      transition: 'opacity 0.12s ease'
+    });
+    // Inner card styling ??uses fixed values rather than CSS vars so
+    // the overlay reads the same regardless of the active theme.
+    const style = document.createElement('style');
+    style.textContent =
+      '#import-dropzone-overlay .dropzone-card{padding:36px 44px;border-radius:24px;background:rgba(10,10,12,0.85);border:2px dashed rgba(3,129,254,0.65);color:#fff;text-align:center;max-width:520px;}' +
+      '#import-dropzone-overlay .dropzone-icon{font-size:48px;line-height:1;margin-bottom:16px;color:#0381FE;}' +
+      '#import-dropzone-overlay .dropzone-title{font-size:20px;font-weight:700;letter-spacing:-0.3px;margin-bottom:6px;}' +
+      '#import-dropzone-overlay .dropzone-hint{font-size:13px;color:rgba(255,255,255,0.65);}';
+    document.head.appendChild(style);
+    document.body.appendChild(overlay);
+    return overlay;
+  }
+  function carriesFiles(e) {
+    if (!e.dataTransfer || !e.dataTransfer.types) return false;
+    // Modern browsers expose `types` as a DOMStringList; convert.
+    return Array.from(e.dataTransfer.types).indexOf('Files') !== -1;
+  }
+  window.addEventListener('dragenter', (e) => {
+    if (!carriesFiles(e)) return;
+    e.preventDefault();
+    dragDepth += 1;
+    const ov = ensureOverlay();
+    ov.style.display = 'flex';
+  });
+  window.addEventListener('dragover', (e) => {
+    if (!carriesFiles(e)) return;
+    e.preventDefault();   // required for `drop` to fire
+    e.dataTransfer.dropEffect = 'copy';
+  });
+  window.addEventListener('dragleave', (e) => {
+    if (!carriesFiles(e)) return;
+    dragDepth = Math.max(0, dragDepth - 1);
+    if (dragDepth === 0 && overlay) overlay.style.display = 'none';
+  });
+  window.addEventListener('drop', async (e) => {
+    if (!carriesFiles(e)) return;
+    e.preventDefault();
+    dragDepth = 0;
+    if (overlay) overlay.style.display = 'none';
+    const files = e.dataTransfer.files;
+    if (files && files.length) {
+      await importThemeFiles(files);
+    }
+  });
+})();
+
+// Wire the Download template button ??produces a single .zip with
+// theme.css + theme.json + theme-preview.html + README.md so designers
+// receive every file they need in one download (single-download keeps
+// the browser's multi-download throttle out of the picture).
+(function _wireDownloadTemplate() {
+  const btn = document.getElementById('btn-download-template');
+  if (!btn) return;
+  btn.addEventListener('click', async () => {
+    try { await downloadThemeTemplate(); }
+    catch (e) { console.error('[customize] download template failed:', e); showToast('ERROR: ' + e.message); }
+  });
+})();
+
+// Left panel: header toggles whole editor-body; each schema section toggles
+// its own .editor-section-body. buildEditorBody() runs on boot and on
+// theme / preview selection changes.
+
+// ---------------------------------------------------------------------------
+//  Boot
+// ---------------------------------------------------------------------------
+async function boot() {
+  try {
+    const data = await fetchJSON('/api/themes');
+    THEMES = data.themes || [];
+    ACTIVE_ID = data._active;
+    // Build dropdown
+    const sel = $('theme-select');
+    sel.innerHTML = THEMES.map(t =>
+      '<option value="' + t.id + '">' + t.name + '</option>'
+    ).join('');
+    sel.value = ACTIVE_ID;
+    updateOnSelect(ACTIVE_ID, false);
+    // Wait for renderer to be ready (the script tag is async-ish; if not
+    // ready yet, retry once on next tick).
+    if (typeof window.renderAtomicForRole === 'function') {
+      renderPreviewGrid();
+    } else {
+      setTimeout(renderPreviewGrid, 50);
+    }
+  } catch (e) {
+    console.error('boot failed', e);
+    document.body.innerHTML = '<div style="padding:32px;color:#EF4444;">Failed to load themes: ' + e.message + '</div>';
+  }
+}
+
+function updateOnSelect(id, applyServer) {
+  SELECTED_PREVIEW_INDEX = null;
+  INSPECTOR_LAYER = null;
+  INSPECTOR_DOM_PATH = null;
+  PREVIEW_CELL_VAR_OVERRIDES = {};
+  const theme = THEMES.find(t => t.id === id);
+  if (!theme) return;
+  applyThemeVars(theme.vars);
+  if (isFlatThemeActive()) setFlatScheme(FLAT_SCHEME, false);
+  else updateFlatSchemeToggle();
+  $('active-pill').textContent = (theme.id === ACTIVE_ID ? 'Active · ' : 'Preview · ') + theme.name;
+  // Re-render preview so any cards that compute color from vars at render
+  // time pick up the new values.
+  renderPreviewGrid();
+  // Always rebuild editor inputs ??they should reflect the newly-
+  // selected theme's values. (The panel is no longer collapsible.)
+  buildEditorBody();
+}
+
+$('theme-select').addEventListener('change', (e) => {
+  SELECTED_PREVIEW_INDEX = null;
+  INSPECTOR_LAYER = null;
+  INSPECTOR_DOM_PATH = null;
+  var pickedId = e.target.value;
+  updateOnSelect(pickedId, false);
+  var picked = THEMES.find(function (t) { return t.id === pickedId; });
+  if (picked) {
+    showToast('\ubbf8\ub9ac\ubcf4\uae30 \ud14c\ub9c8: ' + picked.name);
+  }
+  _markUnsaved(false);
+});
+
+document.getElementById('flat-scheme-toggle')?.addEventListener('click', function (e) {
+  var btn = e.target.closest && e.target.closest('.flat-scheme-btn');
+  if (!btn || !this.contains(btn) || !isFlatThemeActive()) return;
+  setFlatScheme(btn.getAttribute('data-flat-scheme'), true);
+});
+
+document.getElementById('preview-bg-swatches')?.addEventListener('click', function (e) {
+  var btn = e.target.closest && e.target.closest('.preview-bg-swatch');
+  if (!btn || !this.contains(btn)) return;
+  var bg = btn.getAttribute('data-preview-bg');
+  if (!bg) return;
+  document.documentElement.style.setProperty('--preview-bg', bg);
+  this.querySelectorAll('.preview-bg-swatch').forEach(function (swatch) {
+    swatch.setAttribute('aria-pressed', swatch === btn ? 'true' : 'false');
+  });
+});
+
+// btn-apply ("Apply to Site") and btn-reset ("Reset preview") removed ??// their roles are now folded into Save (which both creates a new theme
+// AND sets it active) and Discard (which clears unsaved edits without
+// touching the server). The dropdown's onChange already handles preset
+// switching.
+
+(function wireEditorPanelDelegates() {
+  var panel = document.getElementById('editor-panel');
+  if (!panel || panel.__delegatesBound) return;
+  panel.__delegatesBound = true;
+  panel.addEventListener('input', function (e) {
+    if (!e.target.closest('#editor-body')) return;
+    _onEditorInput(e);
+  });
+  panel.addEventListener('change', function (e) {
+    if (!e.target.closest('#editor-body')) return;
+    _onEditorInput(e);
+  });
+  panel.addEventListener('click', function (e) {
+    var t = e.target;
+    var pToggle = t.closest && t.closest('.editor-panel-toggle');
+    if (pToggle) {
+      e.preventDefault();
+      var pel = document.getElementById('editor-panel');
+      if (pel) {
+        var collapsed = pel.classList.toggle('is-collapsed');
+        pToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+      }
+      return;
+    }
+    var sToggle = t.closest && t.closest('.editor-section-toggle');
+    if (sToggle) {
+      e.preventDefault();
+      var wasOpen = sToggle.getAttribute('aria-expanded') === 'true';
+      sToggle.setAttribute('aria-expanded', wasOpen ? 'false' : 'true');
+      var bid = sToggle.getAttribute('aria-controls');
+      var sBody = bid && document.getElementById(bid);
+      if (sBody) sBody.hidden = wasOpen;
+      return;
+    }
+    if (t.closest && t.closest('#btn-save')) { e.preventDefault(); saveAsCustom(); return; }
+    if (t.closest && t.closest('#btn-discard')) { e.preventDefault(); discardChanges(); return; }
+    if (t.closest && t.closest('#btn-clear-focus')) {
+      e.preventDefault();
+      setInspectorByKind(null);
+      _highlightActiveScreenCards();
+      return;
+    }
+    if (t.closest && t.closest('#btn-show-all-vars')) {
+      e.preventDefault();
+      SELECTED_PREVIEW_INDEX = null;
+      INSPECTOR_LAYER = null;
+      INSPECTOR_DOM_PATH = null;
+      PREVIEW_CELL_VAR_OVERRIDES = {};
+      renderPreviewGrid();
+      buildEditorBody();
+    }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape' || !INSPECTOR_LAYER || !$('editor-body')) return;
+    INSPECTOR_LAYER = null;
+    INSPECTOR_DOM_PATH = null;
+    buildEditorBody();
+    updateEditorScopeUI();
+    _applyInspectorOutline();
+  });
+})();
+
+(function wirePreviewGridDelegates() {
+  var grid = $('preview-grid');
+  if (!grid || grid.__delegatesBound) return;
+  grid.__delegatesBound = true;
+  function applyPreviewSelection(idx) {
+    INSPECTOR_LAYER = null;
+    INSPECTOR_DOM_PATH = null;
+    if (SELECTED_PREVIEW_INDEX === idx) SELECTED_PREVIEW_INDEX = null;
+    else SELECTED_PREVIEW_INDEX = idx;
+    if (SELECTED_PREVIEW_INDEX === null) PREVIEW_CELL_VAR_OVERRIDES = {};
+    renderPreviewGrid();
+    buildEditorBody();
+    updateEditorScopeUI();
+  }
+  grid.addEventListener('click', function (e) {
+    if (e.detail !== 1) return;
+    var cell = e.target.closest('.preview-cell');
+    if (!cell || !grid.contains(cell)) return;
+    var raw = cell.getAttribute('data-preview-index');
+    if (raw == null || raw === '') return;
+    var idx = parseInt(raw, 10);
+    if (isNaN(idx)) return;
+    e.preventDefault();
+    applyPreviewSelection(idx);
+  });
+  grid.addEventListener('dblclick', function (e) {
+    var stage = e.target.closest && e.target.closest('.preview-cell .stage');
+    var cell = e.target.closest && e.target.closest('.preview-cell');
+    if (!stage || !cell || !grid.contains(cell)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    var raw = cell.getAttribute('data-preview-index');
+    var idx = parseInt(raw, 10);
+    if (isNaN(idx)) return;
+    if (SELECTED_PREVIEW_INDEX !== idx) SELECTED_PREVIEW_INDEX = idx;
+    var card = PREVIEW_CARDS[idx];
+    var targetEl = e.target.nodeType === 3 ? e.target.parentElement : e.target;
+    var hit = _resolveInspectorLayer(card, targetEl, stage);
+    INSPECTOR_LAYER = hit;
+    INSPECTOR_DOM_PATH = hit ? { idx: idx, path: _domPathFromStage(stage, targetEl) } : null;
+    renderPreviewGrid();
+    buildEditorBody();
+    updateEditorScopeUI();
+  });
+  grid.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var cell = e.target.closest('.preview-cell');
+    if (!cell || !grid.contains(cell)) return;
+    var raw = cell.getAttribute('data-preview-index');
+    if (raw == null || raw === '') return;
+    e.preventDefault();
+    var idx = parseInt(raw, 10);
+    if (isNaN(idx)) return;
+    applyPreviewSelection(idx);
+  });
+})();
+
+boot();
+</script>
+
+</body>
+</html>

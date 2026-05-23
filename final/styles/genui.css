@@ -1,0 +1,1892 @@
+/* ──────────────────────────────────────────────────────────────────────
+   Theme transition layer — when the topbar Theme picker (or /customize
+   editor) swaps a CSS variable, every consumer that uses var(--name)
+   should fade between the old and new value instead of snapping.
+   We can't put `transition` on the :root variables themselves (CSS
+   custom properties don't animate), so we apply it to the elements
+   that READ those variables. Limited to color + background +
+   border-color + opacity to avoid layout shifts (no padding / radius
+   transitions — those would reflow during a theme change).
+   `prefers-reduced-motion` users skip the animation entirely.
+   ────────────────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: no-preference) {
+  body,
+  .canvas-frame,
+  .canvas-frame.light,
+  .canvas-inner,
+  .canvas-item,
+  .canvas-group,
+  .oui-card,
+  .oui-appbar,
+  .oui-list-item,
+  .oui-dialog,
+  .oui-snackbar,
+  .topbar,
+  .sidebar,
+  .panel,
+  .scene-btn {
+    transition:
+      background-color 280ms cubic-bezier(0.2, 0, 0, 1),
+      color 280ms cubic-bezier(0.2, 0, 0, 1),
+      border-color 280ms cubic-bezier(0.2, 0, 0, 1),
+      box-shadow 280ms cubic-bezier(0.2, 0, 0, 1);
+  }
+}
+
+:root {
+  /* Legacy tokens — bridged to theme tokens below so a /customize theme
+     swap also affects the surrounding page chrome (sidebar excluded —
+     it stays --sidebar-bg for app shell stability). */
+  --primary:        var(--accent-primary, #0381FE);
+  --primary-light:  #3E91FF;
+  --primary-10:     rgba(3,129,254,0.10);
+  --bg:             var(--page-bg, #0a0a0a);
+  --sidebar-bg:     #111111;
+  --surface:        #1a1a1a;
+  --surface-2:      #222222;
+  --text:           var(--text-primary,   #FAFAFA);
+  --text-2:         var(--text-secondary, rgba(255,255,255,0.6));
+  --text-3:         var(--text-tertiary,  rgba(255,255,255,0.35));
+  --divider: rgba(255,255,255,0.08);
+  --glass-bg: rgba(255,255,255,0.06);
+  --glass-border: rgba(255,255,255,0.10);
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --canvas-bg-light: #FCFCFC;
+  --canvas-bg-dark: #171717;
+
+  /* ── Theme variables (used by /customize dropdown) ─────────────────
+     These defaults match the "Default · One UI 8.5" theme in
+     figma-refs/themes.json. The customize page applies overrides via
+     :root { --xxx: …; } in a runtime <style> block. Renderer cards in
+     app/surface-layout.js read these via var(--name, fallback) so any
+     theme switch is purely cosmetic and doesn't require restart. */
+  --page-bg:                          #0a0a0c;
+  --text-primary:                     #efeef2;
+  --text-secondary:                   rgba(239,238,242,0.7);
+  --text-tertiary:                    rgba(239,238,242,0.45);
+  --accent-primary:                   #0381FE;
+
+  --card-radius:                      20px;
+  /* Spacing tokens — kept consistent across all themes per user
+     direction: theme identity is conveyed via radius/typography/color,
+     not via padding. Aligned to Minimal Flat values for a tighter
+     One UI feel. Individual themes can still override these vars but
+     the canonical defaults match. */
+  --card-padding-v:                   14px;
+  --card-padding-h:                   16px;
+  --card-gap:                         6px;
+
+  --card-weather-accent:              #FBBF24;
+  --card-weather-temp-size:           clamp(24px, 7.5vmin, 52px);
+  --card-weather-temp-weight:         600;
+  --card-weather-temp-color:          #fff;
+  --card-weather-temp-letterspacing:  -1.5px;
+  --card-weather-icon-size:           44px;
+
+  --card-calendar-accent:             #A78BFA;
+  --card-calendar-time-size:          22px;
+  --card-calendar-time-weight:        600;
+
+  --card-reminder-accent:             #F59E0B;
+  --card-reminder-task-size:          16px;
+
+  --card-message-avatar-grad:         linear-gradient(135deg,#34D399,#10B981);
+  --card-message-avatar-size:         32px;
+
+  --card-eta-accent:                  #14B8A6;
+  --card-eta-size:                    40px;
+  --card-eta-icon-size:               32px;
+
+  --card-nav-accent:                  #14B8A6;
+  --card-nav-distance-size:           22px;
+  --card-nav-arrow-bg:                rgba(20,184,166,0.25);
+
+  --card-ai-grad:                     linear-gradient(120deg, rgba(102,161,243,0.45) 0%, rgba(167,139,250,0.45) 50%, rgba(34,201,166,0.45) 100%);
+  --card-ai-shimmer-speed:            3.6s;
+
+  --card-input-topic-size:            20px;
+
+  /* Type scale — design_rules typography.typeScale (+ customize tokens). UI 최소 14px. */
+  --font-family-display: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-family-body:    'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-family-mono:    'Space Mono', ui-monospace, monospace;
+  --font-size-xs:        14px;
+  --font-size-sm:        16px;
+  --font-size-md:        18px;
+  --font-size-lg:        22px;
+  --font-size-xl:        26px;
+  --font-size-display:   26px;
+
+  /* design_rules typography: UI min 14px; label 16; body 18; display 26 — fluid for narrow grid tiles */
+  --type-min: 14px;
+  --type-label-fluid: clamp(14px, 3.2vmin, 16px);
+  --type-body-fluid: clamp(14px, 3.6vmin, 18px);
+  --type-display-fluid: clamp(18px, 4.5vmin, 26px);
+  --type-weather-temp-fluid: clamp(24px, 7.5vmin, 52px);
+  --type-weather-clock-fluid: clamp(22px, 10vmin, 46px);
+  --type-weather-meta-fluid: clamp(14px, 3.2vmin, 16px);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:var(--font); font-size:var(--font-size-xs,14px); display:flex; flex-direction:column; -webkit-font-smoothing:antialiased; }
+::selection { background:rgba(3,129,254,0.3); }
+
+/* === TOP BAR === */
+.topbar {
+  height:48px; display:flex; align-items:center; justify-content:space-between;
+  padding:0 16px; background:var(--sidebar-bg); border-bottom:1px solid var(--divider);
+  flex-shrink:0;
+  /* position:relative + explicit z-index make the topbar a stacking
+     context that sits ABOVE the canvas-inner stacking context (created
+     by its zoom:0.78). This guarantees every dropdown inside the topbar
+     (device selector, theme menu, etc.) renders on top of the overlay
+     layer (z-index:500) inside the canvas. */
+  position:relative; z-index:1000;
+}
+.topbar-left { display:flex; align-items:center; gap:12px; }
+.topbar-brand { font-size:14px; font-weight:700; color:#fff; text-decoration:none; letter-spacing:0.5px; }
+.topbar-brand span { color:var(--primary); }
+.topbar-back { color:var(--text-2); text-decoration:none; display:inline-flex; align-items:center; justify-content:center; height:14px; background:none; border:none; padding:0; transition:color 0.15s; }
+.topbar-back:hover { color:var(--text); }
+.topbar-back svg { width:14px; height:14px; display:block; }
+.topbar-right { display:flex; align-items:center; gap:8px; }
+.topbar-btn {
+  padding:6px 14px; border-radius:999px; border:1px solid var(--divider);
+  background:var(--surface); color:var(--text); font-family:var(--font);
+  font-size:12px; font-weight:700; cursor:pointer; transition:all 0.15s;
+}
+.topbar-btn:hover { background:var(--surface-2); }
+.topbar-btn.primary { background:var(--primary); border-color:var(--primary); color:#fff; }
+.topbar-btn.primary:hover { background:var(--primary-light); }
+.chat-inline-btn { opacity:0.55; transition:opacity 0.15s; }
+.chat-inline-btn:hover { opacity:1; background:transparent; }
+.chat-inline-btn:active { opacity:0.8; }
+/* AI star send button is the primary action — keep it more prominent */
+.ai-send-btn { opacity:0.9; }
+.ai-send-btn:hover { opacity:1; }
+.ai-send-btn:active { opacity:0.75; }
+.ai-send-btn .ai-star-slot { display:inline-flex; }
+.chat-send-btn:hover { background:var(--primary-light); transform:scale(1.05); }
+.chat-send-btn:active { transform:scale(0.95); }
+/* Textarea chat input — word-wrap, subtle scrollbar when it hits max-height */
+#genPrompt { white-space:pre-wrap; word-wrap:break-word; overflow-wrap:break-word; }
+#genPrompt::-webkit-scrollbar { width:4px; }
+#genPrompt::-webkit-scrollbar-thumb { background:var(--divider); border-radius:2px; }
+#genPrompt::-webkit-scrollbar-track { background:transparent; }
+/* === DEVICE SELECTOR (dropdown list) === */
+.device-selector { position:relative; }
+.device-selector-btn {
+  padding:5px 12px 5px 10px; border-radius:8px; border:1px solid var(--divider);
+  background:var(--surface); color:var(--text); font-family:var(--font);
+  font-size:11px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px;
+  transition:all 0.15s;
+}
+.device-selector-btn:hover { background:var(--surface-2); }
+.device-selector-btn .dev-icon { font-size:14px; line-height:1; }
+.device-selector-btn .dev-name { white-space:nowrap; }
+.device-selector-btn::after { content:'▾'; font-size:9px; color:var(--text-3); margin-left:2px; }
+.device-selector-btn.open { border-color:var(--primary); background:var(--primary-10); }
+.device-list {
+  display:none; position:absolute; top:calc(100% + 6px); right:0; z-index:200;
+  background:var(--sidebar-bg); border:1px solid var(--divider); border-radius:12px;
+  width:260px; overflow:hidden; box-shadow:0 12px 40px rgba(0,0,0,0.5);
+  animation:devListIn 0.2s cubic-bezier(0.2,0,0,1);
+}
+@keyframes devListIn { from { opacity:0; transform:translateY(-8px) scale(0.96); } to { opacity:1; transform:none; } }
+.device-list.show { display:block; }
+.device-list-item {
+  display:flex; align-items:center; gap:10px; padding:10px 14px; cursor:pointer;
+  transition:all 0.12s; border-bottom:1px solid var(--divider);
+}
+.device-list-item:last-child { border-bottom:none; }
+.device-list-item:hover { background:var(--surface); }
+.device-list-item.active { background:var(--primary-10); }
+.device-list-item .dev-li-icon { font-size:20px; width:28px; text-align:center; flex-shrink:0; }
+.device-list-item .dev-li-info { flex:1; min-width:0; }
+.device-list-item .dev-li-name { font-size:12px; font-weight:700; color:var(--text); }
+.device-list-item.active .dev-li-name { color:var(--primary); }
+.device-list-item .dev-li-spec { font-size:10px; color:var(--text-3); margin-top:1px; }
+.device-list-item .dev-li-check { font-size:12px; color:var(--primary); opacity:0; }
+.device-list-item.active .dev-li-check { opacity:1; }
+
+/* === MAIN LAYOUT === */
+.main { display:flex; flex:1; overflow:hidden; position:relative; }
+
+/* === SIDEBAR === */
+.sidebar {
+  width:390px; flex-shrink:0; background:var(--sidebar-bg);
+  border-right:1px solid var(--divider); display:flex; flex-direction:column; overflow:hidden;
+  transition: width 280ms cubic-bezier(0.2, 0, 0, 1), opacity 200ms ease, border-right-width 280ms ease;
+  /* position + higher z-index so the sidebar's solid background covers
+     the left half of the collapse toggle container — toggle's tab
+     appears to slide out from BEHIND the sidebar. */
+  position: relative;
+  z-index: 2;
+}
+.sidebar.collapsed {
+  width: 0;
+  opacity: 0;
+  border-right-width: 0;
+  pointer-events: none;
+}
+
+/* MLP Prototype tab: widen the sidebar so the 3-col tile gallery has
+   room to breathe and all 5 tiles are visible without scrolling.
+   `:not(.collapsed)` keeps the sidebar-collapse toggle working — when
+   the user collapses, this rule no longer matches and the .collapsed
+   rule above wins. The existing `transition: width 280ms` on .sidebar
+   makes the widening animate smoothly. */
+body.tab-mlp-active .sidebar:not(.collapsed) {
+  width: 600px;
+}
+
+/* Collapse toggle — blue accent bar sticking out from the sidebar's
+   right edge. High-contrast against the dark canvas so the user can
+   find it immediately. Vertically centered, transitions `left` in
+   sync with sidebar width so it stays anchored to the right border. */
+.sidebar-collapse-toggle {
+  position: absolute;
+  top: 50%;
+  left: 390px;
+  transform: translate(-50%, -50%);
+  width: 32px;
+  height: 72px;
+  /* Chevron pushed to the RIGHT edge of the container — the left half
+     of the container sits behind the sidebar (z-index lower than
+     .sidebar) so the icon stays visible on the canvas side and is
+     never clipped behind the sidebar background. */
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 6px;
+  box-sizing: border-box;
+  border: 1px solid rgba(3, 129, 254, 0.45);
+  border-left: 0;
+  border-radius: 0 12px 12px 0;
+  background: rgba(3, 129, 254, 0.18);
+  color: var(--primary, #0381FE);
+  font-family: var(--font);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 1;                /* below .sidebar (z-index: 2) */
+  box-shadow: 2px 0 12px rgba(3, 129, 254, 0.22);
+  transition:
+    left 280ms cubic-bezier(0.2, 0, 0, 1),
+    color 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+  user-select: none;
+}
+.sidebar-collapse-toggle:hover {
+  background: rgba(3, 129, 254, 0.32);
+  box-shadow: 2px 0 16px rgba(3, 129, 254, 0.45);
+  color: #fff;
+}
+.sidebar-collapse-toggle:active {
+  transform: translate(-50%, -50%) scale(0.96);
+}
+.sidebar.collapsed ~ .sidebar-collapse-toggle { left: 0; }
+
+/* Pencil link inside the Theme picker pill — navigates to customize.html. */
+#topbarThemePicker > a.customize-open-btn { color: var(--text-3); }
+#topbarThemePicker > a.customize-open-btn:hover { color: var(--text); }
+
+/* Pipeline features — Uncheck/Check-all toggle is part of the
+   summary, but only meaningful when the section is open. Hide it
+   when collapsed so the summary stays minimal. */
+#pipelineFeaturesDetails:not([open]) #pipelineFeaturesToggleAll {
+  display: none;
+}
+
+/* 고급 (userSupplements) details — hide the default disclosure
+   chevron / triangle so the row reads as a plain text header.
+   Covers both modern (::marker) and legacy WebKit pseudo-elements. */
+.genui-user-supplements-details > summary { list-style: none; }
+.genui-user-supplements-details > summary::marker { display: none; content: ''; }
+
+/* Foldable panel-section (Design tab → Hierarchy → Pipeline Atomic
+   Bridge). We render <details> instead of <div>; the default
+   ▶/▾ marker is suppressed and replaced with a custom span
+   (.panel-foldable-chev) that rotates 90° when [open]. Default
+   state is folded so the long 21-mapping table doesn't dominate
+   the Hierarchy view. */
+details.panel-section--foldable > summary { list-style: none; }
+details.panel-section--foldable > summary::-webkit-details-marker { display: none; }
+details.panel-section--foldable > summary::marker { display: none; content: ''; }
+details.panel-section--foldable[open] > summary .panel-foldable-chev { transform: rotate(90deg); }
+.genui-user-supplements-details > summary::-webkit-details-marker { display: none; }
+.sidebar-tabs {
+  display:flex; border-bottom:1px solid var(--divider); flex-shrink:0;
+}
+.sidebar-tab {
+  flex:1;
+  padding:14px 6px;
+  text-align:center;
+  font-size:12px;
+  font-weight:700;
+  color:var(--text-3);
+  cursor:pointer;
+  border:none;
+  background:none;
+  font-family:var(--font);
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+  border-bottom:3px solid transparent;
+  transition: color 0.15s ease, background 0.15s ease, border-bottom-color 0.15s ease;
+}
+.sidebar-tab:hover { color:var(--text-2); background:rgba(255,255,255,0.02); }
+.sidebar-tab.active {
+  color:var(--primary, #0381FE);
+  background:rgba(3,129,254,0.10);
+  border-bottom-color:var(--primary, #0381FE);
+  font-weight:700;
+}
+.sidebar-content { flex:1; overflow-y:auto; padding:16px; }
+.sidebar-content::-webkit-scrollbar { width:4px; }
+.sidebar-content::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.15); border-radius:2px; }
+.panel { display:none; }
+.panel.active { display:block; }
+.panel-section { margin-bottom:20px; }
+.panel-label { font-size:11px; font-weight:700; color:var(--text-3); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; }
+.panel-label .axis-sep { font-weight:500; letter-spacing:0.5px; opacity:0.7; margin-left:6px; }
+/* Axis-split control: H slider on the left, V slider on the right (same row) */
+.axis-pair { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.axis-col { display:flex; flex-direction:column; gap:4px; min-width:0; }
+.axis-col-label { font-size:10px; font-weight:700; color:var(--text-3); letter-spacing:0.5px; }
+.axis-col .spacing-control { margin:0; }
+
+/* === DESIGN SUB-SECTIONS === */
+.design-section { margin-bottom:8px; }
+.design-section-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px 0; cursor:pointer; border-bottom:1px solid var(--divider);
+  margin-bottom:12px; user-select:none;
+  /* Animate the line fading + body rising when the section expands */
+  transition: border-bottom-color 0.35s ease, margin-bottom 0.35s ease;
+}
+.design-section-header:hover { opacity:0.85; }
+.design-section-title {
+  font-size:13px; font-weight:700; color:var(--text); letter-spacing:0.3px;
+}
+.design-section-arrow {
+  color:var(--text-3); transition:transform 0.2s ease;
+  display:inline-flex; align-items:center; justify-content:center;
+  width:16px; height:16px;
+}
+.design-section-arrow svg { width:16px; height:16px; display:block; }
+.design-section.collapsed .design-section-arrow { transform:rotate(-90deg); }
+.design-section.collapsed .design-section-body { display:none; }
+/* When EXPANDED: the line below the title fades out, and the header's
+   margin-bottom tightens so the body rises into the space the line leaves. */
+.design-section:not(.collapsed) .design-section-header {
+  border-bottom-color: transparent;
+  margin-bottom: 4px;
+}
+/* Body appears first (as is), then drifts up slightly while the line fades.
+   The timing is tuned so "line fade + body rise" read as one motion. */
+.design-section:not(.collapsed) .design-section-body {
+  animation: sectionBodyReveal 0.35s cubic-bezier(0.2, 0, 0, 1);
+}
+@keyframes sectionBodyReveal {
+  0%   { opacity: 0; transform: translateY(8px); }
+  40%  { opacity: 1; }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.design-section-body { padding-bottom:8px; }
+.design-divider { height:1px; background:var(--divider); margin:4px 0 12px; }
+
+/* === TOGGLE SWITCH === */
+.oui-toggle {
+  width:36px; height:20px; border-radius:10px; background:rgba(255,255,255,0.12);
+  position:relative; cursor:pointer; transition:background 0.2s;
+}
+.oui-toggle.active { background:var(--primary); }
+.oui-toggle-thumb {
+  width:16px; height:16px; border-radius:50%; background:#fff;
+  position:absolute; top:2px; left:2px; transition:transform 0.2s;
+}
+.oui-toggle.active .oui-toggle-thumb { transform:translateX(16px); }
+
+/* === COMPONENT PALETTE === */
+.comp-palette { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:4px; }
+.comp-palette.col-2 { grid-template-columns:1fr 1fr; }
+.comp-palette.col-row { display:flex; gap:4px; }
+.comp-palette.col-row .comp-item { flex:1; }
+/* Components 2-column subsection cards (matches Colors treatment) */
+.comp-grid-2col { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.comp-card {
+  background:var(--surface); border:1px solid var(--divider);
+  border-radius:12px; padding:10px; display:flex; flex-direction:column;
+}
+.comp-card .panel-label { margin-bottom:6px; font-size:10px; letter-spacing:0.8px; }
+.comp-card .comp-palette { grid-template-columns:1fr 1fr; gap:4px; }
+.comp-card .comp-item { padding:8px 4px; font-size:10px; }
+.comp-item {
+  padding:8px 4px; border-radius:10px; border:1px solid var(--divider);
+  background:var(--surface); cursor:grab; text-align:center; font-size:10px;
+  font-weight:500; color:var(--text-2); transition:all 0.15s; user-select:none;
+}
+.comp-item:hover { border-color:var(--primary); color:var(--primary); background:var(--primary-10); }
+.comp-item:active { cursor:grabbing; transform:scale(0.95); }
+/* Glyphs/icons above the label intentionally hidden — labels alone read
+   cleaner in the component palette. Markup (.comp-icon spans) left in
+   place so they can be restored with one line if desired. */
+.comp-item .comp-icon,
+.comp-card .comp-item .comp-icon { display:none; }
+
+/* === LAYOUT PRESETS === */
+.layout-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; }
+.layout-preset {
+  aspect-ratio:1; border-radius:10px; border:1px solid var(--divider);
+  background:var(--surface); cursor:pointer; padding:8px; transition:all 0.15s;
+  display:flex; flex-direction:column; gap:3px;
+}
+.layout-preset:hover { border-color:var(--primary); }
+.layout-preset.active { border-color:var(--primary); background:var(--primary-10); }
+.layout-preset .lp-bar { background:rgba(255,255,255,0.15); border-radius:2px; flex-shrink:0; }
+.layout-preset .lp-row { display:flex; gap:3px; flex:1; }
+.layout-preset .lp-col { background:rgba(255,255,255,0.1); border-radius:2px; flex:1; }
+.layout-label { font-size:10px; color:var(--text-3); text-align:center; margin-top:4px; }
+
+/* === COLOR SWATCHES === */
+.color-palette { display:flex; flex-wrap:wrap; gap:6px; }
+.color-swatch {
+  width:32px; height:32px; border-radius:8px; cursor:pointer;
+  border:2px solid transparent; transition:all 0.15s; position:relative;
+}
+.color-swatch:hover { transform:scale(1.1); }
+.color-swatch.selected { border-color:#fff; box-shadow:0 0 0 2px var(--primary); }
+.color-swatch .cs-label { position:absolute; bottom:-14px; left:50%; transform:translateX(-50%); font-size:8px; color:var(--text-3); white-space:nowrap; display:none; }
+.color-swatch:hover .cs-label { display:block; }
+.color-target { display:flex; gap:6px; margin-bottom:12px; }
+
+/* === COLORS 2-COLUMN GRID + SUBSECTION CARDS === */
+.color-grid-2col { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.color-grid-2col.full { grid-column: 1 / -1; }
+.color-card {
+  background:var(--surface); border:1px solid var(--divider);
+  border-radius:12px; padding:10px; display:flex; flex-direction:column;
+}
+.color-card .panel-label { margin-bottom:6px; font-size:10px; letter-spacing:0.8px; }
+.color-card .color-palette { gap:4px; }
+.color-card .color-swatch { width:22px; height:22px; border-radius:6px; border-width:1.5px; }
+.color-card .color-swatch:hover { transform:scale(1.15); }
+.color-card .wp-grid { grid-template-columns:repeat(2, 1fr); gap:4px; }
+.color-card .wp-thumb { border-radius:8px; }
+.color-card .wp-thumb > div { border-radius:8px; }
+.color-target button {
+  flex:1; padding:6px; border-radius:8px; border:1px solid var(--divider);
+  background:var(--surface); color:var(--text-2); font-family:var(--font);
+  font-size:11px; cursor:pointer; transition:all 0.15s;
+}
+.color-target button.active { border-color:var(--primary); color:var(--primary); background:var(--primary-10); }
+
+/* === GROUPING === */
+.group-actions { display:flex; flex-direction:column; gap:6px; }
+.group-btn {
+  padding:10px; border-radius:10px; border:1px solid var(--divider);
+  background:var(--surface); color:var(--text); font-family:var(--font);
+  font-size:12px; font-weight:500; cursor:pointer; transition:all 0.15s; text-align:left;
+}
+.group-btn:hover { border-color:var(--primary); }
+.group-btn span { font-size:16px; margin-right:8px; }
+
+/* === MOTION PALETTE === */
+.motion-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:4px; }
+.motion-item {
+  padding:8px 4px; border-radius:10px; border:1px solid var(--divider);
+  background:var(--surface); cursor:pointer; font-size:10px;
+  color:var(--text-2); transition:all 0.15s;
+  display:flex; align-items:center; justify-content:center; gap:4px;
+}
+.motion-item:hover { border-color:var(--primary); color:var(--primary); }
+.motion-item.selected { border-color:var(--primary); background:var(--primary-10); color:var(--primary); }
+.motion-item .mi-curve { font-size:14px; line-height:1; flex-shrink:0; }
+.motion-item svg { flex-shrink:0; display:block; width:14px; height:14px; }
+
+.dur-slider-wrap { display:flex; flex-direction:column; gap:6px; }
+.dur-slider-header { display:flex; justify-content:space-between; align-items:center; }
+.dur-value { font-size:13px; font-weight:700; color:var(--primary); font-family:var(--font); }
+.dur-label { font-size:11px; color:var(--text-3); font-family:var(--font); }
+.dur-slider {
+  -webkit-appearance:none; appearance:none; width:100%; height:6px;
+  background:linear-gradient(to right, var(--primary) 0%, var(--primary) var(--pct,28.6%), var(--divider) var(--pct,28.6%), var(--divider) 100%);
+  border-radius:3px; outline:none; cursor:pointer;
+}
+.dur-slider::-webkit-slider-thumb {
+  -webkit-appearance:none; width:18px; height:18px; border-radius:50%;
+  background:var(--primary); border:2px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,0.3);
+  cursor:pointer;
+}
+.dur-ticks { display:flex; justify-content:space-between; padding:0 2px; }
+.dur-tick { font-size:9px; color:var(--text-3); font-family:var(--font); cursor:pointer; }
+.dur-tick:hover { color:var(--primary); }
+.dur-chip.selected { border-color:var(--primary); color:var(--primary); background:var(--primary-10); }
+
+/* === VARIANT CONTROLS === */
+.variant-bar {
+  display:flex; align-items:center; gap:2px; padding:0 4px; height:36px; flex-shrink:0;
+  background:var(--sidebar-bg); border-bottom:1px solid var(--divider);
+}
+.variant-tab {
+  padding:6px 16px; border-radius:8px; border:1px solid transparent;
+  background:transparent; color:var(--text-3); font-family:var(--font);
+  font-size:11px; font-weight:700; cursor:pointer; transition:all 0.15s;
+  letter-spacing:0.3px;
+}
+.variant-tab:hover { color:var(--text-2); background:var(--surface); }
+.variant-tab.active { color:var(--text); background:var(--surface); border-color:var(--divider); }
+.variant-tab.active.variant-a { border-color:var(--primary); color:var(--primary); }
+.variant-tab.active.variant-b { border-color:#9b59b6; color:#9b59b6; }
+.variant-tab-compare { margin-left:auto; }
+.variant-tab-compare.active { border-color:#f39c12; color:#f39c12; }
+.variant-badge {
+  display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:4px; vertical-align:middle;
+}
+.variant-badge.a { background:var(--primary); }
+.variant-badge.b { background:#9b59b6; }
+.variant-status {
+  font-size:10px; color:var(--text-3); margin-left:8px; font-weight:500;
+}
+
+/* === COMPARE MODE === */
+.canvas-wrap.compare-mode {
+  gap:8px; align-items:flex-start !important; padding-top:4px;
+}
+.canvas-wrap.compare-mode .compare-frame {
+  display:flex; flex-direction:column; align-items:center;
+}
+.canvas-wrap.compare-mode > div:first-child {
+  display:flex; flex-direction:column; align-items:center;
+}
+.compare-frame {
+  display:none; flex-direction:column; align-items:center;
+}
+.compare-frame .canvas-frame {
+  /* Inherit same sizing as primary canvas-frame — no separate height override */
+}
+.compare-label {
+  font-size:11px; font-weight:700; letter-spacing:0.5px; text-transform:uppercase;
+  padding:3px 14px; border-radius:6px; margin-bottom:6px; flex-shrink:0;
+}
+.compare-label.a { background:var(--primary-10); color:var(--primary); }
+.compare-label.b { background:rgba(155,89,182,0.12); color:#9b59b6; }
+
+/* === CANVAS === */
+.canvas-wrap {
+  flex:1; display:flex; align-items:center; justify-content:center;
+  background:var(--bg); padding:12px 24px 8px; overflow-x:hidden; overflow-y:auto;
+  background-image: radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 20px 20px;
+  flex-direction:column;
+}
+.canvas-frame {
+  height:min(780px, calc(100vh - 84px)); aspect-ratio:1080/2340; /* Galaxy S26 19.5:9 */
+  width:auto;
+  background-image:url('../wallpapers/1.webp');
+  background-color:var(--canvas-bg-dark);
+  background-size:cover;
+  background-position:center center;
+  background-repeat:no-repeat;
+  background-clip:border-box; /* wallpaper fills edge-to-edge under the bezel */
+  border-radius:44px; /* Galaxy S26 canonical bezel radius */
+  border:2px solid rgba(60,60,66,0.9);
+  position:relative;
+  overflow:hidden;
+  box-shadow:0 0 0 1px rgba(0,0,0,0.5) inset, 0 20px 60px rgba(0,0,0,0.5);
+  transition:all 0.4s cubic-bezier(0.2,0,0,1);
+}
+/* Inner content rounds to match the bezel interior so wallpaper + content share the same outline */
+.canvas-frame .canvas-inner { border-radius:42px; }
+/* Samsung TV: 1920×1080 (16:9) */
+.canvas-frame.tv { width:auto; height:min(720px, calc(100vh - 84px)); aspect-ratio:16/9; border-radius:4px; border-width:2px; max-width:calc(100vw - 440px); }
+/* Galaxy Watch 7 (44mm): 480×480 circular */
+.canvas-frame.watch { width:240px; height:240px; border-radius:50%; aspect-ratio:unset; border-width:2px; }
+/* Galaxy Tab S10+: 1752×2800 (16:10 portrait → landscape 16:10) */
+.canvas-frame.tablet { width:auto; height:min(680px, calc(100vh - 84px)); aspect-ratio:2800/1752; border-radius:18px; border-width:2px; }
+/* Galaxy Book: 2880×1800 (16:10 landscape) */
+.canvas-frame.desktop { width:min(900px, calc(100vw - 440px)); height:auto; aspect-ratio:16/10; border-radius:8px; border-width:2px; }
+.canvas-frame.light { background:var(--canvas-bg-light); }
+/* Device notch — hidden on every screen. Samsung Galaxy S26 uses a punch-
+   hole camera (not a notch), so the fake black Dynamic-Island-style bar was
+   visually incorrect and broke the wallpaper continuity at the top edge. */
+.canvas-notch {
+  display: none !important;
+}
+.canvas-frame.watch .canvas-inner { padding:20px 12px; border-radius:50%; }
+.canvas-frame.tv .canvas-inner { padding:32px 48px; zoom:1; gap:8px; }
+.canvas-frame.tablet .canvas-inner { padding:28px 24px 16px; zoom:0.65; gap:0; }
+.canvas-frame.tablet .canvas-notch { display:none; }
+.canvas-inner {
+  position:absolute; top:0; left:0; right:0; bottom:0;
+  padding:28px 0 0; overflow-x:hidden; overflow-y:hidden; display:flex; flex-direction:column; gap:0;
+  font-family:'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  zoom:0.78;
+}
+.canvas-frame.desktop .canvas-inner { padding:16px; zoom:1; }
+.canvas-frame.watch .canvas-inner { zoom:0.85; }
+.canvas-inner::-webkit-scrollbar { width:3px; }
+.canvas-inner::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); border-radius:2px; }
+
+/* === BRAND BUTTONS === */
+.brand-btn {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:6px 12px; border-radius:999px; border:1px solid var(--divider);
+  background:var(--surface); color:var(--text-2); font-family:var(--font);
+  font-size:11px; font-weight:700; cursor:pointer; transition:all 0.15s;
+  white-space:nowrap;
+}
+.brand-btn:hover { border-color:var(--bc, var(--primary)); color:var(--text); }
+.brand-btn.active { border-color:var(--bc, var(--primary)); background:color-mix(in srgb, var(--bc, var(--primary)) 15%, transparent); color:var(--text); }
+.brand-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+
+/* === COMPACT SCENARIO BUTTONS ===
+   min-height pinned so Screens (4-col grid) and Overlays (3-col grid)
+   render at the same height even though their column widths differ. */
+.scene-btn {
+  display:flex; align-items:center; justify-content:center;
+  padding:0 6px;
+  min-height:38px;
+  height:38px;
+  box-sizing:border-box;
+  border-radius:10px; border:1px solid var(--divider);
+  background:var(--surface); color:var(--text-2); font-family:var(--font);
+  font-size:12px; font-weight:500; cursor:pointer;
+  transition:all 0.15s; line-height:1.2;
+  letter-spacing:0;
+}
+.scene-btn span {
+  font-size:12px; font-weight:500; white-space:nowrap;
+  overflow:hidden; text-overflow:ellipsis;
+}
+.scene-btn:hover { border-color:var(--primary); color:var(--primary); background:var(--primary-10); }
+.scene-btn.active {
+  border-color:var(--primary); color:var(--primary);
+  background:var(--primary-10); font-weight:700;
+}
+.scene-btn[data-role="overlay"].active {
+  border-color:#0FCF6E; color:#0FCF6E;
+  background:rgba(15,207,110,0.12);
+}
+
+/* Overlay inner — container for all overlay-layer items (Dialog/QS/Notif
+   composed on top of the base screen). Lives on canvas-FRAME so it
+   covers the full phone silhouette (canvas-inner's zoom:0.78 would
+   otherwise shrink it by 22% on right + bottom). */
+.overlay-inner {
+  position:absolute; inset:0; z-index:500; pointer-events:auto;
+}
+.overlay-inner .rules-item { z-index:auto; }
+
+/* Lock-base overlays: the decorative Lock content (clock/weather/
+   widgets/padlock) is already hidden via opacity:0 (see
+   .overlay-hides-lock-content below), so we can raise canvas-inner
+   above overlay-inner and the only visible parts of canvas-inner are
+   the chrome items (status-bar/now-bar/shortcuts/gesture-bar). Result:
+   blur+tint covers the full frame, chrome stays crisp on top.
+
+   For NON-Lock overlays (QS/Notif/Dialog over Home/List/Detail) we
+   intentionally keep canvas-inner at z-auto so the overlay's blur can
+   obscure the base app UI. Chrome below the blur is a minor trade-off
+   for those bases — the user's current test case is Lock. */
+.canvas-frame[data-overlay-active="1"][data-overlay-base="lockscreen"] .canvas-inner,
+.canvas-frame[data-overlay-active="1"][data-overlay-base="lock"] .canvas-inner {
+  z-index: 550;
+}
+
+/* Overlay-level blur + tint. Applied DIRECTLY on .overlay-inner (not a
+   pseudo) for reliable cross-browser compositing — pseudo-element
+   backdrop-filter has rendering quirks especially inside a zoomed
+   ancestor (canvas-inner uses zoom:0.78) that caused visible edge
+   artifacts and intermittent rendering failures.
+     - QS             : 12px blur + 0.30 neutral tint
+     - Notif/Lock     : same — frosted AOD look
+     - Dialog         : same — soft-focus behind modal
+     - Notif on day   : transparent (cards float on live UI, no tint)
+   Clean edges come for free from .canvas-frame's overflow:hidden +
+   border-radius:44 which clips the overlay-inner to the device silhouette. */
+.overlay-inner[data-overlay-key="quicksettings"],
+.overlay-inner[data-overlay-key="qs"],
+.overlay-inner[data-overlay-key="quickSettings"],
+.overlay-inner[data-overlay-key="notifications"][data-base="lockscreen"],
+.overlay-inner[data-overlay-key="notifications"][data-base="lock"],
+.overlay-inner[data-overlay-key="notification"][data-base="lockscreen"],
+.overlay-inner[data-overlay-key="notification"][data-base="lock"],
+.overlay-inner[data-overlay-key="notif"][data-base="lockscreen"],
+.overlay-inner[data-overlay-key="notif"][data-base="lock"] {
+  background: rgba(23,23,26,0.40);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+/* Dialog uses a darker tint — the old dim-overlay scrim component is
+   no longer rendered (see renderDimOverlay), so the modal's "weight"
+   now comes entirely from the overlay-inner backdrop. */
+.overlay-inner[data-overlay-key="dialog"] {
+  background: rgba(0,0,0,0.55);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+/* Notif over day bases (Home/List/Detail) — NO blur, NO tint: cards
+   float on live app UI. Override the base rule above. */
+.overlay-inner[data-overlay-key="notifications"]:not([data-base="lockscreen"]):not([data-base="lock"]),
+.overlay-inner[data-overlay-key="notification"]:not([data-base="lockscreen"]):not([data-base="lock"]),
+.overlay-inner[data-overlay-key="notif"]:not([data-base="lockscreen"]):not([data-base="lock"]) {
+  background: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* `.overlay-hides-all` is applied to the host when QS is active. It keeps
+   the base visible (so the backdrop-filter has something to blur), but
+   disables pointer events on the base layer so taps hit QS controls only. */
+.overlay-hides-all > .canvas-item:not([data-layer="overlay"]),
+.overlay-hides-all > .rules-item:not([data-layer="overlay"]),
+.overlay-hides-all > .surface-item:not([data-layer="overlay"]) {
+  pointer-events: none;
+}
+
+/* Any overlay over the Lock screen fades out the Lock decorative content
+   (giant clock, weather/date, widget row, padlock). Chrome (status bar,
+   now-bar, shortcuts, gesture bar) remains at z-index:550 above the
+   blur. Result: the frosted overlay sits on a clean blurred wallpaper
+   without a readable clock "ghost" bleeding through. 200ms fade so the
+   transition reads as intentional when toggling the shade. */
+.overlay-hides-lock-content > .rules-item[data-role="clock"],
+.overlay-hides-lock-content > .rules-item[data-role="weatherDate"],
+.overlay-hides-lock-content > .rules-item[data-role="widgetsRow"],
+.overlay-hides-lock-content > .rules-item[data-role="lockIndicator"] {
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+/* Chrome roles render ABOVE the overlay blur/tint (z-index:500) so the
+   system bars stay crisp and legible even when a QS / Notification /
+   Dialog shade is expanded over the base screen.
+   - status-bar (top): time, wifi, battery — always on top of everything
+   - Lock bottom chrome: now-bar, unlock hint, L/R shortcut circles,
+     gesture bar — stay visible over Notif blur on lock
+   - App bottom chrome: app-dock, bottom-navigation, bottom-bar — stay
+     visible over overlays on Home / List / Detail
+   Matches any class (.canvas-item | .rules-item | .surface-item) so
+   palette-added items promote too. Kept at 550 (below the 600+ dev
+   badges/inspect buttons). */
+.canvas-item[data-role="status-bar"],
+.rules-item[data-role="status-bar"],
+.surface-item[data-role="status-bar"],
+.canvas-item[data-role="now-bar"],
+.rules-item[data-role="now-bar"],
+.surface-item[data-role="now-bar"],
+.canvas-item[data-role="unlockHint"],
+.rules-item[data-role="unlockHint"],
+.canvas-item[data-role="unlock-hint"],
+.rules-item[data-role="unlock-hint"],
+.surface-item[data-role="unlock-hint"],
+.canvas-item[data-role="shortcutLeft"],
+.rules-item[data-role="shortcutLeft"],
+.canvas-item[data-role="shortcutRight"],
+.rules-item[data-role="shortcutRight"],
+.canvas-item[data-role="shortcut-left"],
+.rules-item[data-role="shortcut-left"],
+.canvas-item[data-role="shortcut-right"],
+.rules-item[data-role="shortcut-right"],
+.canvas-item[data-role="gestureBar"],
+.rules-item[data-role="gestureBar"],
+.canvas-item[data-role="gesture-bar"],
+.rules-item[data-role="gesture-bar"],
+.surface-item[data-role="gesture-bar"],
+.canvas-item[data-role="app-dock"],
+.rules-item[data-role="app-dock"],
+.surface-item[data-role="app-dock"],
+.canvas-item[data-role="bottom-navigation"],
+.rules-item[data-role="bottom-navigation"],
+.surface-item[data-role="bottom-navigation"],
+.canvas-item[data-role="bottom-bar"],
+.rules-item[data-role="bottom-bar"],
+.surface-item[data-role="bottom-bar"] {
+  z-index: 550;
+}
+
+/* === CANVAS ITEMS === */
+.canvas-item {
+  position:relative; cursor:move; transition:outline 0.1s, opacity 0.15s, transform 0.15s;
+  outline:2px solid transparent; outline-offset:2px; border-radius:4px;
+  align-self:flex-start; width:fit-content;
+}
+.canvas-item.full-width { align-self:stretch; width:100%; }
+.canvas-item.dragging { opacity:0.4; }
+.canvas-item.drag-over-top { box-shadow:0 -3px 0 0 var(--primary); }
+.canvas-item.drag-over-bottom { box-shadow:0 3px 0 0 var(--primary); }
+/* Hover / selected outlines removed — the interaction overlay draws them.
+   `.selected` class is kept on elements only as IDENTITY, not as visual. */
+.canvas-item:hover { outline-color:transparent; }
+.canvas-item.selected { outline-color:transparent; }
+.canvas-item.grouped { outline-color:rgba(100,233,227,0.4); outline-style:dashed; }
+/* App icon images — ensure they render reliably in canvas/scenario contexts */
+.canvas-item img, .canvas-inner img { display:inline-block; object-fit:contain; max-width:100%; }
+/* Inline row: auto-wrap chips/buttons/toggles that are consecutive */
+.canvas-inline-row {
+  display:flex; flex-direction:row; flex-wrap:wrap; gap:8px;
+  align-self:flex-start; align-items:center; width:100%;
+}
+.canvas-inline-row .canvas-item { align-self:center; }
+.canvas-item [contenteditable]:focus { outline:none; cursor:text; }
+.canvas-delete, .canvas-item-delete {
+  position:absolute; top:-8px; right:-8px; width:20px; height:20px;
+  border-radius:50%; background:#ff4444; color:#fff; border:none;
+  font-size:12px; cursor:pointer; display:none; align-items:center; justify-content:center; z-index:5;
+  line-height:1; padding:0;
+}
+.canvas-item.selected .canvas-delete,
+.canvas-item.selected .canvas-item-delete { display:flex; }
+
+/* === CACHED SCREENS (Generate tab → Cached section) === */
+.cached-entry {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 8px; border-radius: 8px;
+  background: var(--surface); border: 1px solid var(--divider);
+  cursor: pointer; transition: all 0.12s;
+  position: relative;
+}
+.cached-entry:hover {
+  border-color: var(--primary);
+  background: var(--primary-10);
+}
+.cached-entry.active {
+  border-color: #0FCF6E;
+  background: rgba(15,207,110,0.12);
+}
+.cached-glyph {
+  width: 24px; height: 24px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface-2); border-radius: 6px;
+  font-size: 13px; color: var(--text-2);
+}
+.cached-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.cached-label {
+  font-size: 12px; font-weight: 700; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cached-sub {
+  font-size: 10px; color: var(--text-3);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  text-transform: capitalize;
+}
+.cached-delete {
+  flex-shrink: 0; width: 20px; height: 20px;
+  background: transparent; border: none; border-radius: 4px;
+  color: var(--text-3); cursor: pointer; font-size: 14px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.12s; opacity: 0;
+}
+.cached-entry:hover .cached-delete { opacity: 1; }
+.cached-delete:hover {
+  background: rgba(255,107,107,0.15); color: #FF6B6B;
+}
+
+/* === SKELETON LOADER ===
+   Applied to canvas while waiting for agent response. Dims+pulses all
+   child content so the structural placeholder reads as "loading". */
+.skeleton-loading .rules-item,
+.skeleton-loading .surface-item,
+.skeleton-loading .canvas-item {
+  animation: skeletonPulse 1.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  pointer-events: none;
+}
+.skeleton-loading .rules-item > *,
+.skeleton-loading .surface-item > *,
+.skeleton-loading .canvas-item > * {
+  filter: saturate(0.7) brightness(0.85);
+}
+@keyframes skeletonPulse {
+  0%, 100% { opacity: 0.65; }
+  50%      { opacity: 0.35; }
+}
+
+/* === HIERARCHY PANEL (Design tab → Hierarchy section) ===
+   Visual grammar rules listed as key → value rows. Read-only for now;
+   each row will eventually get an inline edit affordance so designers
+   can override the default mapping (e.g. change the accent color for
+   urgency=high, pick a different layout template for focus_protection).
+*/
+.hierarchy-rule {
+  display: grid;
+  grid-template-columns: 1fr auto 1.4fr;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  line-height: 1.35;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+  transition: background 0.15s, border-color 0.15s;
+}
+.hierarchy-rule:hover {
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(255,255,255,0.08);
+}
+.hierarchy-rule .hr-key {
+  color: var(--text);
+  font-weight: 500;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hierarchy-rule .hr-arrow {
+  color: var(--text-3);
+  font-size: 10px;
+}
+.hierarchy-rule .hr-val {
+  color: var(--text-2);
+  font-size: 10px;
+  min-width: 0;
+  line-height: 1.4;
+}
+/* "planned" rows — rules declared but not yet enforced on the canvas */
+.hierarchy-rule.hr-planned {
+  opacity: 0.55;
+  border-style: dashed;
+}
+.hierarchy-rule.hr-planned::after {
+  content: 'planned';
+  font-size: 9px;
+  color: var(--text-3);
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.04);
+  grid-column: 3;
+  justify-self: end;
+  margin-left: 4px;
+  white-space: nowrap;
+}
+
+/* === SURFACE-LAYOUT ITEMS (surface-layout.js grammar) === */
+.surface-item {
+  box-sizing: border-box;
+}
+
+/* R2 information-priority: "defer" components render but collapsed
+   (dimmed, scaled, non-interactive) so the user can tell at a glance
+   that this is peripheral context, not a primary action. Full hide
+   would lose continuity and break the spatial model. */
+.surface-item.priority-collapsed,
+.rules-item.priority-collapsed,
+.canvas-item.priority-collapsed {
+  opacity: 0.35;
+  transform: scale(0.92);
+  transform-origin: top left;
+  pointer-events: none;
+  filter: saturate(0.6);
+  transition: opacity 220ms ease, transform 220ms ease, filter 220ms ease;
+}
+.surface-item.priority-collapsed:hover,
+.rules-item.priority-collapsed:hover,
+.canvas-item.priority-collapsed:hover {
+  opacity: 0.7;
+  transform: scale(0.96);
+}
+
+/* R3-B purpose-aware layout emphasis classes. Applied by
+   renderSurfacePlan when the layout dispatcher (_layoutForPurpose)
+   marks a component with _emphasis. Each emphasis reads as a distinct
+   visual tier without overriding the atomic's own styling. */
+
+/* hero  — dominant element in the purpose layout (one per generation)
+   NOTE: earlier revision used a ::before radial-gradient overlay that
+   rendered as a visible grey rectangle OUTSIDE the atomic's rounded
+   silhouette (atomic owns the border-radius; the wrapper doesn't), so
+   the glow looked like a phantom container. Reverted to a pure inline
+   emphasis — no pseudo, no extra box. The atomic's own glass already
+   reads as prominent when the hero is placed in the purpose layout's
+   hero slot. */
+.surface-item.emphasis-hero {
+  /* deliberately empty — let the atomic + layout position speak */
+}
+
+/* must  — matches informationPriority.must_show. Subtle green ring. */
+.surface-item.emphasis-must {
+  box-shadow: 0 0 0 1px rgba(74,222,128,0.28), 0 4px 14px rgba(74,222,128,0.08);
+  transition: box-shadow 240ms ease;
+}
+
+/* action  — pinned action-row at the bottom of continuity / modal layouts */
+.surface-item.emphasis-action {
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.25);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* secondary  — context above the dialog in modal_stack */
+.surface-item.emphasis-secondary {
+  opacity: 0.9;
+}
+
+/* dim  — supporting items beneath the hero in hero_single */
+.surface-item.emphasis-dim {
+  opacity: 0.55;
+  transform: scale(0.96);
+  transform-origin: top center;
+  filter: saturate(0.8);
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+.surface-item.emphasis-dim:hover {
+  opacity: 0.85;
+  transform: scale(0.99);
+}
+.surface-item > * {
+  width: 100%;
+  height: 100%;
+}
+
+/* Smooth reflow — when a node's left/top changes (delete, reorder, resize),
+   absolute-positioned items glide into place instead of snapping. `will-change`
+   hints the compositor to promote these to their own layer so transitions
+   animate on GPU, not via the main thread. */
+.canvas-item, .rules-item, .surface-item {
+  transition:
+    top 260ms cubic-bezier(0.2, 0, 0, 1),
+    left 260ms cubic-bezier(0.2, 0, 0, 1),
+    width 260ms cubic-bezier(0.2, 0, 0, 1),
+    height 260ms cubic-bezier(0.2, 0, 0, 1);
+}
+.rules-item, .surface-item {
+  will-change: top, left;
+}
+/* Drag in progress → dimmed + no transition (snaps to cursor) */
+.canvas-item.dragging, .rules-item.dragging, .surface-item.dragging {
+  transition: none;
+  opacity: 0.4;
+}
+/* Group membership — subtle dashed outline shared across all members.
+   Keyboard: Cmd/Ctrl+G groups selected nodes; Cmd/Ctrl+Shift+G ungroups. */
+.canvas-item[data-group-id],
+.rules-item[data-group-id],
+.surface-item[data-group-id] {
+  outline: 1px dashed rgba(100, 233, 227, 0.55);
+  outline-offset: 1px;
+}
+
+/* Drop-target indicators for same-column reorder */
+.canvas-item.drag-insert-before::before,
+.rules-item.drag-insert-before::before,
+.surface-item.drag-insert-before::before {
+  content: '';
+  position: absolute; left: 0; right: 0; top: -3px;
+  height: 3px; background: #0FCF6E;
+  border-radius: 2px; pointer-events: none; z-index: 600;
+}
+.canvas-item.drag-insert-after::after,
+.rules-item.drag-insert-after::after,
+.surface-item.drag-insert-after::after {
+  content: '';
+  position: absolute; left: 0; right: 0; bottom: -3px;
+  height: 3px; background: #0FCF6E;
+  border-radius: 2px; pointer-events: none; z-index: 600;
+}
+
+/* === SCENE INSPECTOR (Design tab → live layers + property editor) === */
+.scene-layers {
+  display: flex; flex-direction: column; gap: 2px;
+  max-height: 300px; overflow: auto;
+  padding: 2px;
+}
+.scene-layer-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 8px; border-radius: 6px; cursor: pointer;
+  font-size: 11px; color: var(--text-2);
+  border: 1px solid transparent;
+  transition: background 0.1s, border-color 0.1s;
+}
+.scene-layer-row:hover {
+  background: rgba(255,255,255,0.04);
+  border-color: var(--divider);
+}
+.scene-layer-row.active {
+  background: rgba(15,207,110,0.12);
+  border-color: #0FCF6E;
+  color: #fff;
+}
+.scene-layer-icon {
+  width: 18px; height: 18px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0.75; font-size: 12px;
+}
+.scene-layer-role {
+  flex: 1; font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* Group rows — a row that represents a CONTAINER (primary-task,
+   supporting, etc.). Visually marked as the parent of the child rows
+   below it: dashed-style hint already on the indicator chip; here we
+   add a subtle row-level bg so a glance distinguishes container from
+   leaf. Children inherit normal row styling but get padding-left from
+   their depth (set inline in scene-inspector). */
+.scene-layer-row.is-group {
+  background: rgba(255,255,255,0.025);
+  border-color: rgba(255,255,255,0.06);
+}
+.scene-layer-row.is-group:hover {
+  background: rgba(255,255,255,0.06);
+}
+.scene-layer-size {
+  font-size: 9px; color: var(--text-3);
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+}
+.scene-empty {
+  padding: 16px 10px; font-size: 11px;
+  color: var(--text-3); text-align: center; font-style: italic;
+}
+
+.scene-props {
+  display: flex; flex-direction: column; gap: 10px;
+  padding-top: 4px;
+}
+.scene-prop-row {
+  display: flex; flex-direction: column; gap: 4px;
+}
+.scene-prop-label {
+  font-size: 10px; color: var(--text-3);
+  text-transform: uppercase; letter-spacing: 0.4px; font-weight: 700;
+}
+.scene-prop-input {
+  padding: 7px 9px; border-radius: 6px;
+  border: 1px solid var(--divider);
+  background: var(--surface); color: var(--text);
+  font-family: var(--font); font-size: 12px;
+}
+.scene-prop-input:focus {
+  outline: none; border-color: var(--primary);
+}
+.scene-prop-radio {
+  display: flex; gap: 4px;
+}
+.scene-prop-radio label {
+  flex: 1; text-align: center;
+  padding: 6px 8px; border-radius: 6px;
+  border: 1px solid var(--divider); font-size: 11px;
+  cursor: pointer; color: var(--text-2);
+  transition: all 0.12s;
+}
+.scene-prop-radio input { display: none; }
+.scene-prop-radio label:has(input:checked) {
+  border-color: #0FCF6E;
+  background: rgba(15,207,110,0.12);
+  color: #fff;
+  font-weight: 700;
+}
+
+/* `.scene-hover` is legacy from the class-based inspector; now routed through
+   the interaction overlay. Kept as a no-op so old code paths can't accidentally
+   paint a stale rectangle. */
+.canvas-item.scene-hover,
+.rules-item.scene-hover,
+.surface-item.scene-hover {
+  outline: transparent;
+}
+
+/* === RULES-MODE ITEMS (Lock / QS / Notif / Dialog) ===
+   Standalone class — no class-based hover / selected styling. All visual
+   feedback comes from the interaction overlay. */
+.rules-item {
+  cursor:pointer;
+  box-sizing:border-box;
+  outline:2px solid transparent;
+  outline-offset:-1px;
+}
+.rules-item:hover  { outline-color:transparent; }
+.rules-item.selected { outline-color:transparent; }
+
+/* Green diagnostic badges — hidden globally. The green "RULES: scenario (N)"
+   tag (.rules-badge) and the per-element info chips were useful during
+   Tier-1 debugging but add visual noise over real UI. Kept in the DOM so
+   inspect-mode can still be toggled via script, but display:none by CSS. */
+.rules-info-chip,
+.rules-badge {
+  display: none !important;
+}
+.rules-inspect-on .rules-item { outline:1px dashed rgba(15,207,110,0.55); }
+
+/* Staggered entry for notification cards when the Notif overlay mounts.
+   `animation-delay` is set per-item (inline) in rules-renderer so the
+   cards cascade in. Transform is set to translateY so the slide starts
+   from above and settles into place. */
+@keyframes notifCardEnter {
+  0%   { opacity: 0; transform: translateY(-14px) scale(0.98); }
+  60%  { opacity: 1; }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* === INTERACTION OVERLAY (single source of hover + selection visuals) ===
+   Overlay lives inside the canvas (or _rulesInner when rules-mode is on).
+   Boxes are drawn by interaction-state.js from window.interactionState;
+   pointer-events are disabled so hit-testing still reaches the real nodes. */
+.interaction-overlay {
+  position:absolute; inset:0;
+  pointer-events:none; z-index:700;
+  overflow:visible;
+}
+.ix-hover-box {
+  border:2px dashed rgba(15,207,110,0.85);
+  border-radius:4px;
+  box-shadow:0 0 0 1px rgba(0,0,0,0.35) inset;
+  pointer-events:none;
+}
+.ix-selected-box {
+  border:2px solid #0FCF6E;
+  border-radius:4px;
+  box-shadow:
+    0 0 0 1px rgba(15,207,110,0.4) inset,
+    0 0 20px rgba(15,207,110,0.25);
+  pointer-events:none;
+}
+
+/* Interaction overlay is a Design-tab-only affordance. On the Generate /
+   Refine tabs, hide hover + selected boxes so users see the raw UI without
+   debug-style rectangles sitting on top of it. Body class is toggled in
+   switchTab (ui-panels.js). */
+body:not(.tab-design-active) .interaction-overlay { display: none; }
+
+/* === CMD/CTRL INTERACT MODE ================================================
+   When the user holds ⌘/Ctrl, hover + selection visuals fade out and the
+   cursor hints that the component is now live — sliders can be dragged,
+   toggles flipped, radios checked. Handled in interaction-state.js by
+   toggling `body.cmd-interact-mode` + early-exiting pointermove/click.
+   Overlay fade gives a clear visual cue that we're in interaction mode. */
+body.cmd-interact-mode .interaction-overlay { opacity:0; transition:opacity 120ms ease-out; }
+body.cmd-interact-mode #canvas,
+body.cmd-interact-mode [data-node-id] { cursor:pointer; }
+body.cmd-interact-mode .canvas-item.selected { outline-color:transparent; }
+/* Subtle hint ring on whatever node is under the cursor in interact mode */
+body.cmd-interact-mode [data-node-id]:hover {
+  box-shadow:0 0 0 1.5px rgba(15,207,110,0.4), 0 0 12px rgba(15,207,110,0.15);
+  border-radius:4px;
+}
+
+/* === GROUP WRAPPER === */
+.canvas-group {
+  border:1px dashed rgba(100,233,227,0.3); border-radius:18px;
+  padding:12px; background:rgba(100,233,227,0.03);
+  display:flex; flex-direction:column; gap:8px;
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
+}
+
+/* === ROLE-AWARE COMPOSITION (pipeline path) ===
+   Group-level roles communicate the JOB of a cluster of components.
+   Child-level roles communicate the FUNCTION of each component within
+   its cluster. The visual treatment makes the semantic hierarchy
+   readable at a glance:
+     primary-task   → unified inner surface, visibly ONE unit
+     supporting     → recedes, lower contrast
+     chrome         → flush to frame, no decoration
+     subject        → dominant typography, full width
+     state/action   → attached to subject visually
+     context        → muted
+   Only the pipeline renderer sets data-group-role / data-pipeline-role;
+   legacy surface scenarios are unaffected. */
+
+/* group: chrome — purely structural. NOTE: chrome groups never actually
+   reach the DOM as a .canvas-group wrapper anymore — renderPipelineResponse
+   detects group.role==="chrome" and absolute-positions each child into
+   the device frame's chrome zones (topSystem / bottomNav) computed from
+   window.createOneUILayout. This rule is kept defensively in case any
+   chrome group does fall through, so it doesn't get the dev-mode dashed
+   border. */
+.canvas-group[data-group-role="chrome"] {
+  border:none !important;
+  background:none !important;
+  padding:0 !important;
+  gap:0 !important;
+}
+
+/* Chrome items rendered via Path B's renderAtomicForRole bridge. They are
+   absolute-positioned by renderPipelineResponse using zone coordinates,
+   so we strip the .canvas-item card decoration and let the atomic HTML
+   fill its zone exactly. */
+.canvas-item.chrome-item {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  overflow: hidden;
+}
+
+/* Body atomics — focus-block / now-bar / action-row / etc. — also rendered
+   via the Path B atomic bridge but flow inline in the canvas content
+   (NOT absolute-positioned). The atomic HTML already includes its own
+   card / pill / surface treatment, so we strip the .canvas-item card
+   shell to avoid double decoration. */
+.canvas-item.body-atomic {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  /* Fill the group column and allow flex shrink so inner pills / rows never
+     force horizontal scroll past the device frame (regression: min-width
+     on now-bar + width:fit-content on .canvas-item). */
+  align-self: stretch;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  /* Make wrapper a flex column so the inner rendered card div (which
+     uses inline `height:100%`) actually stretches to fill the
+     wrapper's min-height. Without this, hero cards with min-height:
+     144px showed 80px of content and 64px of empty space at the
+     bottom (the inner div's `height:100%` resolved to `auto` because
+     the wrapper had no explicit height). flex:1 on the child makes
+     it grow vertically regardless of the inline height value. */
+  display: flex;
+  flex-direction: column;
+}
+.canvas-item.body-atomic > * {
+  flex: 1 1 auto;
+  min-height: 0;   /* allow flex shrink for nested overflow:hidden */
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* 2-col preset grid: tiles use intrinsic height — do not force min-height:0
+   on the atomic root or long labels/climate lines clip inside glass cards. */
+.canvas-group[data-pipeline-container="grid"] .canvas-item.body-atomic > * {
+  flex: 0 1 auto;
+  min-height: auto;
+  overflow: visible;
+}
+.canvas-item.chrome-item[data-atomic-role="status-bar"] {
+  /* Sits in the topSystem zone — keep the atomic flush. */
+  z-index: 50;
+}
+.canvas-item.chrome-item[data-atomic-role="collapsed-app-bar"],
+.canvas-item.chrome-item[data-atomic-role="expandable-app-bar"],
+.canvas-item.chrome-item[data-atomic-role="list-top-bar"] {
+  z-index: 49;
+  padding: 0 16px !important;  /* horizontal inset for the title text */
+  display: flex;
+  align-items: center;
+}
+.canvas-item.chrome-item[data-atomic-role="gesture-bar"],
+.canvas-item.chrome-item[data-atomic-role="nav-buttons"] {
+  z-index: 50;
+}
+
+/* group: primary-task — the screen's main task unit. Subject + state +
+   action belong here. Substantial card-like surface so the children
+   read as ONE coherent unit rather than three separate stacked cards.
+   Tier 1.4 — added a stronger inset highlight + a subtle outer glow so
+   the primary group reads as the focal layer in the visual stack. */
+.canvas-group[data-group-role="primary-task"] {
+  border:1px solid rgba(255,255,255,0.12) !important;
+  background:linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)) !important;
+  border-radius:20px !important;
+  padding:14px !important;
+  gap:10px !important;
+  box-shadow:
+    0 8px 28px rgba(0,0,0,0.22),
+    0 1px 0 rgba(255,255,255,0.08) inset,
+    0 0 0 1px rgba(255,255,255,0.03);
+}
+
+/* Docked session now-bar: scenes.js locks #canvas to the layout viewport with
+   overflow:hidden and pins the strip with bottom:… — the primary-task glass
+   shell must scroll internally instead of growing the flex column (which
+   used to push absolute top: rDock.y into the card mid-screen). Use
+   flex-basis:auto so short screens keep natural card height — only when
+   content exceeds the frame does min-height:0 + overflow-y allow scroll. */
+#canvas[data-pipeline-docked-nowbar="1"] {
+  min-height: 0;
+}
+#canvas[data-pipeline-docked-nowbar="1"] > .canvas-group[data-group-role="primary-task"],
+#canvas[data-pipeline-docked-nowbar="1"] .pipeline-bottom-sheet-inner > .canvas-group[data-group-role="primary-task"] {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Tier 1.1 — HERO variant for priority=1 children inside primary-task.
+   Real Samsung One UI hero cards are 1.5-1.8× the size of supporting
+   ones with visibly more presence — bigger numbers, taller surface,
+   stronger shadow. Driven by data-priority="1" on the canvas-item
+   wrapper (set in scenes.js) plus body-atomic (so we only target
+   rendered cards). The accent stripe at the top is a hero marker —
+   makes the hero state visible at a glance even if size differences
+   blend with screen variance. */
+/* Hero variant — scoped to RICH CARD atomics only (focus-block and
+   now-bar). action-row / toggle-chip / notif-card are intrinsically
+   short (48-86dp) — applying hero min-height to them produces a tall
+   wrapper with a small button floating at the top and 100px of empty
+   space below (visible bug in the Fitness screenshot). The selector
+   chain explicitly opts in by atomic-role so future atomic types
+   default to NO hero treatment unless added here. */
+.canvas-group[data-group-role="primary-task"] .canvas-item.body-atomic[data-priority="1"][data-atomic-role="focus-block"],
+.canvas-group[data-group-role="primary-task"] .canvas-item.body-atomic[data-priority="1"][data-atomic-role="now-bar"] {
+  /* No min-height — earlier we forced 144px to give hero presence,
+     but for sparse cards (section + facets only, no topic) it left a
+     tall wrapper with content clustered at the top and 60-80px of
+     empty space below. Hero distinction now comes from typography +
+     radius + padding + shadow + accent stripe — those read as "hero"
+     without forcing a fixed height; cards size naturally to content. */
+  position: relative;
+  --card-radius: 20px;
+  --card-padding-v: 20px;
+  --card-padding-h: 22px;
+  --card-weather-temp-size: 68px;
+  --card-weather-icon-size: 56px;
+  --card-calendar-time-size: 28px;
+  --card-eta-size: 50px;
+  --card-eta-icon-size: 40px;
+  --card-nav-distance-size: 28px;
+  --card-input-topic-size: 24px;
+  --card-reminder-task-size: 18px;
+  --card-message-avatar-size: 38px;
+  box-shadow:
+    0 10px 28px rgba(0,0,0,0.28),
+    0 0 0 1px rgba(255,255,255,0.05);
+}
+/* Hero accent stripe — thin gradient line at the very top of the card.
+   Uses an ::after so it doesn't interfere with the card's own padding /
+   contents. The gradient picks up whatever per-card accent color the
+   theme defines (weather=amber, calendar=purple, etc.). */
+.canvas-group[data-group-role="primary-task"] .canvas-item.body-atomic[data-priority="1"]::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: var(--card-padding-h, 14px);
+  right: var(--card-padding-h, 14px);
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: linear-gradient(90deg,
+    var(--card-weather-accent, var(--card-calendar-accent, var(--accent-primary, #0381FE))),
+    transparent);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Priority 2 cards stay default size. */
+/* Priority 3 — visually receded (smaller, dimmer). */
+.canvas-item.body-atomic[data-priority="3"] {
+  opacity: 0.74;
+  --card-radius: 20px;
+  --card-padding-v: 14px;
+  --card-padding-h: 16px;
+}
+
+/* === URGENCY → ACCENT COLOR (R3-A) ===
+   Applied to the device frame's canvas based on interpretation.context.urgency.
+   "low" gets no special treatment (default surface). "medium" gets a Samsung
+   blue ring around the primary-task group. "high" escalates to a warning red
+   ring + ambient red glow on the canvas — used for urgent contexts (driving,
+   safety alerts, high-stakes confirmations). Set by renderPipelineResponse. */
+#canvas[data-urgency="medium"] .canvas-group[data-group-role="primary-task"] {
+  border-color: rgba(51, 136, 233, 0.48) !important;       /* Samsung blue 40% */
+  box-shadow:
+    0 0 0 1px rgba(51, 136, 233, 0.20),
+    0 6px 20px rgba(0,0,0,0.18),
+    inset 0 1px 0 rgba(255,255,255,0.05) !important;
+}
+#canvas[data-urgency="medium"] .canvas-item[data-pipeline-role="subject"] .oui-card-title {
+  color: #5DA8F5;                                          /* subtle blue title */
+}
+
+#canvas[data-urgency="high"] .canvas-group[data-group-role="primary-task"] {
+  border-color: rgba(239, 68, 68, 0.55) !important;        /* warning red */
+  box-shadow:
+    0 0 0 2px rgba(239, 68, 68, 0.28),
+    0 0 24px rgba(239, 68, 68, 0.18),
+    0 6px 20px rgba(0,0,0,0.18),
+    inset 0 1px 0 rgba(255,255,255,0.05) !important;
+}
+#canvas[data-urgency="high"] .canvas-item[data-pipeline-role="subject"] .oui-card-title {
+  color: #FCA5A5;                                          /* warning red title */
+}
+#canvas[data-urgency="high"] .canvas-item[data-pipeline-role="action"] .oui-chip,
+#canvas[data-urgency="high"] .canvas-item[data-pipeline-role="action"] .oui-btn-contained {
+  /* High-urgency actions get red accent on their primary affordance. */
+  background: rgba(239, 68, 68, 0.85) !important;
+  color: #fff !important;
+}
+
+/* group: supporting — context that frames the primary task. Tier 1.2:
+   visibly subordinate to primary-task — flatter surface (no inset),
+   slightly thinner border, no outer shadow. Kept at the same outer
+   width / padding so cards align horizontally edge-to-edge across
+   groups (regression fix from earlier rounds). */
+.canvas-group[data-group-role="supporting"] {
+  border:1px dashed rgba(255,255,255,0.08) !important;
+  background:rgba(255,255,255,0.018) !important;
+  border-radius:20px !important;
+  padding:20px !important;
+  gap:14px !important;
+  opacity:0.94;
+}
+
+/* group: tertiary — even less weight (badges, quiet notifications). */
+.canvas-group[data-group-role="tertiary"] {
+  border:none !important;
+  background:none !important;
+  padding:4px 16px !important;
+  gap:6px !important;
+  margin: 0 12px;
+  opacity:0.72;
+  font-size:0.94em;
+}
+
+/* group: meta — overflow / settings / help shortcuts. */
+.canvas-group[data-group-role="meta"] {
+  border:none !important;
+  background:rgba(255,255,255,0.02) !important;
+  border-radius:20px !important;
+  padding:6px 14px !important;
+  margin: 0 16px;
+  opacity:0.84;
+  font-size:0.93em;
+}
+
+/* === Child role emphasis ===
+   Within ANY group, role lets us scale the visual weight of each child.
+   Subject is the dominant artifact; state and action attach to it;
+   context recedes; feedback is transient. */
+
+/* subject — dominant. Bigger title type, brighter text, full visual weight. */
+.canvas-item[data-pipeline-role="subject"] .oui-card-title,
+.canvas-item[data-pipeline-role="subject"] .oui-list-title,
+.canvas-item[data-pipeline-role="subject"] .oui-dialog-title,
+.canvas-item[data-pipeline-role="subject"] .oui-appbar-title {
+  font-size: 19px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.01em;
+  margin-bottom: 6px;
+}
+.canvas-item[data-pipeline-role="subject"] .oui-card {
+  padding: 22px !important;
+}
+
+/* state — visually attached to the subject above (negative top margin
+   pulls them into a single unit when stacked). Slightly muted. */
+.canvas-item[data-pipeline-role="state"] {
+  margin-top: -6px !important;
+  opacity: 0.95;
+}
+.canvas-item[data-pipeline-role="state"] .oui-card-title {
+  font-size: 13px !important;
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+/* action — strong label, stretched to fill its row inside primary-task. */
+.canvas-item[data-pipeline-role="action"] .oui-chip,
+.canvas-item[data-pipeline-role="action"] .oui-btn-contained,
+.canvas-item[data-pipeline-role="action"] .oui-btn-outlined,
+.canvas-item[data-pipeline-role="action"] .oui-card-title {
+  font-weight: 700 !important;
+}
+.canvas-group[data-group-role="primary-task"] .canvas-item[data-pipeline-role="action"] {
+  align-self: stretch;
+  margin-top: 4px;
+}
+
+/* context — clearly subordinate (smaller, dimmer). */
+.canvas-item[data-pipeline-role="context"] {
+  opacity: 0.82 !important;
+}
+.canvas-item[data-pipeline-role="context"] .oui-card {
+  padding: 14px 16px !important;
+}
+.canvas-item[data-pipeline-role="context"] .oui-card-title {
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+
+/* feedback — light, transient, slightly italic. */
+.canvas-item[data-pipeline-role="feedback"] {
+  opacity: 0.90;
+  font-style: italic;
+}
+
+/* navigation — neutral. */
+.canvas-item[data-pipeline-role="navigation"] {
+  opacity: 0.96;
+}
+
+/* === ONE UI COMPONENT STYLES (for canvas rendering) === */
+.oui-btn-contained { display:inline-flex; align-items:center; justify-content:center; min-height:48px; padding:0 24px; border-radius:18px; background:#0072DE; color:#FAFAFA; font-size:15px; font-weight:500; border:none; font-family:var(--font); }
+.oui-btn-outlined { display:inline-flex; align-items:center; justify-content:center; min-height:48px; padding:0 24px; border-radius:18px; background:transparent; color:#FAFAFA; font-size:15px; font-weight:500; border:1.5px solid #FAFAFA; font-family:var(--font); }
+.oui-btn-flat { display:inline-flex; align-items:center; justify-content:center; min-height:48px; padding:0 24px; border-radius:18px; background:transparent; color:var(--primary); font-size:15px; font-weight:500; border:none; font-family:var(--font); }
+.oui-fab { width:56px; height:56px; border-radius:50%; background:var(--primary); color:#fff; border:none; font-size:24px; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 16px rgba(3,129,254,0.3); }
+/* Switch — on = blue + knob right, off = grey + knob left. Transition handled
+   on both the background and ::after so flipping in Cmd-interact mode feels
+   native. Default (no .on / .off modifier) renders in the "on" state. */
+.oui-switch { width:52px; height:32px; border-radius:16px; background:#3E91FF; position:relative; border:none; cursor:pointer; transition:background 180ms ease; }
+.oui-switch::after { content:''; position:absolute; top:2px; right:2px; width:28px; height:28px; border-radius:50%; background:#fff; box-shadow:0 2px 4px rgba(0,0,0,0.2); transition:right 180ms ease, left 180ms ease; }
+.oui-switch:not(.on) { background:rgba(255,255,255,0.18); }
+.oui-switch:not(.on)::after { right:auto; left:2px; }
+/* Checkbox — on = filled blue + visible checkmark, off = hollow */
+.oui-checkbox { width:24px; height:24px; border-radius:4px; background:#3E91FF; border:2px solid #3E91FF; display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px; cursor:pointer; transition:background 180ms ease, color 120ms ease; box-sizing:border-box; }
+.oui-checkbox:not(.on) { background:transparent; color:transparent; }
+/* Radio — on = filled dot, off = empty ring (via ::after visibility) */
+.oui-radio { width:24px; height:24px; border-radius:50%; border:2px solid #3E91FF; display:flex; align-items:center; justify-content:center; background:transparent; cursor:pointer; box-sizing:border-box; }
+.oui-radio::after { content:''; width:12px; height:12px; border-radius:50%; background:#3E91FF; transition:transform 140ms ease, opacity 120ms ease; }
+.oui-radio:not(.on)::after { transform:scale(0.2); opacity:0; }
+.oui-input { width:100%; height:52px; border-radius:18px; border:1.5px solid rgba(255,255,255,0.15); background:rgba(255,255,255,0.04); color:var(--text); font-size:15px; padding:18px 16px 6px; font-family:var(--font); }
+.oui-search { width:100%; height:44px; border-radius:999px; background:rgba(255,255,255,0.06); border:none; color:var(--text); font-size:14px; padding:0 16px; font-family:var(--font); }
+.oui-chip { display:inline-flex; align-items:center; padding:8px 16px; border-radius:22px; background:var(--primary-10); color:var(--primary); font-size:13px; font-weight:500; border:none; font-family:var(--font); }
+.oui-card { width:100%; border-radius:26px; background:var(--surface-2); padding:20px; border:1px solid rgba(255,255,255,0.06); }
+.oui-card-title { font-size:17px; font-weight:700; margin-bottom:4px; }
+.oui-card-desc { font-size:13px; color:var(--text-2); }
+.oui-list-item { display:flex; align-items:center; gap:12px; padding:14px 16px; border-bottom:0.5px solid rgba(255,255,255,0.06); }
+.oui-list-icon { width:36px; height:36px; border-radius:50%; background:var(--primary-10); display:flex; align-items:center; justify-content:center; color:var(--primary); font-size:16px; flex-shrink:0; }
+.oui-list-text { flex:1; }
+.oui-list-title { font-size:15px; font-weight:500; }
+.oui-list-sub { font-size:12px; color:var(--text-3); }
+.oui-appbar { width:100%; height:56px; display:flex; align-items:center; padding:0 12px; gap:8px; background:rgba(255,255,255,0.03); border-radius:0; }
+.oui-appbar-title { font-size:18px; font-weight:700; flex:1; }
+.oui-bottomnav { width:100%; height:56px; display:flex; align-items:center; justify-content:space-around; background:rgba(255,255,255,0.03); border-top:0.5px solid rgba(255,255,255,0.06); border-radius:0; margin-top:auto; flex-shrink:0; }
+.oui-bottomnav-item { display:flex; flex-direction:column; align-items:center; gap:2px; font-size:10px; color:var(--text-3); }
+.oui-bottomnav-item.active { color:var(--primary); }
+.oui-pill-tab { display:inline-flex; align-items:center; gap:4px; background:rgba(255,255,255,0.08); backdrop-filter:blur(16px); border:1px solid rgba(255,255,255,0.12); border-radius:999px; padding:6px 8px; }
+.oui-pill-dot { width:40px; height:32px; border-radius:999px; display:flex; align-items:center; justify-content:center; font-size:14px; color:var(--text-3); }
+.oui-pill-dot.active { background:rgba(255,255,255,0.15); color:var(--primary); }
+.oui-snackbar { width:100%; padding:14px 16px; background:#474747; color:#FAFAFA; border-radius:18px; font-size:14px; display:flex; align-items:center; justify-content:space-between; }
+.oui-snackbar-action { color:#7CB8FF; font-weight:700; border:none; background:none; font-family:var(--font); font-size:14px; }
+.oui-divider { width:100%; height:0.5px; background:rgba(255,255,255,0.08); }
+.oui-badge { display:inline-flex; align-items:center; justify-content:center; min-width:17px; height:17px; border-radius:9px; background:#D32F2F; color:#fff; font-size:10px; font-weight:700; padding:0 4px; }
+.oui-dialog { width:100%; max-width:300px; background:var(--surface-2); border-radius:26px; padding:24px 20px 16px; margin:0 auto; }
+.oui-dialog-title { font-size:18px; font-weight:700; margin-bottom:8px; }
+.oui-dialog-body { font-size:14px; color:var(--text-2); margin-bottom:16px; line-height:1.5; }
+.oui-dialog-actions { display:flex; justify-content:flex-end; gap:8px; }
+
+/* Light mode overrides */
+.canvas-frame.light .oui-btn-outlined { color:#252525; border-color:#252525; }
+.canvas-frame.light .oui-input { border-color:#E4E4E4; background:#fff; color:#252525; }
+.canvas-frame.light .oui-search { background:#F2F2F2; color:#252525; }
+.canvas-frame.light .oui-card { background:#fff; border-color:rgba(0,0,0,0.06); }
+.canvas-frame.light .oui-card-title { color:#252525; }
+.canvas-frame.light .oui-card-desc { color:#666; }
+.canvas-frame.light .oui-list-item { border-color:rgba(0,0,0,0.06); }
+.canvas-frame.light .oui-list-title { color:#252525; }
+.canvas-frame.light .oui-list-sub { color:#888; }
+.canvas-frame.light .oui-appbar { background:rgba(0,0,0,0.02); }
+.canvas-frame.light .oui-appbar-title { color:#252525; }
+.canvas-frame.light .oui-bottomnav { background:rgba(0,0,0,0.02); border-color:rgba(0,0,0,0.06); }
+.canvas-frame.light .oui-bottomnav-item { color:#888; }
+.canvas-frame.light .oui-divider { background:rgba(0,0,0,0.08); }
+.canvas-frame.light .oui-dialog { background:#fff; }
+.canvas-frame.light .oui-dialog-title { color:#252525; }
+.canvas-frame.light .oui-dialog-body { color:#666; }
+
+/* === SPACING SLIDER === */
+.spacing-control { display:flex; align-items:center; gap:8px; }
+.spacing-control input[type=range] { flex:1; accent-color:var(--primary); }
+.spacing-value { font-size:12px; font-family:monospace; color:var(--primary); min-width:32px; }
+
+/* === ALIGNMENT === */
+.align-row { display:flex; gap:4px; }
+.align-btn {
+  flex:1; padding:8px; border-radius:8px; border:1px solid var(--divider);
+  background:var(--surface); color:var(--text-3); cursor:pointer; text-align:center;
+  font-size:14px; transition:all 0.15s; font-family:var(--font);
+}
+.align-btn:hover { border-color:var(--primary); }
+.align-btn.active { background:var(--primary-10); border-color:var(--primary); color:var(--primary); }
+
+/* === WALLPAPER GRID === */
+.wp-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; }
+.wp-thumb {
+  aspect-ratio:9/19.5; border-radius:8px; overflow:hidden; cursor:pointer;
+  border:2px solid transparent; transition:all 0.15s;
+  box-shadow:0 1px 4px rgba(0,0,0,0.2);
+}
+.wp-thumb:hover { border-color:rgba(3,129,254,0.5); transform:scale(1.05); }
+.wp-thumb.active { border-color:var(--primary); box-shadow:0 0 0 1px var(--primary); }
+
+/* === EMPTY STATE === */
+.canvas-empty { display:none; }
+.canvas-hint {
+  position:fixed; bottom:20px; left:24px;
+  padding:0; background:none; backdrop-filter:none; border:none;
+  color:var(--text-2); font-size:11px; font-weight:500; white-space:nowrap;
+  pointer-events:none; animation:hintFade 8s ease forwards; z-index:50;
+}
+@keyframes hintFade { 0%{opacity:0;transform:translateY(8px);} 6%{opacity:1;transform:translateY(0);} 90%{opacity:1;} 100%{opacity:0;} }
+
+/* Animations */
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+@keyframes slideUp { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
+@keyframes scaleUp { from { opacity:0; transform:scale(0.7); } to { opacity:1; transform:scale(1); } }
+@keyframes bounce { from { opacity:0; transform:scale(0.3); } to { opacity:1; transform:scale(1); } }
+@keyframes springPop { from { transform:scale(0); } to { transform:scale(1); } }
+@keyframes shake { 0%,100% { transform:translateX(0); } 20%,60% { transform:translateX(-6px); } 40%,80% { transform:translateX(6px); } }
+@keyframes glassMat { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }
+@keyframes chromeFade { from { opacity:1; } to { opacity:0.2; } }
+/* Now-bar single-line voice listening waveform — five bars pulse at staggered phases */
+@keyframes slPulse { 0%, 100% { transform: scaleY(0.4); opacity: 0.7; } 50% { transform: scaleY(1); opacity: 1; } }
+/* AI notification sparkle accent — slow shimmer across the gradient bg */
+@keyframes aiShimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+/* Subtle scale-in for newly-rendered cards (microinteraction polish) */
+@keyframes cardSlideUp { 0% { opacity: 0; transform: translateY(8px); } 100% { opacity: 1; transform: translateY(0); } }
+/* Now-bar media marquee — scrolls the song title track from 0% to -50%
+   (the track duplicates the text so the loop is seamless). 14s loop
+   speed matches Samsung's subtle Lock-screen Music Now-bar scroll. */
+@keyframes nowbar-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+/* QS shade entrance — each shell/chip slides up slightly while fading in,
+   mirroring Samsung's "pull-down shade" motion. Staggered via CSS so
+   items cascade in without per-item inline delays. */
+@keyframes qsShadeEnter {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.overlay-inner[data-overlay-key="quicksettings"] .rules-item,
+.overlay-inner[data-overlay-key="qs"] .rules-item,
+.overlay-inner[data-overlay-key="quickSettings"] .rules-item {
+  animation: qsShadeEnter 320ms cubic-bezier(0.2, 0.8, 0.15, 1) both;
+}
+/* Stagger: early items land first, later items slide up with tiny offset */
+.overlay-inner[data-overlay-key="quicksettings"] .rules-item:nth-child(n+4),
+.overlay-inner[data-overlay-key="qs"] .rules-item:nth-child(n+4),
+.overlay-inner[data-overlay-key="quickSettings"] .rules-item:nth-child(n+4) {
+  animation-delay: 30ms;
+}
+.overlay-inner[data-overlay-key="quicksettings"] .rules-item:nth-child(n+8),
+.overlay-inner[data-overlay-key="qs"] .rules-item:nth-child(n+8),
+.overlay-inner[data-overlay-key="quickSettings"] .rules-item:nth-child(n+8) {
+  animation-delay: 60ms;
+}
+.overlay-inner[data-overlay-key="quicksettings"] .rules-item:nth-child(n+12),
+.overlay-inner[data-overlay-key="qs"] .rules-item:nth-child(n+12),
+.overlay-inner[data-overlay-key="quickSettings"] .rules-item:nth-child(n+12) {
+  animation-delay: 90ms;
+}
+
+/* List / Detail screens — same slide-up entrance for content components.
+   Excludes system chrome (status-bar, app-dock / bottom nav, app icons)
+   so those stay pinned and unanimated as the user requested. */
+.surface-item:not([data-role="status-bar"]):not([data-role="app-dock"]):not([data-role="app-icon"]):not([data-role="app-grid"]):not([data-role="bottom-navigation"]):not([data-role="gestureBar"]) {
+  animation: qsShadeEnter 320ms cubic-bezier(0.2, 0.8, 0.15, 1) both;
+}
+/* Small stagger on List/Detail so the 2-3 content items cascade. */
+.surface-item:nth-child(n+3):not([data-role="status-bar"]):not([data-role="app-dock"]):not([data-role="app-icon"]):not([data-role="app-grid"]):not([data-role="bottom-navigation"]):not([data-role="gestureBar"]) {
+  animation-delay: 50ms;
+}
+.surface-item:nth-child(n+5):not([data-role="status-bar"]):not([data-role="app-dock"]):not([data-role="app-icon"]):not([data-role="app-grid"]):not([data-role="bottom-navigation"]):not([data-role="gestureBar"]) {
+  animation-delay: 100ms;
+}
+/* Search-bar placeholder — matches its own text color (dark/light/AI).
+   The inline input style sets color via `color:`; the placeholder
+   pseudo-element inherits via currentColor so no extra rules needed.
+   For AI variants we bump placeholder opacity so the gradient glows. */
+input[id^="searchbar-"]::placeholder {
+  color: currentColor;
+  opacity: 0.85;
+}
+@keyframes slideLeft { from { opacity:0; transform:translateX(40px); } to { opacity:1; transform:translateX(0); } }
+@keyframes spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
+
+/* === AGENT MODE INDICATOR === */
+.agent-mode-indicator {
+  display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:999px;
+  font-size:10px; font-weight:700; letter-spacing:0.3px; text-transform:uppercase;
+  transition:all 0.2s;
+}
+.agent-mode-indicator::before {
+  content:''; width:6px; height:6px; border-radius:50%; flex-shrink:0;
+}
+.agent-mode-indicator.local { background:var(--surface); color:var(--text-3); border:1px solid var(--divider); }
+.agent-mode-indicator.local::before { background:var(--text-3); }
+.agent-mode-indicator.connected { background:rgba(46,204,113,0.12); color:#2ecc71; border:1px solid rgba(46,204,113,0.25); }
+.agent-mode-indicator.connected::before { background:#2ecc71; }
+
+/* === CRITIC PANEL === */
+#criticPanel {
+  display:none; margin-top:12px; padding:12px; background:var(--surface); border:1px solid var(--divider);
+  border-radius:12px; font-size:12px;
+}
+.critic-score { font-size:28px; font-weight:700; color:var(--primary); margin-bottom:8px; }
+.critic-score span { font-size:14px; font-weight:500; color:var(--text-3); }
+.critic-issue { padding:4px 0; color:var(--text-2); display:flex; align-items:center; gap:6px; }
+.critic-suggestions { margin-top:8px; border-top:1px solid var(--divider); padding-top:8px; }
+.critic-suggestion { padding:3px 0; color:var(--text-2); font-size:11px; }
+
+/* === REFINEMENT SYSTEM === */
+.refine-feedback { width:100%; min-height:64px; max-height:120px; border-radius:12px; border:1px solid var(--divider); background:var(--surface); color:var(--text); font-family:var(--font); font-size:13px; padding:10px 12px; resize:vertical; line-height:1.5; }
+.refine-feedback:focus { outline:none; border-color:var(--primary); }
+.refine-tags { display:flex; flex-wrap:wrap; gap:4px; margin-top:8px; }
+.refine-tag { padding:5px 10px; border-radius:14px; border:1px solid var(--divider); background:transparent; color:var(--text-3); font-size:11px; font-family:var(--font); cursor:pointer; transition:all 0.15s; }
+.refine-tag:hover { border-color:var(--text-2); color:var(--text-2); }
+.refine-tag.selected { background:var(--primary-10); border-color:var(--primary); color:var(--primary); font-weight:700; }
+
+.refine-step { margin-bottom:14px; display:none; }
+.refine-step.visible { display:block; }
+.refine-step-header { display:flex; align-items:center; gap:6px; margin-bottom:8px; }
+.refine-step-num { width:20px; height:20px; border-radius:50%; background:var(--primary); color:#fff; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.refine-step-title { font-size:12px; font-weight:700; color:var(--text); }
+
+.refine-issue-card { background:var(--surface); border:1px solid var(--divider); border-radius:10px; padding:10px 12px; margin-bottom:6px; }
+.refine-issue-type { display:inline-flex; align-items:center; gap:4px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:2px 8px; border-radius:6px; margin-bottom:4px; }
+.refine-issue-type.spacing { background:rgba(3,129,254,0.12); color:#3E91FF; }
+.refine-issue-type.density { background:rgba(249,168,37,0.12); color:#F9A825; }
+.refine-issue-type.hierarchy { background:rgba(156,39,176,0.12); color:#CE93D8; }
+.refine-issue-type.alignment { background:rgba(76,175,80,0.12); color:#66BB6A; }
+.refine-issue-type.readability { background:rgba(239,83,80,0.12); color:#EF5350; }
+.refine-issue-type.consistency { background:rgba(100,233,227,0.12); color:#64E9E3; }
+.refine-issue-type.sizing { background:rgba(255,167,38,0.12); color:#FFA726; }
+.refine-issue-type.semantic { background:rgba(255,112,67,0.12); color:#FF7043; }
+.refine-issue-type.interaction { background:rgba(41,182,246,0.12); color:#29B6F6; }
+.refine-issue-desc { font-size:12px; color:var(--text-2); line-height:1.4; margin-top:2px; }
+.refine-issue-nodes { font-size:10px; color:var(--text-3); margin-top:4px; }
+
+.refine-patch-item { display:flex; align-items:flex-start; gap:8px; padding:8px 10px; background:var(--surface); border:1px solid var(--divider); border-radius:8px; margin-bottom:4px; font-size:11px; }
+.refine-patch-prop { font-weight:700; color:var(--text); min-width:60px; }
+.refine-patch-arrow { color:var(--text-3); }
+.refine-patch-from { color:#EF5350; text-decoration:line-through; }
+.refine-patch-to { color:#66BB6A; font-weight:700; }
+.refine-patch-effect { font-size:10px; color:var(--text-3); margin-top:2px; }
+
+.refine-decision { display:flex; gap:6px; margin-top:10px; }
+.refine-decision .topbar-btn { flex:1; padding:10px; font-size:12px; }
+
+.canvas-item.refine-highlight { outline:2px solid rgba(249,168,37,0.7) !important; outline-offset:2px; }
+.canvas-item.refine-patched { outline:2px solid rgba(76,175,80,0.7) !important; outline-offset:2px; }
+@keyframes refineFlash { 0% { outline-color:rgba(76,175,80,0.8); } 100% { outline-color:transparent; } }
+
+.refine-compare { position:absolute; inset:0; z-index:100; display:none; background:var(--bg); border-radius:inherit; overflow:hidden; }
+.refine-compare.show { display:flex; }
+.refine-compare-side { flex:1; overflow:hidden; position:relative; display:flex; flex-direction:column; }
+.refine-compare-side:first-child { border-right:1px solid var(--divider); }
+.refine-compare-label { padding:6px 12px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-3); background:rgba(0,0,0,0.3); text-align:center; flex-shrink:0; }
+.refine-compare-label.before { color:#EF5350; }
+.refine-compare-label.after { color:#66BB6A; }
+.refine-compare-canvas { flex:1; overflow-y:auto; padding:0; }
+.refine-compare-canvas .canvas-inner-clone { display:flex; flex-direction:column; gap:0; padding:28px 0 0; zoom:0.78; font-family:'Inter',sans-serif; }
+.refine-close-compare { position:absolute; top:8px; right:8px; z-index:101; width:28px; height:28px; border-radius:50%; background:rgba(0,0,0,0.5); color:#fff; border:none; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+
+/* ============================================================================
+   R4: Flow Navigator — compact controller above the canvas for multi-node
+   flow graphs. Shows the shape of the flow (entry → action → completion)
+   as labeled dots with prev/next arrows. Click a dot to swap the canvas
+   to that node's renderModel. Hidden entirely for single-node flows.
+   ============================================================================ */
+.flow-navigator { display:none; align-items:center; gap:8px; padding:8px 14px; margin:0 auto 12px; max-width:fit-content; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:999px; font-family:'Inter',sans-serif; }
+.flow-navigator[hidden] { display:none !important; }
+.flow-navigator.is-visible { display:inline-flex; }
+.flow-navigator .fn-arrow { width:24px; height:24px; border-radius:50%; background:rgba(255,255,255,0.08); color:var(--text-2); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:12px; line-height:1; transition:background 0.15s; }
+.flow-navigator .fn-arrow:hover:not(:disabled) { background:rgba(255,255,255,0.14); color:#fff; }
+.flow-navigator .fn-arrow:disabled { opacity:0.3; cursor:not-allowed; }
+.flow-navigator .fn-nodes { display:flex; align-items:center; gap:6px; }
+.flow-navigator .fn-node { padding:4px 10px; border-radius:999px; font-size:10px; font-weight:700; letter-spacing:0.3px; text-transform:uppercase; color:var(--text-2); background:rgba(255,255,255,0.04); cursor:pointer; border:1px solid rgba(255,255,255,0.08); transition:background 0.15s, color 0.15s; white-space:nowrap; }
+.flow-navigator .fn-node:hover { background:rgba(255,255,255,0.08); color:#fff; }
+.flow-navigator .fn-node.is-current { background:#3E91FF; color:#fff; border-color:#3E91FF; }
+.flow-navigator .fn-node.is-loading { opacity:0.5; cursor:wait; }
+.flow-navigator .fn-edge { color:var(--text-3); font-size:10px; user-select:none; }
+.flow-navigator .fn-meta { font-size:10px; color:var(--text-3); margin-left:4px; }
+

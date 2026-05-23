@@ -1,0 +1,110 @@
+---
+description: test1/test2/test3 모션 테스트를 theme/다른 테스트와 격리하는 작업 규칙
+alwaysApply: true
+---
+
+# MLP test pages: test1/test2/test3 격리 규칙
+
+아래 규칙은 `test1/test2/test3` 페이지에서 컴포넌트 모션 테스트를 **병렬로 진행**하되, **공통 theme 렌더러 및 다른 test 페이지에 영향이 없도록 격리**하기 위한 작업 규칙이다.
+
+## Goal
+
+```json
+{
+  "goal": "test1/test2/test3 페이지에서 컴포넌트 모션 테스트를 병렬로 진행하되, theme 공통 렌더러와 다른 test 페이지에 영향이 없도록 격리한다.",
+  "core_rules": [
+    "공통 theme 컴포넌트 렌더러는 재사용한다: renderAtomicForRole, generateSurfaceScenario, 기존 dot component CSS를 우선 사용한다.",
+    "test 전용 변경은 반드시 test scope 안에 둔다: window.__mlpTestConfig.id, body[data-mlp-test], #canvas[data-test-scope]를 기준으로 분기한다.",
+    "다른 test 페이지나 /theme에 영향을 주는 전역 수정은 금지한다.",
+    "컴포넌트 자체를 완전히 새로 만들기보다, 기존 dot component의 variant, rect, scoped CSS override로 먼저 해결한다.",
+    "이미 존재하는 test1/test2/test3 페이지 구조는 유지하고, 각자 담당 test 페이지만 수정한다.",
+    "plan 파일, .env, build 산출물(.next 등)은 수정하거나 커밋하지 않는다.",
+    "Yarn만 사용한다. npm 사용 금지.",
+    "Next.js Pages Router 기준으로 작업한다. App Router 파일 추가 금지.",
+    "Javascript만 사용한다. Typescript 파일 추가 금지."
+  ],
+  "page_ownership": {
+    "test1": {
+      "owner_scope": "Persona 1 home-style motion test",
+      "allowed_files": [
+        "public/app/surface-layout.js",
+        "styles/theme-page.css",
+        "pages/test1.js"
+      ],
+      "allowed_changes": [
+        "window.__mlpTestConfig.id === 'test1' 분기 내부 component list 조정",
+        "test1 전용 rect/variant 조정",
+        "#canvas[data-test-scope=\"test1\"] selector 기반 CSS override"
+      ]
+    },
+    "test2": {
+      "owner_scope": "Persona 2 lockscreen / MLP agent motion test",
+      "allowed_files": [
+        "public/app/surface-layout.js",
+        "styles/theme-page.css",
+        "pages/test2.js"
+      ],
+      "allowed_changes": [
+        "window.__mlpTestConfig.id === 'test2' 조건 내부 조정",
+        "lockscreen-persona2 관련 test2 전용 위치/스타일 조정",
+        "#canvas[data-test-scope=\"test2\"] selector 기반 CSS override"
+      ]
+    },
+    "test3": {
+      "owner_scope": "Persona 3 simplified home component motion test",
+      "allowed_files": [
+        "public/app/surface-layout.js",
+        "styles/theme-page.css",
+        "pages/test3.js"
+      ],
+      "allowed_changes": [
+        "window.__mlpTestConfig.id === 'test3' 분기 내부 component list 조정",
+        "test3 전용 rect/variant 조정",
+        "#canvas[data-test-scope=\"test3\"] selector 기반 CSS override"
+      ]
+    }
+  },
+  "do_not_touch": [
+    "/theme preview grid behavior",
+    "공통 dot component 기본 디자인을 바꾸는 전역 CSS",
+    "다른 persona/test 분기",
+    "pages/prototype.js 구조",
+    ".env",
+    ".next",
+    "plan files"
+  ],
+  "implementation_pattern": {
+    "js_scope_example": "if (window.__mlpTestConfig && window.__mlpTestConfig.id === 'test1') { /* test1 only */ }",
+    "css_scope_example": "#canvas[data-test-scope=\"test1\"] .some-component { /* test1 only */ }",
+    "preferred_order": [
+      "1. 기존 component role 재사용",
+      "2. variant 값으로 내용/상태 변경",
+      "3. _rect로 위치/사이즈 조정",
+      "4. 반드시 data-test-scope selector로 CSS override",
+      "5. 그래도 부족할 때만 새 role 추가"
+    ]
+  },
+  "verification_checklist": [
+    "/test1, /test2, /test3를 각각 열어 담당 페이지만 바뀌었는지 확인한다.",
+    "/theme에서 dot preview가 깨지지 않는지 확인한다.",
+    "/prototype에서 persona 버튼이 /test1, /test2, /test3로 이동하는지 확인한다.",
+    "ReadLints 또는 build로 문법 오류를 확인한다.",
+    "커밋 전 git diff에서 본인 담당 scope 밖 변경이 없는지 확인한다."
+  ],
+  "commit_rules": [
+    "작업 단위별로 작게 커밋한다.",
+    "커밋 메시지에 담당 test를 포함한다. 예: test1 motion tune, test3 layout refine",
+    "빌드 산출물과 환경 파일은 커밋하지 않는다."
+  ]
+}
+```
+
+## 작업 시 강제 체크
+
+- **공통 렌더러 재사용**: `renderAtomicForRole`, `generateSurfaceScenario`, 기존 dot component CSS 우선.
+- **test scope 격리**: `window.__mlpTestConfig.id` / `body[data-mlp-test]` / `#canvas[data-test-scope]` 기준으로만 분기/override.
+- **전역 수정 금지**: 다른 test 페이지, `/theme`, `/prototype`(특히 `pages/prototype.js` 구조), 다른 persona 분기 영향 금지.
+- **변경 우선순위**: role 재사용 → `variant` → `_rect` → `#canvas[data-test-scope="..."]` 기반 CSS override → (최후) 새 role 추가.
+- **파일/소유권 준수**: 각 `test1/test2/test3`는 본인 담당 페이지만, 허용 파일만 변경.
+- **금지 파일**: `.env`, `.next`, plan 파일(및 빌드 산출물) 수정/커밋 금지.
+- **툴/프레임워크 제약**: Yarn only, Next.js Pages Router, JavaScript only(Typescript 금지).

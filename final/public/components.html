@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Samsung One UI - Complete Component Library</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #0381FE;
+    --primary-dark: #0072DE;
+    --primary-light: #3E91FF;
+    --primary-10: rgba(3,129,254,0.10);
+    --primary-20: rgba(3,129,254,0.20);
+    --bg: #FCFCFC;
+    --surface: #FFFFFF;
+    --surface-dim: #F2F2F2;
+    --text-primary: #252525;
+    --text-secondary: #666666;
+    --text-disabled: #858585;
+    --text-hint: #ABABAB;
+    --divider: #E4E4E4;
+    --outline: #252525;
+    --error: #D32F2F;
+    --success: #2E7D32;
+    --warning: #F9A825;
+    --tooltip-bg: #474747;
+    --tooltip-text: #FAFAFA;
+    --fab-bg: #FCFCFF;
+    --tab-bg: #E4E4E7;
+    --tab-selected: #252525;
+    --tab-unselected: #848487;
+    --nav-selected-bg: #EAEAEB;
+    --nav-selected-text: #387AFF;
+    --nav-unselected-text: #B7B7BB;
+    --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --radius-sm: 8px;
+    --radius-md: 18px;
+    --radius-lg: 22px;
+    --radius-xl: 26px;
+    --radius-pill: 999px;
+    --shadow-1: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow-2: 0 4px 12px rgba(0,0,0,0.10);
+    --shadow-3: 0 8px 24px rgba(0,0,0,0.12);
+    --shadow-fab: 0 6px 16px rgba(0,0,0,0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text-primary); font-family: var(--font); font-size: 16px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+
+  /* ===== LAYOUT ===== */
+  .page-header {
+    position: sticky; top: 0; z-index: 200;
+    background: #000; color: #fff; padding: 0 24px; height: 56px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .page-header h1 { font-size: 18px; font-weight: 700; letter-spacing: 0.5px; }
+  .page-header nav { display: flex; gap: 8px; }
+  .page-header nav a {
+    color: rgba(255,255,255,0.7); font-size: 12px; text-decoration: none;
+    padding: 6px 12px; border-radius: var(--radius-pill); transition: all 0.2s;
+  }
+  .page-header nav a:hover { color: #fff; background: rgba(255,255,255,0.1); }
+
+  .toc {
+    background: var(--surface); border-bottom: 1px solid var(--divider);
+    padding: 16px 24px; display: flex; flex-wrap: wrap; gap: 8px;
+    position: sticky; top: 56px; z-index: 100;
+  }
+  .toc a {
+    font-size: 13px; color: var(--text-secondary); text-decoration: none;
+    padding: 6px 14px; border-radius: var(--radius-lg); background: var(--surface-dim);
+    transition: all 0.2s; white-space: nowrap;
+  }
+  .toc a:hover { background: var(--primary-10); color: var(--primary); }
+
+  .comp-section { padding: 48px 24px; max-width: 1100px; margin: 0 auto; }
+  .comp-section + .comp-section { border-top: 1px solid var(--divider); }
+  .comp-label { font-size: 12px; font-weight: 600; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .comp-title { font-size: 34px; font-weight: 700; line-height: 1.2; margin-bottom: 8px; }
+  .comp-desc { font-size: 15px; color: var(--text-secondary); margin-bottom: 32px; max-width: 600px; }
+  .comp-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin-bottom: 24px; }
+  .comp-row-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .comp-card { background: var(--surface); border-radius: var(--radius-xl); padding: 24px; box-shadow: var(--shadow-1); }
+  .comp-card + .comp-card { margin-top: 16px; }
+  .spec-tag { display: inline-block; font-size: 11px; font-family: ui-monospace, monospace; color: var(--text-disabled); background: var(--surface-dim); padding: 2px 8px; border-radius: 4px; margin-top: 6px; }
+  .dark-stage { background: #171717; border-radius: var(--radius-xl); padding: 32px; margin-top: 16px; }
+  .dark-stage * { color: #FAFAFA; }
+
+  /* ===== 1. BUTTONS ===== */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    font-family: var(--font); font-size: 17px; font-weight: 500; cursor: pointer;
+    border: none; outline: none; transition: all 0.2s ease;
+    min-height: 52px; padding: 0 24px; border-radius: var(--radius-md);
+    position: relative; overflow: hidden;
+  }
+  .btn::after {
+    content: ''; position: absolute; inset: 0; background: currentColor; opacity: 0; transition: opacity 0.15s;
+  }
+  .btn:active::after { opacity: 0.1; }
+
+  .btn-contained { background: var(--primary-dark); color: #FAFAFA; }
+  .btn-contained:hover { background: var(--primary); }
+  .btn-contained:disabled { background: #EBEBEB; color: var(--text-disabled); cursor: not-allowed; }
+
+  .btn-medium { background: #EBEBEB; color: var(--text-primary); }
+  .btn-medium:hover { background: #E0E0E0; }
+
+  .btn-outline { background: transparent; color: var(--outline); border: 1.5px solid var(--outline); }
+  .btn-outline:hover { background: rgba(0,0,0,0.04); }
+
+  .btn-flat { background: transparent; color: var(--primary); }
+  .btn-flat:hover { background: var(--primary-10); }
+
+  .btn-sm { min-height: 36px; padding: 0 16px; font-size: 15px; border-radius: 12px; }
+  .btn-icon-only { width: 48px; height: 48px; min-height: unset; padding: 0; border-radius: 50%; }
+
+  /* ===== 2. FAB ===== */
+  .fab {
+    width: 56px; height: 56px; border-radius: 50%; border: none;
+    background: var(--primary); color: #fff; font-size: 24px;
+    display: inline-flex; align-items: center; justify-content: center;
+    box-shadow: var(--shadow-fab); cursor: pointer; transition: all 0.2s;
+  }
+  .fab:hover { box-shadow: 0 8px 20px rgba(3,129,254,0.3); transform: translateY(-1px); }
+  .fab-secondary { background: var(--fab-bg); color: var(--text-primary); }
+  .fab-extended { width: auto; border-radius: 28px; padding: 0 24px; gap: 8px; font-size: 16px; font-weight: 600; }
+  .fab-mini { width: 40px; height: 40px; font-size: 18px; }
+
+  /* ===== 3. SWITCHES ===== */
+  .switch { position: relative; width: 52px; height: 32px; display: inline-block; cursor: pointer; }
+  .switch input { display: none; }
+  .switch-track {
+    position: absolute; inset: 0; border-radius: 16px;
+    background: #C7C7CC; transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .switch-thumb {
+    position: absolute; top: 2px; left: 2px; width: 28px; height: 28px;
+    border-radius: 50%; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .switch input:checked ~ .switch-track { background: var(--primary-light); }
+  .switch input:checked ~ .switch-thumb { transform: translateX(20px); }
+  .switch.disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ===== 4. CHECKBOXES ===== */
+  .checkbox { display: inline-flex; align-items: center; gap: 12px; cursor: pointer; font-size: 16px; }
+  .checkbox input { display: none; }
+  .checkbox-box {
+    width: 24px; height: 24px; border-radius: 4px; border: 2px solid #888;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; flex-shrink: 0;
+  }
+  .checkbox-box svg { opacity: 0; transition: opacity 0.15s; }
+  .checkbox input:checked ~ .checkbox-box { background: var(--primary-light); border-color: var(--primary-light); }
+  .checkbox input:checked ~ .checkbox-box svg { opacity: 1; }
+
+  /* ===== 5. RADIO ===== */
+  .radio { display: inline-flex; align-items: center; gap: 12px; cursor: pointer; font-size: 16px; }
+  .radio input { display: none; }
+  .radio-circle {
+    width: 24px; height: 24px; border-radius: 50%; border: 2px solid #888;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; flex-shrink: 0;
+  }
+  .radio-dot { width: 12px; height: 12px; border-radius: 50%; background: transparent; transition: all 0.2s; }
+  .radio input:checked ~ .radio-circle { border-color: var(--primary-light); }
+  .radio input:checked ~ .radio-circle .radio-dot { background: var(--primary-light); }
+
+  /* ===== 6. TEXT FIELDS ===== */
+  .text-field { position: relative; margin-bottom: 4px; }
+  .text-field input, .text-field textarea {
+    width: 100%; padding: 18px 16px 6px; font-family: var(--font); font-size: 17px;
+    border: 1.5px solid var(--divider); border-radius: var(--radius-md); outline: none;
+    background: var(--surface); color: var(--text-primary); transition: border-color 0.2s;
+  }
+  .text-field textarea { min-height: 100px; resize: vertical; }
+  .text-field input:focus, .text-field textarea:focus { border-color: var(--primary); }
+  .text-field input.error { border-color: var(--error); }
+  .text-field-label {
+    position: absolute; left: 16px; top: 12px; font-size: 12px; font-weight: 500;
+    color: var(--text-secondary); pointer-events: none; transition: all 0.2s;
+  }
+  .text-field input:focus ~ .text-field-label { color: var(--primary); }
+  .text-field input.error ~ .text-field-label { color: var(--error); }
+  .text-field-helper { font-size: 12px; color: var(--text-secondary); margin-top: 4px; padding: 0 16px; }
+  .text-field-helper.error { color: var(--error); }
+
+  /* ===== 7. SEARCH BAR ===== */
+  .search-bar {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--surface-dim); border-radius: var(--radius-pill);
+    padding: 0 20px; height: 48px;
+  }
+  .search-bar svg { flex-shrink: 0; color: var(--text-secondary); }
+  .search-bar input {
+    border: none; background: transparent; font-family: var(--font); font-size: 16px;
+    color: var(--text-primary); outline: none; width: 100%;
+  }
+  .search-bar input::placeholder { color: var(--text-hint); }
+
+  /* ===== 8. CHIPS ===== */
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 16px; border-radius: var(--radius-lg); font-size: 14px; font-weight: 500;
+    cursor: pointer; transition: all 0.2s; border: none; font-family: var(--font);
+  }
+  .chip-filled { background: var(--primary); color: #fff; }
+  .chip-outline { background: transparent; border: 1.5px solid var(--divider); color: var(--text-primary); }
+  .chip-outline:hover { border-color: var(--primary); color: var(--primary); }
+  .chip-tonal { background: var(--primary-10); color: var(--primary); }
+  .chip-suggestion { background: var(--surface-dim); color: var(--text-primary); border-radius: var(--radius-lg); }
+  .chip .chip-close { width: 18px; height: 18px; border-radius: 50%; background: rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; font-size: 10px; margin-left: 2px; }
+
+  /* ===== 9. TABS ===== */
+  .tab-bar { display: flex; background: var(--surface); border-bottom: 1px solid var(--divider); padding: 0 24px; }
+  .tab-item {
+    padding: 14px 20px; font-size: 16px; font-weight: 500; color: var(--tab-unselected);
+    cursor: pointer; position: relative; transition: color 0.2s; border: none; background: none; font-family: var(--font);
+  }
+  .tab-item.active { color: var(--tab-selected); }
+  .tab-item.active::after {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+    background: var(--tab-selected); border-radius: 2px 2px 0 0;
+  }
+
+  .tab-bar-rounded { display: inline-flex; background: var(--tab-bg); border-radius: var(--radius-pill); padding: 3px; }
+  .tab-rounded {
+    padding: 8px 20px; font-size: 14px; font-weight: 600; border-radius: var(--radius-pill);
+    cursor: pointer; transition: all 0.3s; border: none; font-family: var(--font);
+    color: var(--tab-unselected); background: transparent;
+  }
+  .tab-rounded.active { background: var(--surface); color: var(--text-primary); box-shadow: var(--shadow-1); }
+
+  /* ===== 10. BOTTOM NAV ===== */
+  .bottom-nav {
+    display: flex; align-items: center; justify-content: space-around;
+    background: var(--surface); border-top: 1px solid var(--divider);
+    height: 64px; border-radius: 0;
+  }
+  .bottom-nav-item {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    padding: 8px 16px; border-radius: 12px; cursor: pointer; transition: all 0.2s;
+    border: none; background: none; font-family: var(--font);
+  }
+  .bottom-nav-item svg { width: 24px; height: 24px; color: var(--nav-unselected-text); transition: color 0.2s; }
+  .bottom-nav-item span { font-size: 11px; font-weight: 500; color: var(--nav-unselected-text); transition: color 0.2s; }
+  .bottom-nav-item.active { background: var(--nav-selected-bg); }
+  .bottom-nav-item.active svg { color: var(--nav-selected-text); }
+  .bottom-nav-item.active span { color: var(--nav-selected-text); font-weight: 700; }
+
+  /* ===== 11. APP BAR ===== */
+  .app-bar { display: flex; align-items: center; height: 56px; padding: 0 16px; background: var(--surface); }
+  .app-bar-back { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 50%; cursor: pointer; border: none; background: none; }
+  .app-bar-back:hover { background: rgba(0,0,0,0.04); }
+  .app-bar-title { font-size: 20px; font-weight: 600; margin-left: 4px; flex: 1; }
+  .app-bar-action { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 50%; cursor: pointer; border: none; background: none; color: var(--text-primary); }
+  .app-bar-expanded { padding: 16px 24px 24px; background: var(--surface); }
+  .app-bar-expanded-title { font-size: 34px; font-weight: 700; line-height: 1.15; }
+  .app-bar-expanded-sub { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+
+  /* ===== 12. CARDS ===== */
+  .oneui-card { background: var(--surface); border-radius: var(--radius-xl); overflow: hidden; box-shadow: var(--shadow-1); transition: box-shadow 0.3s; }
+  .oneui-card:hover { box-shadow: var(--shadow-2); }
+  .oneui-card-img { width: 100%; height: 180px; background: linear-gradient(135deg, #64e9e3, #9ffac7); display: flex; align-items: center; justify-content: center; font-size: 48px; }
+  .oneui-card-body { padding: 20px; }
+  .oneui-card-body h3 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+  .oneui-card-body p { font-size: 14px; color: var(--text-secondary); line-height: 1.5; }
+
+  /* ===== 13. LIST ITEMS ===== */
+  .list { background: var(--surface); border-radius: var(--radius-xl); overflow: hidden; box-shadow: var(--shadow-1); }
+  .list-item {
+    display: flex; align-items: center; gap: 16px; padding: 16px 24px; min-height: 56px;
+    cursor: pointer; transition: background 0.15s;
+  }
+  .list-item:hover { background: rgba(0,0,0,0.03); }
+  .list-item + .list-item { border-top: 0.5px solid var(--divider); }
+  .list-icon { width: 38px; height: 38px; border-radius: 50%; background: var(--primary-10); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--primary); }
+  .list-content { flex: 1; min-width: 0; }
+  .list-title { font-size: 17px; font-weight: 500; }
+  .list-subtitle { font-size: 13px; color: var(--text-secondary); margin-top: 1px; }
+  .list-trailing { font-size: 14px; color: var(--text-secondary); flex-shrink: 0; }
+
+  /* ===== 14. DIALOG ===== */
+  .dialog-backdrop { background: rgba(0,0,0,0.4); border-radius: var(--radius-xl); padding: 40px; display: flex; align-items: center; justify-content: center; }
+  .dialog {
+    background: var(--surface); border-radius: var(--radius-xl); padding: 28px 24px 20px;
+    width: 100%; max-width: 360px; box-shadow: var(--shadow-3);
+  }
+  .dialog-title { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+  .dialog-body { font-size: 15px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 24px; }
+  .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+  /* ===== 15. BOTTOM SHEET ===== */
+  .bottom-sheet-demo { background: rgba(0,0,0,0.35); border-radius: var(--radius-xl); padding-top: 120px; overflow: hidden; }
+  .bottom-sheet {
+    background: var(--surface); border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    padding: 12px 24px 24px;
+  }
+  .bottom-sheet-handle { width: 36px; height: 4px; background: #C0C0C0; border-radius: 2px; margin: 0 auto 16px; }
+  .bottom-sheet-title { font-size: 22px; font-weight: 600; margin-bottom: 16px; }
+
+  /* ===== 16. SLIDERS ===== */
+  .slider-container { padding: 8px 0; }
+  .slider {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 4px;
+    background: var(--divider); border-radius: 2px; outline: none;
+  }
+  .slider::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%;
+    background: var(--primary); cursor: pointer; box-shadow: 0 2px 6px rgba(3,129,254,0.3);
+  }
+  .slider-labels { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+  /* ===== 17. PROGRESS ===== */
+  .progress-bar { height: 4px; background: var(--divider); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--primary); border-radius: 2px; transition: width 0.5s ease; }
+  .progress-circular {
+    width: 48px; height: 48px; border-radius: 50%;
+    border: 4px solid var(--divider); border-top-color: var(--primary);
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .progress-circular-lg { width: 64px; height: 64px; border-width: 5px; }
+
+  /* ===== 18. SNACKBAR ===== */
+  .snackbar {
+    display: inline-flex; align-items: center; gap: 16px;
+    background: var(--tooltip-bg); color: var(--tooltip-text);
+    padding: 14px 20px; border-radius: var(--radius-md); font-size: 15px;
+    box-shadow: var(--shadow-2);
+  }
+  .snackbar-action { color: #7CB8FF; font-weight: 600; cursor: pointer; border: none; background: none; font-family: var(--font); font-size: 15px; }
+
+  /* ===== 19. TOOLTIP ===== */
+  .tooltip-demo { position: relative; display: inline-block; }
+  .tooltip-bubble {
+    background: var(--tooltip-bg); color: var(--tooltip-text); font-size: 14px;
+    padding: 10px 18px; border-radius: 12px; position: relative;
+    max-width: 240px; line-height: 1.4;
+  }
+  .tooltip-arrow {
+    width: 16px; height: 12px; position: absolute; bottom: -10px; left: 24px;
+    overflow: hidden;
+  }
+  .tooltip-arrow::before {
+    content: ''; width: 12px; height: 12px; background: var(--tooltip-bg);
+    position: absolute; top: 0; left: 2px; transform: rotate(45deg);
+  }
+
+  /* ===== 20. BADGES ===== */
+  .badge-wrap { position: relative; display: inline-block; }
+  .badge {
+    position: absolute; top: -3px; right: -3px;
+    min-width: 17px; height: 17px; border-radius: 9px;
+    background: var(--error); color: #fff; font-size: 10px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; padding: 0 4px;
+  }
+  .badge-dot { min-width: 10px; height: 10px; padding: 0; border-radius: 50%; }
+
+  /* ===== 21. DIVIDERS ===== */
+  .divider { height: 0.5px; background: var(--divider); margin: 0 24px; }
+  .divider-full { margin: 0; }
+  .divider-inset { margin-left: 64px; }
+
+  /* ===== 22. MENUS ===== */
+  .menu {
+    background: var(--surface); border-radius: var(--radius-xl); padding: 8px 0;
+    box-shadow: var(--shadow-3); min-width: 200px; max-width: 300px;
+  }
+  .menu-item {
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px 24px; font-size: 16px; cursor: pointer; transition: background 0.15s;
+  }
+  .menu-item:hover { background: rgba(0,0,0,0.04); }
+  .menu-item svg { width: 24px; height: 24px; color: var(--text-secondary); flex-shrink: 0; }
+  .menu-divider { height: 0.5px; background: var(--divider); margin: 4px 0; }
+
+  /* ===== GRID LAYOUTS ===== */
+  .comp-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .comp-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  @media (max-width: 768px) {
+    .comp-grid-2, .comp-grid-3 { grid-template-columns: 1fr; }
+    .toc { display: none; }
+    .comp-title { font-size: 24px; }
+    .page-header nav { display: none; }
+  }
+
+  /* ===== UTILITY ===== */
+  .mt-16 { margin-top: 16px; }
+  .mt-24 { margin-top: 24px; }
+  .mb-8 { margin-bottom: 8px; }
+  .gap-8 { gap: 8px; }
+  .gap-12 { gap: 12px; }
+  .gap-24 { gap: 24px; }
+  .flex-col { display: flex; flex-direction: column; }
+  .w-full { width: 100%; }
+  .max-w-320 { max-width: 320px; }
+  .max-w-400 { max-width: 400px; }
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <h1>SAMSUNG One UI Components</h1>
+  <nav>
+    <a href="preview.html">Light Preview</a>
+    <a href="preview-dark.html">Dark Preview</a>
+    <a href="motion.html">Motion Library</a>
+  </nav>
+</header>
+
+<div class="toc">
+  <a href="#buttons">Buttons</a>
+  <a href="#fab">FAB</a>
+  <a href="#switches">Switches</a>
+  <a href="#checkboxes">Checkboxes</a>
+  <a href="#radios">Radios</a>
+  <a href="#textfields">Text Fields</a>
+  <a href="#search">Search</a>
+  <a href="#chips">Chips</a>
+  <a href="#tabs">Tabs</a>
+  <a href="#appbar">App Bar</a>
+  <a href="#bottomnav">Bottom Nav</a>
+  <a href="#cards">Cards</a>
+  <a href="#lists">Lists</a>
+  <a href="#dialogs">Dialogs</a>
+  <a href="#bottomsheet">Bottom Sheet</a>
+  <a href="#sliders">Sliders</a>
+  <a href="#progress">Progress</a>
+  <a href="#snackbar">Snackbar</a>
+  <a href="#tooltips">Tooltips</a>
+  <a href="#badges">Badges</a>
+  <a href="#menus">Menus</a>
+  <a href="#dividers">Dividers</a>
+</div>
+
+<!-- ==================== BUTTONS ==================== -->
+<section class="comp-section" id="buttons">
+  <div class="comp-label">01 / Buttons</div>
+  <h2 class="comp-title">Buttons</h2>
+  <p class="comp-desc">One UI uses emphasis levels to guide focus. Only one button style should be prominent per screen.</p>
+
+  <div class="comp-card">
+    <div class="comp-row-label">Emphasis Levels</div>
+    <div class="comp-row">
+      <button class="btn btn-contained">High Emphasis</button>
+      <button class="btn btn-medium">Medium Emphasis</button>
+      <button class="btn btn-outline">Outlined</button>
+      <button class="btn btn-flat">Flat / Text</button>
+    </div>
+    <div class="spec-tag">min-height: 52dp | radius: 18dp | font: 17sp medium | padding: 0 24dp</div>
+  </div>
+
+  <div class="comp-card">
+    <div class="comp-row-label">Sizes</div>
+    <div class="comp-row">
+      <button class="btn btn-contained">Regular (52dp)</button>
+      <button class="btn btn-contained btn-sm">Small (36dp)</button>
+      <button class="btn btn-contained btn-icon-only">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+    </div>
+    <div class="spec-tag">small: 36dp / 15sp / 12dp radius | icon-only: 48x48dp / 50% radius</div>
+  </div>
+
+  <div class="comp-card">
+    <div class="comp-row-label">States</div>
+    <div class="comp-row">
+      <button class="btn btn-contained">Default</button>
+      <button class="btn btn-contained" style="background:#3E91FF;">Hover</button>
+      <button class="btn btn-contained" style="opacity:0.85;">Pressed</button>
+      <button class="btn btn-contained" disabled>Disabled</button>
+    </div>
+    <div class="spec-tag">disabled: bg #EBEBEB / text #858585 | pressed: 10% overlay</div>
+  </div>
+
+  <div class="dark-stage">
+    <div class="comp-row-label" style="color:rgba(255,255,255,0.5);">Dark Mode</div>
+    <div class="comp-row">
+      <button class="btn btn-contained">Contained</button>
+      <button class="btn btn-outline" style="color:#FAFAFA; border-color:#FAFAFA;">Outlined</button>
+      <button class="btn btn-flat" style="color:#3E91FF;">Flat</button>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== FAB ==================== -->
+<section class="comp-section" id="fab">
+  <div class="comp-label">02 / Floating Action Button</div>
+  <h2 class="comp-title">FAB</h2>
+  <p class="comp-desc">Primary actions elevated above content. One UI 7 emphasizes circular geometry.</p>
+
+  <div class="comp-card">
+    <div class="comp-row gap-24">
+      <div style="text-align:center"><button class="fab">+</button><div class="spec-tag">56dp / Primary</div></div>
+      <div style="text-align:center"><button class="fab fab-secondary">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+      </button><div class="spec-tag">56dp / Secondary</div></div>
+      <div style="text-align:center"><button class="fab fab-mini">+</button><div class="spec-tag">40dp / Mini</div></div>
+      <div style="text-align:center"><button class="fab fab-extended">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Compose
+      </button><div class="spec-tag">Extended / 28dp radius</div></div>
+    </div>
+    <div class="spec-tag">elevation: 6dp | shadow: 0 6px 16px rgba(0,0,0,0.15) | bg: #0381FE primary / #FCFCFF secondary</div>
+  </div>
+</section>
+
+<!-- ==================== SWITCHES ==================== -->
+<section class="comp-section" id="switches">
+  <div class="comp-label">03 / Switches</div>
+  <h2 class="comp-title">Toggle Switches</h2>
+  <p class="comp-desc">Binary controls for settings. Active state uses #3E91FF accent.</p>
+
+  <div class="comp-card">
+    <div class="comp-row gap-24">
+      <div class="flex-col gap-12">
+        <label class="switch"><input type="checkbox"><span class="switch-track"></span><span class="switch-thumb"></span></label>
+        <div class="spec-tag">Off</div>
+      </div>
+      <div class="flex-col gap-12">
+        <label class="switch"><input type="checkbox" checked><span class="switch-track"></span><span class="switch-thumb"></span></label>
+        <div class="spec-tag">On (#3E91FF)</div>
+      </div>
+      <div class="flex-col gap-12">
+        <label class="switch disabled"><input type="checkbox" disabled><span class="switch-track"></span><span class="switch-thumb"></span></label>
+        <div class="spec-tag">Disabled</div>
+      </div>
+    </div>
+    <div class="spec-tag">track: 52x32dp / thumb: 28dp / radius: 16dp | animation: 300ms cubic-bezier(0.4, 0, 0.2, 1)</div>
+  </div>
+</section>
+
+<!-- ==================== CHECKBOXES ==================== -->
+<section class="comp-section" id="checkboxes">
+  <div class="comp-label">04 / Checkboxes</div>
+  <h2 class="comp-title">Checkboxes</h2>
+
+  <div class="comp-card">
+    <div class="flex-col gap-12">
+      <label class="checkbox"><input type="checkbox"><span class="checkbox-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></span>Unchecked</label>
+      <label class="checkbox"><input type="checkbox" checked><span class="checkbox-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></span>Checked</label>
+      <label class="checkbox" style="opacity:0.4;"><input type="checkbox" disabled><span class="checkbox-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></span>Disabled</label>
+    </div>
+    <div class="spec-tag">size: 24dp | radius: 4dp | checked bg: #3E91FF | touch target: 48dp min</div>
+  </div>
+</section>
+
+<!-- ==================== RADIOS ==================== -->
+<section class="comp-section" id="radios">
+  <div class="comp-label">05 / Radio Buttons</div>
+  <h2 class="comp-title">Radio Buttons</h2>
+
+  <div class="comp-card">
+    <div class="flex-col gap-12">
+      <label class="radio"><input type="radio" name="demo"><span class="radio-circle"><span class="radio-dot"></span></span>Option A</label>
+      <label class="radio"><input type="radio" name="demo" checked><span class="radio-circle"><span class="radio-dot"></span></span>Option B (Selected)</label>
+      <label class="radio"><input type="radio" name="demo"><span class="radio-circle"><span class="radio-dot"></span></span>Option C</label>
+    </div>
+    <div class="spec-tag">outer: 24dp | inner dot: 12dp | selected: #3E91FF | divider start margin: 64dp</div>
+  </div>
+</section>
+
+<!-- ==================== TEXT FIELDS ==================== -->
+<section class="comp-section" id="textfields">
+  <div class="comp-label">06 / Text Fields</div>
+  <h2 class="comp-title">Input Fields</h2>
+  <p class="comp-desc">Outlined fields with 18dp rounded corners. Labels float on focus.</p>
+
+  <div class="comp-card max-w-400">
+    <div class="flex-col gap-24">
+      <div class="text-field">
+        <input type="text" value="John Doe" style="padding-top:24px;">
+        <span class="text-field-label">Full Name</span>
+      </div>
+      <div class="text-field">
+        <input type="email" placeholder="email@example.com" style="padding-top:24px;">
+        <span class="text-field-label">Email</span>
+        <div class="text-field-helper">We'll never share your email</div>
+      </div>
+      <div class="text-field">
+        <input type="text" class="error" value="abc" style="padding-top:24px;">
+        <span class="text-field-label">Phone Number</span>
+        <div class="text-field-helper error">Please enter a valid phone number</div>
+      </div>
+      <div class="text-field">
+        <textarea placeholder="Write your message..." style="padding-top:24px;"></textarea>
+        <span class="text-field-label">Message</span>
+      </div>
+    </div>
+    <div class="spec-tag">height: ~56dp | radius: 18dp | border: 1.5px | font: 17sp | focus color: #0381FE</div>
+  </div>
+</section>
+
+<!-- ==================== SEARCH ==================== -->
+<section class="comp-section" id="search">
+  <div class="comp-label">07 / Search</div>
+  <h2 class="comp-title">Search Bar</h2>
+
+  <div class="comp-card max-w-400">
+    <div class="search-bar">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" placeholder="Search settings">
+    </div>
+    <div class="spec-tag">height: 48dp | radius: pill | bg: #F2F2F2 | icon: 20dp</div>
+  </div>
+</section>
+
+<!-- ==================== CHIPS ==================== -->
+<section class="comp-section" id="chips">
+  <div class="comp-label">08 / Chips</div>
+  <h2 class="comp-title">Chips & Tags</h2>
+
+  <div class="comp-card">
+    <div class="comp-row-label">Variants</div>
+    <div class="comp-row">
+      <button class="chip chip-filled">Filled</button>
+      <button class="chip chip-tonal">Tonal</button>
+      <button class="chip chip-outline">Outlined</button>
+      <button class="chip chip-suggestion">Suggestion</button>
+      <button class="chip chip-filled">Removable <span class="chip-close">&times;</span></button>
+    </div>
+    <div class="spec-tag">height: ~38dp | radius: 22dp | padding: 9dp 16dp | font: 14sp medium</div>
+  </div>
+</section>
+
+<!-- ==================== TABS ==================== -->
+<section class="comp-section" id="tabs">
+  <div class="comp-label">09 / Tabs</div>
+  <h2 class="comp-title">Tab Bars</h2>
+  <p class="comp-desc">Maximum 4 tabs (5 if necessary). Text only, no swiping between tabs.</p>
+
+  <div class="comp-card" style="padding:0; overflow:hidden;">
+    <div class="comp-row-label" style="padding:24px 24px 8px;">Underline Tabs</div>
+    <div class="tab-bar">
+      <button class="tab-item active">All</button>
+      <button class="tab-item">Photos</button>
+      <button class="tab-item">Videos</button>
+      <button class="tab-item">Music</button>
+    </div>
+    <div style="padding:24px;">
+      <div class="comp-row-label" style="margin-top:16px;">Rounded / Pill Tabs</div>
+      <div class="tab-bar-rounded">
+        <button class="tab-rounded active">Day</button>
+        <button class="tab-rounded">Week</button>
+        <button class="tab-rounded">Month</button>
+      </div>
+      <div class="spec-tag">underline: 2px indicator | rounded: 40dp min-height / pill radius | bg: #E4E4E7 / selected: #FFF</div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== APP BAR ==================== -->
+<section class="comp-section" id="appbar">
+  <div class="comp-label">10 / App Bar</div>
+  <h2 class="comp-title">App Bar / Top Bar</h2>
+
+  <div class="comp-card" style="padding:0; overflow:hidden;">
+    <div class="comp-row-label" style="padding:24px 24px 0;">Condensed</div>
+    <div class="app-bar">
+      <button class="app-bar-back">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="app-bar-title">Settings</div>
+      <button class="app-bar-action">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+      <button class="app-bar-action">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+      </button>
+    </div>
+
+    <div class="comp-row-label" style="padding:24px 24px 0;">Expanded (scrolls to condensed)</div>
+    <div class="app-bar-expanded">
+      <div class="app-bar-expanded-title">Settings</div>
+      <div class="app-bar-expanded-sub">Manage your device preferences</div>
+    </div>
+    <div class="spec-tag" style="margin:16px 24px 24px;">condensed: 56dp | expanded title: 34sp bold | sub: 13sp | max 3 action buttons</div>
+  </div>
+</section>
+
+<!-- ==================== BOTTOM NAV ==================== -->
+<section class="comp-section" id="bottomnav">
+  <div class="comp-label">11 / Bottom Navigation</div>
+  <h2 class="comp-title">Bottom Navigation Bar</h2>
+
+  <div class="comp-card" style="padding:0; overflow:hidden; max-width:400px;">
+    <div style="padding:24px; padding-bottom:0;"><div class="comp-row-label">Max 5 items</div></div>
+    <div class="bottom-nav">
+      <button class="bottom-nav-item active">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        <span>Home</span>
+      </button>
+      <button class="bottom-nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <span>Search</span>
+      </button>
+      <button class="bottom-nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        <span>Favorites</span>
+      </button>
+      <button class="bottom-nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Profile</span>
+      </button>
+    </div>
+    <div class="spec-tag" style="margin:16px 24px;">height: 64dp | icon: 24dp | label: 11sp | active bg: #EAEAEB | active text: #387AFF</div>
+  </div>
+</section>
+
+<!-- ==================== ONE UI 8.5 NEW COMPONENTS ==================== -->
+<section class="comp-section" id="ambient" style="background:linear-gradient(180deg, #0a0a1a 0%, #171717 100%); border-top:none;">
+  <div class="comp-label" style="color:#3E91FF;">One UI 8.5 / Ambient Design</div>
+  <h2 class="comp-title" style="color:#fff;">New in One UI 8.5</h2>
+  <p class="comp-desc" style="color:rgba(255,255,255,0.6);">Ambient Design introduces Glass UI surfaces, floating pill navigation, adaptive layouts, and contextually-aware chrome behavior.</p>
+
+  <!-- Floating Pill Tab Bar -->
+  <div style="margin-bottom:24px;">
+    <div class="comp-row-label" style="color:rgba(255,255,255,0.4);">Floating Pill Tab Bar</div>
+    <div style="background:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22><defs><linearGradient id=%22g%22 x1=%220%22 y1=%220%22 x2=%221%22 y2=%221%22><stop offset=%220%22 stop-color=%22%23192a56%22/><stop offset=%221%22 stop-color=%22%230a0a2e%22/></linearGradient></defs><rect fill=%22url(%23g)%22 width=%22400%22 height=%22300%22/></svg>') center/cover; border-radius:26px; padding:40px 24px 16px; position:relative; min-height:240px; display:flex; flex-direction:column; justify-content:flex-end; align-items:center;">
+      <!-- Content area -->
+      <div style="flex:1; display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.3); font-size:14px;">Content area — chrome fades during scroll</div>
+      <!-- Pill Tab Bar -->
+      <div style="display:inline-flex; align-items:center; gap:4px; background:rgba(255,255,255,0.12); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,0.15); border-radius:999px; padding:6px 8px; margin-bottom:8px;">
+        <div style="display:flex; align-items:center; justify-content:center; width:48px; height:36px; border-radius:999px; background:rgba(255,255,255,0.18);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="#3E91FF"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:center; width:48px; height:36px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:center; width:48px; height:36px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:center; width:48px; height:36px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="spec-tag" style="color:rgba(255,255,255,0.3);">pill radius: 999dp | bg: rgba(255,255,255,0.12) + blur(20px) | border: 1px rgba(255,255,255,0.15) | active: circular highlight | fades on scroll</div>
+  </div>
+
+  <!-- Now Bar -->
+  <div style="margin-bottom:24px;">
+    <div class="comp-row-label" style="color:rgba(255,255,255,0.4);">Now Bar (Lock Screen Live Activity)</div>
+    <div style="background:#0a0a1a; border-radius:26px; padding:40px 24px 24px; position:relative; text-align:center;">
+      <!-- Clock -->
+      <div style="font-size:64px; font-weight:200; color:#fff; letter-spacing:-2px; margin-bottom:4px;">9:41</div>
+      <div style="font-size:14px; color:rgba(255,255,255,0.5); margin-bottom:40px;">Friday, April 11</div>
+      <!-- Now Bar pill -->
+      <div style="display:inline-flex; align-items:center; gap:12px; background:rgba(255,255,255,0.1); backdrop-filter:blur(16px); border:1px solid rgba(255,255,255,0.12); border-radius:999px; padding:10px 20px 10px 14px;">
+        <div style="width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,#1DB954,#1ed760); display:flex; align-items:center; justify-content:center;">
+          <span style="color:#fff; font-size:14px;">&#9654;</span>
+        </div>
+        <div style="text-align:left;">
+          <div style="font-size:13px; font-weight:600; color:#fff;">Dynamite</div>
+          <div style="font-size:11px; color:rgba(255,255,255,0.5);">BTS &mdash; 2:34 / 3:19</div>
+        </div>
+        <div style="width:24px; height:4px; border-radius:2px; background:rgba(255,255,255,0.2); overflow:hidden; margin-left:8px;">
+          <div style="width:70%; height:100%; background:#1DB954; border-radius:2px;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="spec-tag" style="color:rgba(255,255,255,0.3);">pill shape | frosted bg + blur(16px) | 1px outline | shows: timers, music, navigation | visible on lock screen + AOD + status bar</div>
+  </div>
+
+  <!-- Glass UI Quick Panel Tiles -->
+  <div style="margin-bottom:24px;">
+    <div class="comp-row-label" style="color:rgba(255,255,255,0.4);">Quick Panel Tiles (Glass UI — Drag & Drop)</div>
+    <div style="background:#0d0d1a; border-radius:26px; padding:24px; display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px;">
+      <div style="background:rgba(62,145,255,0.2); backdrop-filter:blur(12px); border:1px solid rgba(62,145,255,0.3); border-radius:18px; padding:14px 12px; text-align:center; grid-column:span 2;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3E91FF" stroke-width="2"><path d="M5 12.55a11 11 0 0114.08 0"/><path d="M8.53 16.11a6 6 0 016.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+        <div style="font-size:12px; color:#3E91FF; margin-top:6px; font-weight:600;">Wi-Fi</div>
+        <div style="font-size:10px; color:rgba(255,255,255,0.4);">Home_5G</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.06); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,0.1); border-radius:18px; padding:14px 12px; text-align:center;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2"><rect x="1" y="6" width="22" height="12" rx="2"/><line x1="23" y1="13" x2="23" y2="11"/></svg>
+        <div style="font-size:11px; color:rgba(255,255,255,0.5); margin-top:6px;">Bluetooth</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.06); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,0.1); border-radius:18px; padding:14px 12px; text-align:center;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg>
+        <div style="font-size:11px; color:rgba(255,255,255,0.5); margin-top:6px;">Brightness</div>
+      </div>
+      <!-- Brightness slider spanning full width -->
+      <div style="background:rgba(255,255,255,0.06); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,0.1); border-radius:18px; padding:14px 16px; grid-column:span 4; display:flex; align-items:center; gap:12px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/></svg>
+        <div style="flex:1; height:4px; background:rgba(255,255,255,0.15); border-radius:2px; position:relative;">
+          <div style="width:65%; height:100%; background:#3E91FF; border-radius:2px;"></div>
+        </div>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
+      </div>
+    </div>
+    <div class="spec-tag" style="color:rgba(255,255,255,0.3);">tiles: frosted glass + blur(12px) + 1px outline | sizes: small/medium/large | fully drag-and-drop | sliders: switchable horizontal/vertical | radius: 18dp</div>
+  </div>
+
+  <!-- 3D Icon Shadows -->
+  <div style="margin-bottom:24px;">
+    <div class="comp-row-label" style="color:rgba(255,255,255,0.4);">3D App Icon Shadows</div>
+    <div style="display:flex; gap:24px; align-items:center; justify-content:center; padding:32px;">
+      <div style="text-align:center;">
+        <div style="width:56px; height:56px; border-radius:14px; background:linear-gradient(135deg,#3E91FF,#0072DE); filter:drop-shadow(0 4px 8px rgba(0,0,0,0.4)); display:flex; align-items:center; justify-content:center; margin:0 auto 8px;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="#fff"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 00-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/></svg>
+        </div>
+        <div style="font-size:11px; color:rgba(255,255,255,0.5);">Phone</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="width:56px; height:56px; border-radius:14px; background:linear-gradient(135deg,#25D366,#128C7E); filter:drop-shadow(0 4px 8px rgba(0,0,0,0.4)); display:flex; align-items:center; justify-content:center; margin:0 auto 8px;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="#fff"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
+        </div>
+        <div style="font-size:11px; color:rgba(255,255,255,0.5);">Messages</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="width:56px; height:56px; border-radius:14px; background:linear-gradient(135deg,#FF6B6B,#EE5A24); filter:drop-shadow(0 4px 8px rgba(0,0,0,0.4)); display:flex; align-items:center; justify-content:center; margin:0 auto 8px;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="12" r="3.2"/><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
+        </div>
+        <div style="font-size:11px; color:rgba(255,255,255,0.5);">Camera</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="width:56px; height:56px; border-radius:14px; background:linear-gradient(135deg,#F9A825,#FF8F00); filter:drop-shadow(0 4px 8px rgba(0,0,0,0.4)); display:flex; align-items:center; justify-content:center; margin:0 auto 8px;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="#fff"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+        </div>
+        <div style="font-size:11px; color:rgba(255,255,255,0.5);">Email</div>
+      </div>
+    </div>
+    <div class="spec-tag" style="color:rgba(255,255,255,0.3);">drop-shadow: 0 4px 8px rgba(0,0,0,0.4) | subtle floating effect | toned down from beta for subtlety | radius: 14dp squircle</div>
+  </div>
+
+  <!-- Unlock Animations -->
+  <div>
+    <div class="comp-row-label" style="color:rgba(255,255,255,0.4);">Custom Unlock Animations (6 Styles via LockStar)</div>
+    <div style="display:grid; grid-template-columns:repeat(6,1fr); gap:8px;">
+      <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:14px; padding:16px 8px; text-align:center;">
+        <div style="font-size:20px; margin-bottom:6px;">&#8594;</div>
+        <div style="font-size:11px; color:rgba(255,255,255,0.5);">Slide</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:14px; padding:16px 8px; text-align:center;">
+        <div style="font-size:20px; margin-bottom:6px;">&#8596;</div>
+        <div style="font-size:11px; color:rgba(255,255,255,0.5);">Expand</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:14px; padding:16px 8px; text-align:center;">
+        <div style="font-size:20px; margin-bottom:6px;">&#10022;</div>
+        <div style="font-size:11px; color:rgba(255,255,255,0.5);">Spread</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:14px; padding:16px 8px; text-align:center;">
+        <div style="font-size:20px; margin-bottom:6px;">&#8776;</div>
+        <div style="font-size:11px; color:rgba(255,255,255,0.5);">Wave</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:14px; padding:16px 8px; text-align:center;">
+        <div style="font-size:20px; margin-bottom:6px;">&#8734;</div>
+        <div style="font-size:11px; color:rgba(255,255,255,0.5);">Warp</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:14px; padding:16px 8px; text-align:center;">
+        <div style="font-size:20px; margin-bottom:6px;">&#9711;</div>
+        <div style="font-size:11px; color:rgba(255,255,255,0.5);">Ripple</div>
+      </div>
+    </div>
+    <div class="spec-tag" style="color:rgba(255,255,255,0.3);">6 styles via LockStar | customizable per user | also: icon blur + wallpaper blur levels adjustable in Home Up</div>
+  </div>
+</section>
+
+<!-- ==================== CARDS ==================== -->
+<section class="comp-section" id="cards">
+  <div class="comp-label">12 / Cards</div>
+  <h2 class="comp-title">Cards</h2>
+
+  <div class="comp-grid-3">
+    <div class="oneui-card">
+      <div class="oneui-card-img" style="background:linear-gradient(135deg,#64e9e3,#9ffac7);">
+        <span style="font-size:48px;">&#128241;</span>
+      </div>
+      <div class="oneui-card-body">
+        <h3>Galaxy S25 Ultra</h3>
+        <p>The next level of Galaxy AI. Titanium design meets intelligent camera.</p>
+      </div>
+    </div>
+    <div class="oneui-card">
+      <div class="oneui-card-img" style="background:linear-gradient(135deg,#BFCFE2,#C6E0CF);">
+        <span style="font-size:48px;">&#128187;</span>
+      </div>
+      <div class="oneui-card-body">
+        <h3>Galaxy Book</h3>
+        <p>Ultra-thin design with seamless Galaxy ecosystem integration.</p>
+      </div>
+    </div>
+    <div class="oneui-card">
+      <div class="oneui-card-img" style="background:linear-gradient(135deg,#E8D5F5,#F5D5E0);">
+        <span style="font-size:48px;">&#9201;</span>
+      </div>
+      <div class="oneui-card-body">
+        <h3>Galaxy Watch</h3>
+        <p>Advanced health monitoring with Galaxy AI-powered insights.</p>
+      </div>
+    </div>
+  </div>
+  <div class="spec-tag">radius: 26dp | shadow: 0 1px 3px rgba(0,0,0,0.08) | icon: 38dp | icon margin: 8dp vert / 16dp end</div>
+</section>
+
+<!-- ==================== LISTS ==================== -->
+<section class="comp-section" id="lists">
+  <div class="comp-label">13 / Lists</div>
+  <h2 class="comp-title">List Items</h2>
+
+  <div class="list max-w-400">
+    <div class="list-item">
+      <div class="list-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <div class="list-content">
+        <div class="list-title">Account</div>
+        <div class="list-subtitle">Samsung account, Google</div>
+      </div>
+      <div class="list-trailing">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ABABAB" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+    </div>
+    <div class="list-item">
+      <div class="list-icon" style="background:rgba(46,125,50,0.1); color:#2E7D32;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      </div>
+      <div class="list-content">
+        <div class="list-title">Security & Privacy</div>
+        <div class="list-subtitle">Screen lock, Find My Mobile</div>
+      </div>
+      <div class="list-trailing">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ABABAB" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+    </div>
+    <div class="list-item">
+      <div class="list-icon" style="background:rgba(3,129,254,0.1); color:var(--primary);">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      </div>
+      <div class="list-content">
+        <div class="list-title">Display</div>
+        <div class="list-subtitle">Brightness, Eye comfort shield</div>
+      </div>
+      <div class="list-trailing">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ABABAB" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+    </div>
+    <div class="list-item">
+      <div class="list-icon" style="background:rgba(249,168,37,0.1); color:#F9A825;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      </div>
+      <div class="list-content">
+        <div class="list-title">Notifications</div>
+        <div class="list-subtitle">App notifications, Do not disturb</div>
+      </div>
+      <label class="switch" style="flex-shrink:0;"><input type="checkbox" checked><span class="switch-track"></span><span class="switch-thumb"></span></label>
+    </div>
+  </div>
+  <div class="spec-tag">item min-height: 56dp | padding: 16dp 24dp | icon: 38dp circle | title: 17sp medium | subtitle: 13sp</div>
+</section>
+
+<!-- ==================== DIALOGS ==================== -->
+<section class="comp-section" id="dialogs">
+  <div class="comp-label">14 / Dialogs</div>
+  <h2 class="comp-title">Dialogs</h2>
+  <p class="comp-desc">Choice/confirmation dialogs at bottom, information dialogs centered. Dim: 65%.</p>
+
+  <div class="comp-grid-2">
+    <div class="dialog-backdrop">
+      <div class="dialog">
+        <div class="dialog-title" style="color:var(--text-primary);">Delete file?</div>
+        <div class="dialog-body" style="color:var(--text-secondary);">This action cannot be undone. The file will be permanently removed from your device.</div>
+        <div class="dialog-actions">
+          <button class="btn btn-flat btn-sm">Cancel</button>
+          <button class="btn btn-contained btn-sm" style="background:var(--error);">Delete</button>
+        </div>
+      </div>
+    </div>
+    <div class="dialog-backdrop">
+      <div class="dialog">
+        <div class="dialog-title" style="color:var(--text-primary);">Choose theme</div>
+        <div style="margin-bottom:20px;">
+          <label class="radio" style="display:flex; padding:12px 0; color:var(--text-primary);"><input type="radio" name="theme" checked><span class="radio-circle"><span class="radio-dot"></span></span>Light</label>
+          <label class="radio" style="display:flex; padding:12px 0; color:var(--text-primary);"><input type="radio" name="theme"><span class="radio-circle"><span class="radio-dot"></span></span>Dark</label>
+          <label class="radio" style="display:flex; padding:12px 0; color:var(--text-primary);"><input type="radio" name="theme"><span class="radio-circle"><span class="radio-dot"></span></span>System default</label>
+        </div>
+        <div class="dialog-actions">
+          <button class="btn btn-flat btn-sm">Cancel</button>
+          <button class="btn btn-flat btn-sm" style="color:var(--primary);">Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="spec-tag">radius: 26dp | padding: 28dp 24dp 20dp | title: 20sp bold | body: 15sp | dim: 0.65 overlay</div>
+</section>
+
+<!-- ==================== BOTTOM SHEET ==================== -->
+<section class="comp-section" id="bottomsheet">
+  <div class="comp-label">15 / Bottom Sheet</div>
+  <h2 class="comp-title">Bottom Sheet</h2>
+
+  <div class="bottom-sheet-demo max-w-400">
+    <div class="bottom-sheet">
+      <div class="bottom-sheet-handle"></div>
+      <div class="bottom-sheet-title" style="color:var(--text-primary);">Share via</div>
+      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px; text-align:center;">
+        <div><div style="width:48px;height:48px;border-radius:50%;background:var(--primary-10);margin:0 auto 6px;display:flex;align-items:center;justify-content:center;color:var(--primary);font-size:20px;">&#9993;</div><div style="font-size:12px;color:var(--text-secondary);">Email</div></div>
+        <div><div style="width:48px;height:48px;border-radius:50%;background:rgba(37,211,102,0.1);margin:0 auto 6px;display:flex;align-items:center;justify-content:center;color:#25D366;font-size:20px;">&#9742;</div><div style="font-size:12px;color:var(--text-secondary);">Message</div></div>
+        <div><div style="width:48px;height:48px;border-radius:50%;background:rgba(29,161,242,0.1);margin:0 auto 6px;display:flex;align-items:center;justify-content:center;color:#1DA1F2;font-size:20px;">&#128279;</div><div style="font-size:12px;color:var(--text-secondary);">Copy link</div></div>
+        <div><div style="width:48px;height:48px;border-radius:50%;background:var(--surface-dim);margin:0 auto 6px;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);font-size:20px;">&#8943;</div><div style="font-size:12px;color:var(--text-secondary);">More</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="spec-tag">radius: 26dp top | handle: 36x4dp #C0C0C0 | title: 22sp semibold | drag handle tint: #66505050</div>
+</section>
+
+<!-- ==================== SLIDERS ==================== -->
+<section class="comp-section" id="sliders">
+  <div class="comp-label">16 / Sliders</div>
+  <h2 class="comp-title">Sliders</h2>
+
+  <div class="comp-card max-w-400">
+    <div class="comp-row-label">Continuous</div>
+    <div class="slider-container">
+      <input type="range" class="slider" min="0" max="100" value="60">
+      <div class="slider-labels"><span>0</span><span>50</span><span>100</span></div>
+    </div>
+    <div class="comp-row-label mt-24">Brightness</div>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      <input type="range" class="slider" min="0" max="100" value="75" style="flex:1;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </div>
+    <div class="spec-tag">track: 4dp | thumb: 24dp circle | color: #0381FE | marker: #9C9C9C</div>
+  </div>
+</section>
+
+<!-- ==================== PROGRESS ==================== -->
+<section class="comp-section" id="progress">
+  <div class="comp-label">17 / Progress Indicators</div>
+  <h2 class="comp-title">Progress</h2>
+
+  <div class="comp-card max-w-400">
+    <div class="comp-row-label">Linear Determinate</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:65%;"></div></div>
+    <div style="font-size:13px; color:var(--text-secondary); text-align:right; margin-top:4px;">65%</div>
+
+    <div class="comp-row-label mt-24">Linear Indeterminate</div>
+    <div class="progress-bar" style="overflow:hidden;">
+      <div class="progress-fill" style="width:30%; animation: indeterminate 1.5s infinite ease-in-out;"></div>
+    </div>
+
+    <div class="comp-row-label mt-24">Circular</div>
+    <div class="comp-row">
+      <div class="progress-circular"></div>
+      <div class="progress-circular progress-circular-lg"></div>
+    </div>
+    <div class="spec-tag">linear height: 4dp | circular: 48dp / 64dp | stroke: 4-5dp | color: #0381FE</div>
+  </div>
+
+  <style>
+    @keyframes indeterminate {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(400%); }
+    }
+  </style>
+</section>
+
+<!-- ==================== SNACKBAR ==================== -->
+<section class="comp-section" id="snackbar">
+  <div class="comp-label">18 / Snackbar & Toast</div>
+  <h2 class="comp-title">Snackbar</h2>
+  <p class="comp-desc">Snackbars stay until action pressed. Action toasts auto-dismiss.</p>
+
+  <div class="flex-col gap-12">
+    <div class="snackbar">File deleted <button class="snackbar-action">Undo</button></div>
+    <div class="snackbar">Network connection restored</div>
+    <div class="snackbar" style="background:var(--error);">Failed to send message <button class="snackbar-action" style="color:#fff;">Retry</button></div>
+  </div>
+  <div class="spec-tag">bg: #474747 | text: #FAFAFA 15sp | radius: 18dp | action: #7CB8FF 15sp semibold | padding: 14dp 20dp</div>
+</section>
+
+<!-- ==================== TOOLTIPS ==================== -->
+<section class="comp-section" id="tooltips">
+  <div class="comp-label">19 / Tooltips</div>
+  <h2 class="comp-title">Tooltips</h2>
+
+  <div class="comp-row gap-24">
+    <div class="tooltip-demo">
+      <div class="tooltip-bubble">
+        Tap here to add a new contact
+        <div class="tooltip-arrow"></div>
+      </div>
+    </div>
+    <div class="tooltip-demo">
+      <div class="tooltip-bubble" style="background:var(--primary); max-width:200px;">
+        <span style="color:#fff;">New! Try Galaxy AI features</span>
+        <div class="tooltip-arrow"><div style="position:absolute; top:0; left:2px; width:12px; height:12px; background:var(--primary); transform:rotate(45deg);"></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="spec-tag">bg: #474747 | text: #FAFAFA 14sp | radius: 12dp | arrow: 16x12dp | margin: 18dp horiz / 16dp vert | bubble: 31dp</div>
+</section>
+
+<!-- ==================== BADGES ==================== -->
+<section class="comp-section" id="badges">
+  <div class="comp-label">20 / Badges</div>
+  <h2 class="comp-title">Badges</h2>
+
+  <div class="comp-row gap-24">
+    <div class="badge-wrap">
+      <button class="btn btn-medium btn-icon-only" style="width:48px;height:48px;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      </button>
+      <span class="badge">3</span>
+      <div class="spec-tag">Count badge</div>
+    </div>
+    <div class="badge-wrap">
+      <button class="btn btn-medium btn-icon-only" style="width:48px;height:48px;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      </button>
+      <span class="badge badge-dot"></span>
+      <div class="spec-tag">Dot badge</div>
+    </div>
+    <div class="badge-wrap">
+      <button class="btn btn-medium btn-icon-only" style="width:48px;height:48px;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      </button>
+      <span class="badge">99+</span>
+      <div class="spec-tag">Max count</div>
+    </div>
+  </div>
+  <div class="spec-tag">size: 17dp | min-width: 17dp | radius: 9dp | bg: #D32F2F | text: #FFF 10sp bold | offset: -3dp</div>
+</section>
+
+<!-- ==================== MENUS ==================== -->
+<section class="comp-section" id="menus">
+  <div class="comp-label">21 / Menus</div>
+  <h2 class="comp-title">Menus & Dropdowns</h2>
+
+  <div class="comp-row gap-24" style="align-items:flex-start;">
+    <div class="menu">
+      <div class="menu-item" style="color:var(--text-primary);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Edit
+      </div>
+      <div class="menu-item" style="color:var(--text-primary);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        Copy
+      </div>
+      <div class="menu-divider"></div>
+      <div class="menu-item" style="color:var(--text-primary);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+        Delete
+      </div>
+    </div>
+
+    <div class="menu" style="min-width:240px;">
+      <div class="menu-item" style="color:var(--text-primary); justify-content:space-between;">
+        <span>Sort by name</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="menu-item" style="color:var(--text-primary);">Sort by date</div>
+      <div class="menu-item" style="color:var(--text-primary);">Sort by size</div>
+    </div>
+  </div>
+  <div class="spec-tag">min-width: 200dp | max-width: 300dp | radius: 26dp | item: 14dp 24dp padding | icon: 24dp | divider: 0.5dp</div>
+</section>
+
+<!-- ==================== DIVIDERS ==================== -->
+<section class="comp-section" id="dividers">
+  <div class="comp-label">22 / Dividers</div>
+  <h2 class="comp-title">Dividers</h2>
+
+  <div class="comp-card" style="padding:0;">
+    <div style="padding:20px 24px; font-size:14px; color:var(--text-secondary);">Full width</div>
+    <div class="divider divider-full"></div>
+    <div style="padding:20px 24px; font-size:14px; color:var(--text-secondary);">Inset (64dp start)</div>
+    <div class="divider divider-inset"></div>
+    <div style="padding:20px 24px; font-size:14px; color:var(--text-secondary);">Middle (24dp padding)</div>
+    <div class="divider"></div>
+    <div style="padding:20px 24px; font-size:14px; color:var(--text-secondary);">Content below</div>
+  </div>
+  <div class="spec-tag">height: 0.5dp | color: #E4E4E4 | inset start: 64dp | middle padding: 25dp start/end</div>
+</section>
+
+<!-- ==================== SPEC SUMMARY ==================== -->
+<section class="comp-section" style="background:var(--surface-dim);">
+  <div class="comp-label">Reference</div>
+  <h2 class="comp-title">One UI Design Tokens</h2>
+
+  <div class="comp-grid-2">
+    <div class="comp-card">
+      <h3 style="font-size:18px; font-weight:700; margin-bottom:16px;">Color Tokens</h3>
+      <table style="width:100%; font-size:13px; border-collapse:collapse;">
+        <tr><td style="padding:6px 0;">Primary</td><td style="font-family:monospace;">#0381FE</td><td><div style="width:20px;height:20px;border-radius:4px;background:#0381FE;"></div></td></tr>
+        <tr><td style="padding:6px 0;">Primary Dark</td><td style="font-family:monospace;">#0072DE</td><td><div style="width:20px;height:20px;border-radius:4px;background:#0072DE;"></div></td></tr>
+        <tr><td style="padding:6px 0;">Activated</td><td style="font-family:monospace;">#3E91FF</td><td><div style="width:20px;height:20px;border-radius:4px;background:#3E91FF;"></div></td></tr>
+        <tr><td style="padding:6px 0;">Nav Selected</td><td style="font-family:monospace;">#387AFF</td><td><div style="width:20px;height:20px;border-radius:4px;background:#387AFF;"></div></td></tr>
+        <tr><td style="padding:6px 0;">Surface (Light)</td><td style="font-family:monospace;">#FCFCFC</td><td><div style="width:20px;height:20px;border-radius:4px;background:#FCFCFC;border:1px solid #ddd;"></div></td></tr>
+        <tr><td style="padding:6px 0;">Surface (Dark)</td><td style="font-family:monospace;">#171717</td><td><div style="width:20px;height:20px;border-radius:4px;background:#171717;"></div></td></tr>
+        <tr><td style="padding:6px 0;">Text Primary</td><td style="font-family:monospace;">#252525</td><td><div style="width:20px;height:20px;border-radius:4px;background:#252525;"></div></td></tr>
+        <tr><td style="padding:6px 0;">Text Secondary</td><td style="font-family:monospace;">#666666</td><td><div style="width:20px;height:20px;border-radius:4px;background:#666666;"></div></td></tr>
+        <tr><td style="padding:6px 0;">Divider</td><td style="font-family:monospace;">#E4E4E4</td><td><div style="width:20px;height:20px;border-radius:4px;background:#E4E4E4;border:1px solid #ddd;"></div></td></tr>
+        <tr><td style="padding:6px 0;">Error</td><td style="font-family:monospace;">#D32F2F</td><td><div style="width:20px;height:20px;border-radius:4px;background:#D32F2F;"></div></td></tr>
+      </table>
+    </div>
+
+    <div class="comp-card">
+      <h3 style="font-size:18px; font-weight:700; margin-bottom:16px;">Radius Tokens</h3>
+      <table style="width:100%; font-size:13px; border-collapse:collapse;">
+        <tr><td style="padding:6px 0;">Checkbox</td><td style="font-family:monospace;">4dp</td></tr>
+        <tr><td style="padding:6px 0;">List item bg</td><td style="font-family:monospace;">8dp</td></tr>
+        <tr><td style="padding:6px 0;">Bottom nav btn</td><td style="font-family:monospace;">12dp</td></tr>
+        <tr><td style="padding:6px 0;">Small button</td><td style="font-family:monospace;">12dp</td></tr>
+        <tr><td style="padding:6px 0;">Switch track</td><td style="font-family:monospace;">16dp</td></tr>
+        <tr><td style="padding:6px 0;">Button</td><td style="font-family:monospace;">18dp</td></tr>
+        <tr><td style="padding:6px 0;">Chip</td><td style="font-family:monospace;">22dp</td></tr>
+        <tr><td style="padding:6px 0;">Card / Dialog / Sheet</td><td style="font-family:monospace;">26dp</td></tr>
+        <tr><td style="padding:6px 0;">FAB / Circle</td><td style="font-family:monospace;">50%</td></tr>
+        <tr><td style="padding:6px 0;">Search / Pill tab</td><td style="font-family:monospace;">999dp</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<footer style="padding:32px; text-align:center; font-size:12px; color:var(--text-disabled);">
+  Samsung One UI Component Library &mdash; Generated from <a href="https://developer.samsung.com/one-ui" style="color:var(--primary);">developer.samsung.com/one-ui</a> &amp; <a href="https://github.com/OneUIProject/oneui-design" style="color:var(--primary);">oneui-design</a>
+</footer>
+
+</body>
+</html>

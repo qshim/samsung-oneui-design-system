@@ -1,0 +1,1842 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GenUI - Samsung One UI 8.5 Design Builder</title>
+
+<!-- Theme tokens: css/genui.css defines :root fallbacks first; this
+     empty <style id="theme-vars"> is filled by /api/themes and MUST sit
+     AFTER genui.css so preset values (Neon black text, Glass borders,
+     etc.) win the cascade. -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- Lock-screen clock font — Space Grotesk (Google, display-geometric sans).
+     Paired with Inter for UI / body text. Preconnect so the clock renders
+     with the correct metrics on first paint (no FOUT when lock screen
+     generates). Space Mono is kept loaded for backward compatibility with
+     older generated scenes that reference it, but new renders default to
+     Space Grotesk. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/genui.css">
+<style id="theme-vars"></style>
+<script>
+  // Theme system — boot apply + Generate-panel picker + cross-window
+  // sync. The customize page (/customize) is the editor; this block
+  // handles the active-theme apply + the small Generate-panel dropdown
+  // that lets the user fast-switch presets without leaving the page.
+  // BroadcastChannel keeps the two windows in sync — saving a theme
+  // on /customize broadcasts a 'theme-saved' message that this window
+  // listens for to refresh its dropdown options.
+  (function _themeBoot() {
+    const STYLE_EL_ID = 'theme-vars';
+    const SELECT_ID   = 'themePickerSelect';
+    let CACHED_THEMES = null;
+
+    function applyVarsToRoot(vars) {
+      var raw = vars || {};
+      // Document globals: surface renderer reads `--oneui-theme-style` /
+      // chroma from :root (`getComputedStyle(document.documentElement)`).
+      // Palette tokens (`--text-primary`, surfaces, QS chips, …) live on the
+      // device frames only so Neon black ink does not recolor sidebar/topbar.
+      var DOC_KEYS = new Set(['--oneui-theme-style', '--oneui-chroma']);
+      var rootLines = [];
+      var frameLines = [];
+      Object.keys(raw).forEach(function (key) {
+        var v = raw[key];
+        var line = '  ' + key + ': ' + v + ';';
+        if (DOC_KEYS.has(key)) rootLines.push(line);
+        else frameLines.push(line);
+      });
+      var css = '';
+      if (rootLines.length) {
+        css += ':root {\n' + rootLines.join('\n') + '\n}\n';
+      }
+      if (frameLines.length) {
+        css += '#canvasFrame, #canvasFrameB {\n' + frameLines.join('\n') + '\n}\n';
+      }
+      const style = document.getElementById(STYLE_EL_ID);
+      if (style) style.textContent = css;
+    }
+
+    function populatePicker(themes, activeId) {
+      const sel = document.getElementById(SELECT_ID);
+      if (!sel) return;
+      const prev = sel.value;
+      sel.innerHTML = themes.map(t =>
+        '<option value="' + t.id + '"' + (t.id === activeId ? ' selected' : '') + '>' + t.name + '</option>'
+      ).join('');
+      // Restore prior selection if the active id changed but the
+      // previously-selected theme is still in the list.
+      if (prev && themes.find(t => t.id === prev)) sel.value = prev;
+    }
+
+    function loadAndApply(opts) {
+      return fetch('/api/themes', { cache: 'no-store' })
+        .then(r => r.json())
+        .then(data => {
+          if (!data || !data.themes) return;
+          CACHED_THEMES = data.themes;
+          const activeId = (opts && opts.forceId) || data._active;
+          const active = data.themes.find(t => t.id === activeId) || data.themes[0];
+          if (active && active.vars) applyVarsToRoot(active.vars);
+          window.__activeTheme = active && active.id;
+          // Wait one tick — the picker element may not exist yet at
+          // boot time (it's later in the DOM than this <head> script).
+          setTimeout(function () {
+            populatePicker(data.themes, active && active.id);
+            if (typeof window.refreshCanvasForTheme === 'function') {
+              window.refreshCanvasForTheme();
+            }
+          }, 0);
+        })
+        .catch(() => {});
+    }
+
+    // Called by the dropdown's onchange. Applies vars locally + POSTs
+    // active id so the change persists across reloads.
+    window.applyThemeFromPicker = function applyThemeFromPicker(id) {
+      if (!id || !CACHED_THEMES) return;
+      const theme = CACHED_THEMES.find(t => t.id === id);
+      if (!theme) return;
+      applyVarsToRoot(theme.vars || {});
+      window.__activeTheme = id;
+      fetch('/api/themes/active', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      }).catch(() => {});
+      requestAnimationFrame(function () {
+        if (typeof window.refreshCanvasForTheme === 'function') {
+          window.refreshCanvasForTheme();
+        }
+      });
+    };
+
+    // Cross-window sync — listens for 'theme-saved' broadcasts from
+    // the /customize editor (which posts whenever a theme is created
+    // or the active theme changes). On receive, we re-fetch the list
+    // and update the dropdown so newly-saved custom themes show up
+    // immediately without a manual refresh.
+    if (typeof BroadcastChannel === 'function') {
+      const ch = new BroadcastChannel('oneui-themes');
+      ch.addEventListener('message', (ev) => {
+        if (!ev || !ev.data) return;
+        if (ev.data.type === 'theme-saved' || ev.data.type === 'theme-active-changed') {
+          loadAndApply({ forceId: ev.data.activeId });
+        }
+      });
+      window.__themeChannel = ch;
+    }
+
+    loadAndApply();
+  })();
+</script>
+<!-- html-to-image — used by the auto-iterate loop to capture canvas
+     snapshots. Uses the SVG <foreignObject> + native rasterization
+     approach, which produced pixel-accurate captures in our test
+     scenarios (vs. html2canvas which doubled text and mis-rendered
+     box-shadows). modern-screenshot was the first attempt but ships
+     ES-module-only — html-to-image ships a UMD bundle exposing
+     window.htmlToImage, which is what we need for a CDN <script>. -->
+<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.13/dist/html-to-image.js" async></script>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <a class="topbar-back" href="index.html" title="Back to Overview" aria-label="Back to Overview"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 10.5L12 3L21 10.5V20.25C21 20.6642 20.6642 21 20.25 21H15.75C15.3358 21 15 20.6642 15 20.25V14.25C15 13.8358 14.6642 13.5 14.25 13.5H9.75C9.33579 13.5 9 13.8358 9 14.25V20.25C9 20.6642 8.66421 21 8.25 21H3.75C3.33579 21 3 20.6642 3 20.25V10.5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+    <a class="topbar-brand" href="index.html">SAMSUNG <span>GenUI</span></a>
+  </div>
+  <div class="topbar-right">
+    <!-- Theme: always visible top-right — same dropdown + pencil as sidebar;
+         avoids “where did theme go?” when Generate panel is scrolled. -->
+    <span id="topbarThemePicker" style="display:inline-flex;align-items:center;gap:2px;padding:0 4px 0 10px;border-radius:8px;background:rgba(255,255,255,0.04);border:1px solid var(--divider);height:28px;">
+      <span style="font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.4px;">Theme</span>
+      <select id="themePickerSelect"
+        onchange="applyThemeFromPicker(this.value)"
+        title="Switch theme — affects all rendered cards and page chrome"
+        style="appearance:none;background:transparent;color:var(--text);border:0;outline:none;font-family:var(--font);font-size:11px;font-weight:500;padding:0 18px 0 6px;cursor:pointer;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E&quot;);background-repeat:no-repeat;background-position:right 4px center;height:24px;">
+        <option value="" disabled selected>Loading…</option>
+      </select>
+      <a class="customize-open-btn" href="customize.html"
+              title="Theme customizer — opens full page"
+              aria-label="Open theme customizer"
+              style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;margin-left:4px;border:0;border-left:1px solid var(--divider);border-radius:0;padding:0 0 0 6px;background:transparent;color:var(--text-3);cursor:pointer;transition:color 0.15s ease;text-decoration:none;">
+        <svg width="13" height="13" viewBox="0 0 17.55 17.55" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M7.521 14.976C7.329 15.168 6.596 15.723 6.324 15.777L1.156 16.79C0.884 16.844 0.706 16.665 0.759 16.393L1.773 11.228C1.827 10.956 2.381 10.222 2.573 10.030M7.709 14.793C7.417 15.085 6.940 15.085 6.648 14.793L2.759 10.904C2.468 10.612 2.468 10.135 2.759 9.843L11.266 1.336C12.047 0.555 13.313 0.555 14.095 1.336L16.216 3.458C16.997 4.238 16.997 5.504 16.216 6.286L7.709 14.793Z"
+                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+    </span>
+
+    <!-- Device selector removed — site is Galaxy S26-only by default.
+         The element below is kept hidden so toggleDeviceList / selectDevice
+         callers in app/settings.js continue to find the DOM nodes they
+         expect (avoids null-reference errors). To re-enable, change
+         display:none → flex and the dropdown re-appears. -->
+    <div class="device-selector" id="deviceSelector" style="display:none;">
+      <button class="device-selector-btn" onclick="toggleDeviceList()" id="deviceBtn">
+        <span class="dev-icon">📱</span>
+        <span class="dev-name" id="deviceBtnLabel">Galaxy S26</span>
+      </button>
+      <div class="device-list" id="deviceList">
+        <div class="device-list-item active" data-mode="mobile" onclick="selectDevice('mobile',this)">
+          <span class="dev-li-icon">📱</span>
+          <div class="dev-li-info">
+            <div class="dev-li-name">Galaxy S26</div>
+            <div class="dev-li-spec">1080 × 2340 · 19.5:9 · 360dp</div>
+          </div>
+          <span class="dev-li-check">✓</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ENGINE — Local/AI agent-mode toggle is hidden. With the
+         Pipeline-first workflow (textarea Enter + Run Pipeline both
+         call pipelineGenerate) the Local mode no longer has a path to
+         drive the canvas, so the toggle was vestigial UI. The element
+         is left in the DOM so app/agent.js can still reach it via
+         getElementById without errors; the visual is suppressed. -->
+    <div id="agentModeIndicator" class="agent-mode-indicator local" onclick="toggleAgentMode()" style="display:none;" title="Local / AI agent mode (hidden — Pipeline is always active)">Local</div>
+
+    <!-- Export + Clear remain in Generate tab if present; Theme is above. -->
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-tabs">
+      <button class="sidebar-tab active" onclick="switchTab(5,this)">Generate</button>
+      <button class="sidebar-tab" onclick="switchTab(6,this)">Design</button>
+      <button class="sidebar-tab" onclick="switchTab(7,this)">MLP Prototype</button>
+    </div>
+    <div class="sidebar-content">
+
+      <!-- PANEL 0: COMPONENTS (legacy - content moved to Design panel) -->
+      <div class="panel" id="panel-0">
+        <div class="panel-section">
+          <div class="panel-label">Buttons</div>
+          <div class="comp-palette">
+            <div class="comp-item" onclick="addComp('btn-contained')"><span class="comp-icon">&#9632;</span>Contained</div>
+            <div class="comp-item" onclick="addComp('btn-outlined')"><span class="comp-icon">&#9633;</span>Outlined</div>
+            <div class="comp-item" onclick="addComp('btn-flat')"><span class="comp-icon">Aa</span>Flat / Text</div>
+            <div class="comp-item" onclick="addComp('fab')"><span class="comp-icon">+</span>FAB</div>
+          </div>
+        </div>
+        <div class="panel-section">
+          <div class="panel-label">Controls</div>
+          <div class="comp-palette">
+            <div class="comp-item" onclick="addComp('switch')"><span class="comp-icon">&#8596;</span>Switch</div>
+            <div class="comp-item" onclick="addComp('checkbox')"><span class="comp-icon">&#9745;</span>Checkbox</div>
+            <div class="comp-item" onclick="addComp('radio')"><span class="comp-icon">&#9673;</span>Radio</div>
+            <div class="comp-item" onclick="addComp('chip')"><span class="comp-icon">&#9679;</span>Chip</div>
+          </div>
+        </div>
+        <div class="panel-section">
+          <div class="panel-label">Navigation</div>
+          <div class="comp-palette">
+            <div class="comp-item" onclick="addComp('appbar')"><span class="comp-icon">&#9776;</span>App Bar</div>
+            <div class="comp-item" onclick="addComp('pill-tab')"><span class="comp-icon">&#9673;</span>Pill Tab Bar</div>
+            <div class="comp-item" onclick="addComp('tab-bar')"><span class="comp-icon">&#9135;</span>Tab Bar</div>
+          </div>
+        </div>
+        <div class="panel-section">
+          <div class="panel-label">Content</div>
+          <div class="comp-palette">
+            <div class="comp-item" onclick="addComp('card')"><span class="comp-icon">&#9634;</span>Card</div>
+            <div class="comp-item" onclick="addComp('list-item')"><span class="comp-icon">&#9776;</span>List Item</div>
+            <div class="comp-item" onclick="addComp('dialog')"><span class="comp-icon">&#9635;</span>Dialog</div>
+            <div class="comp-item" onclick="addComp('snackbar')"><span class="comp-icon">&#9644;</span>Snackbar</div>
+          </div>
+        </div>
+        <div class="panel-section">
+          <div class="panel-label">Inputs & Utility</div>
+          <div class="comp-palette">
+            <div class="comp-item" onclick="addComp('input')"><span class="comp-icon">&#9998;</span>Text Field</div>
+            <div class="comp-item" onclick="addComp('search')"><span class="comp-icon">&#128269;</span>Search</div>
+            <div class="comp-item" onclick="addComp('divider')"><span class="comp-icon">&mdash;</span>Divider</div>
+            <div class="comp-item" onclick="addComp('badge')"><span class="comp-icon">&#9679;</span>Badge</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL 1: LAYOUT -->
+      <div class="panel" id="panel-1">
+        <div class="panel-section">
+          <div class="panel-label">레이아웃 프리셋</div>
+          <div class="layout-grid">
+            <div>
+              <div class="layout-preset active" onclick="setLayout('column',this)">
+                <div class="lp-bar" style="height:6px;"></div>
+                <div class="lp-col"></div>
+                <div class="lp-col"></div>
+              </div>
+              <div class="layout-label">세로 스택</div>
+            </div>
+            <div>
+              <div class="layout-preset" onclick="setLayout('two-col',this)">
+                <div class="lp-bar" style="height:6px;"></div>
+                <div class="lp-row"><div class="lp-col"></div><div class="lp-col"></div></div>
+              </div>
+              <div class="layout-label">두 열</div>
+            </div>
+            <div>
+              <div class="layout-preset" onclick="setLayout('grid',this)">
+                <div class="lp-row"><div class="lp-col"></div><div class="lp-col"></div></div>
+                <div class="lp-row"><div class="lp-col"></div><div class="lp-col"></div></div>
+              </div>
+              <div class="layout-label">2×2 그리드</div>
+            </div>
+            <div>
+              <div class="layout-preset" onclick="setLayout('app',this)">
+                <div class="lp-bar" style="height:8px;"></div>
+                <div class="lp-col"></div>
+                <div class="lp-bar" style="height:8px;"></div>
+              </div>
+              <div class="layout-label">앱 본문</div>
+            </div>
+            <div>
+              <div class="layout-preset" onclick="setLayout('hero',this)">
+                <div class="lp-col" style="flex:2;"></div>
+                <div class="lp-bar" style="height:4px;"></div>
+                <div class="lp-col"></div>
+              </div>
+              <div class="layout-label">히어로 + 목록</div>
+            </div>
+            <div>
+              <div class="layout-preset" onclick="setLayout('free',this)">
+                <div class="lp-col" style="opacity:0.3;"></div>
+              </div>
+              <div class="layout-label">자유 배치</div>
+            </div>
+          </div>
+        </div>
+        <div class="panel-section">
+          <div class="axis-pair">
+            <div class="axis-col">
+              <span class="axis-col-label">Gap H</span>
+              <div class="spacing-control">
+                <input type="range" min="0" max="48" step="8" value="8" oninput="setGapH(this.value)">
+                <div class="spacing-value" id="gapHValue2">8px</div>
+              </div>
+            </div>
+            <div class="axis-col">
+              <span class="axis-col-label">Gap V</span>
+              <div class="spacing-control">
+                <input type="range" min="0" max="48" step="8" value="8" oninput="setGapV(this.value)">
+                <div class="spacing-value" id="gapVValue2">8px</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="panel-section">
+          <div class="axis-pair">
+            <div class="axis-col">
+              <span class="axis-col-label">Padding H</span>
+              <div class="spacing-control">
+                <input type="range" min="0" max="48" step="8" value="16" oninput="setPaddingH(this.value)">
+                <div class="spacing-value" id="padHValue2">16px</div>
+              </div>
+            </div>
+            <div class="axis-col">
+              <span class="axis-col-label">Padding V</span>
+              <div class="spacing-control">
+                <input type="range" min="0" max="48" step="8" value="16" oninput="setPaddingV(this.value)">
+                <div class="spacing-value" id="padVValue2">16px</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="panel-section">
+          <div class="panel-label">Alignment</div>
+          <div class="align-row">
+            <button class="align-btn" onclick="setAlign('flex-start',this)">&#8676;</button>
+            <button class="align-btn active" onclick="setAlign('center',this)">&#8596;</button>
+            <button class="align-btn" onclick="setAlign('flex-end',this)">&#8677;</button>
+            <button class="align-btn" onclick="setAlign('stretch',this)">&#8644;</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL 2: COLORS -->
+      <div class="panel" id="panel-2">
+        <div class="panel-section">
+          <div class="panel-label">Apply to</div>
+          <div class="color-target">
+            <button class="active" onclick="setColorTarget('bg',this)">Background</button>
+            <button onclick="setColorTarget('text',this)">Text</button>
+            <button onclick="setColorTarget('border',this)">Border</button>
+          </div>
+        </div>
+        <div class="panel-section">
+          <div class="panel-label">Brand</div>
+          <div class="color-palette">
+            <div class="color-swatch" style="background:#1428A0;" onclick="applyColor('#1428A0')"><span class="cs-label">Samsung Blue</span></div>
+            <div class="color-swatch" style="background:#000;border:1px solid rgba(255,255,255,0.2);" onclick="applyColor('#000000')"><span class="cs-label">Black</span></div>
+            <div class="color-swatch" style="background:#FFFFFF;" onclick="applyColor('#FFFFFF')"><span class="cs-label">White</span></div>
+            <div class="color-swatch" style="background:#F7F7F7;" onclick="applyColor('#F7F7F7')"><span class="cs-label">Near White</span></div>
+            <div class="color-swatch" style="background:#FFF01F;" onclick="applyColor('#FFF01F')"><span class="cs-label">Galaxy Yellow</span></div>
+          </div>
+        </div>
+        <div class="panel-section">
+          <div class="panel-label">System</div>
+          <div class="color-palette">
+            <div class="color-swatch" style="background:#0381FE;" onclick="applyColor('#0381FE')"><span class="cs-label">Primary</span></div>
+            <div class="color-swatch" style="background:#0072DE;" onclick="applyColor('#0072DE')"><span class="cs-label">Primary Dark</span></div>
+            <div class="color-swatch" style="background:#3E91FF;" onclick="applyColor('#3E91FF')"><span class="cs-label">Activated</span></div>
+            <div class="color-swatch" style="background:#FCFCFC;" onclick="applyColor('#FCFCFC')"><span class="cs-label">Surface</span></div>
+            <div class="color-swatch" style="background:#171717;" onclick="applyColor('#171717')"><span class="cs-label">Surface Dark</span></div>
+            <div class="color-swatch" style="background:#D32F2F;" onclick="applyColor('#D32F2F')"><span class="cs-label">Error</span></div>
+            <div class="color-swatch" style="background:#2E7D32;" onclick="applyColor('#2E7D32')"><span class="cs-label">Success</span></div>
+            <div class="color-swatch" style="background:#387AFF;" onclick="applyColor('#387AFF')"><span class="cs-label">Nav Selected</span></div>
+          </div>
+        </div>
+        <div class="panel-section">
+          <div class="panel-label">Text</div>
+          <div class="color-palette">
+            <div class="color-swatch" style="background:#252525;" onclick="applyColor('#252525')"><span class="cs-label">Text Primary</span></div>
+            <div class="color-swatch" style="background:#666666;" onclick="applyColor('#666666')"><span class="cs-label">Text Secondary</span></div>
+            <div class="color-swatch" style="background:#858585;" onclick="applyColor('#858585')"><span class="cs-label">Text Disabled</span></div>
+            <div class="color-swatch" style="background:#FAFAFA;" onclick="applyColor('#FAFAFA')"><span class="cs-label">Text Light</span></div>
+          </div>
+        </div>
+        <div class="panel-section">
+          <div class="panel-label">Glass UI</div>
+          <div class="color-palette">
+            <div class="color-swatch" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);" onclick="applyColor('rgba(255,255,255,0.06)')"><span class="cs-label">Glass BG</span></div>
+            <div class="color-swatch" style="background:rgba(62,145,255,0.2);border:1px solid rgba(62,145,255,0.3);" onclick="applyColor('rgba(62,145,255,0.2)')"><span class="cs-label">Active Tile</span></div>
+            <div class="color-swatch" style="background:#474747;" onclick="applyColor('#474747')"><span class="cs-label">Tooltip</span></div>
+          </div>
+        </div>
+        <div class="panel-section">
+          <div class="panel-label">Illustration</div>
+          <div class="color-palette">
+            <div class="color-swatch" style="background:#87CEEB;" onclick="applyColor('#87CEEB')"><span class="cs-label">Sky Blue</span></div>
+            <div class="color-swatch" style="background:#006994;" onclick="applyColor('#006994')"><span class="cs-label">Ocean Blue</span></div>
+            <div class="color-swatch" style="background:#008080;" onclick="applyColor('#008080')"><span class="cs-label">Teal</span></div>
+            <div class="color-swatch" style="background:#B57EDC;" onclick="applyColor('#B57EDC')"><span class="cs-label">Lavender</span></div>
+            <div class="color-swatch" style="background:#3EA055;" onclick="applyColor('#3EA055')"><span class="cs-label">Clover</span></div>
+            <div class="color-swatch" style="background:#F4C430;" onclick="applyColor('#F4C430')"><span class="cs-label">Saffron</span></div>
+            <div class="color-swatch" style="background:#FF7F50;" onclick="applyColor('#FF7F50')"><span class="cs-label">Coral</span></div>
+          </div>
+        </div>
+        <!-- WALLPAPER SECTION -->
+        <div class="panel-section">
+          <div class="panel-label">Wallpaper</div>
+          <div class="wp-grid">
+            <div class="wp-thumb" onclick="setWallpaper('none')" title="None">
+              <div style="width:100%;height:100%;background:#171717;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--text-3);">&#8709;</div>
+            </div>
+            <div class="wp-thumb active" onclick="setWallpaper('galaxy-blue')" title="Galaxy Blue">
+              <div style="width:100%;height:100%;background:linear-gradient(160deg,#0a1628 0%,#0d2847 25%,#1a4a7a 50%,#0d3b6e 75%,#081e3d 100%);"></div>
+            </div>
+            <div class="wp-thumb" onclick="setWallpaper('galaxy-purple')" title="Galaxy Purple">
+              <div style="width:100%;height:100%;background:linear-gradient(160deg,#1a0a2e 0%,#2d1b69 30%,#5b2d8e 55%,#3a1d6e 75%,#1a0a3e 100%);"></div>
+            </div>
+            <div class="wp-thumb" onclick="setWallpaper('galaxy-green')" title="Galaxy Green">
+              <div style="width:100%;height:100%;background:linear-gradient(160deg,#0a1e14 0%,#0d3a28 30%,#1a6b4a 55%,#0d4a32 75%,#081e14 100%);"></div>
+            </div>
+            <div class="wp-thumb" onclick="setWallpaper('galaxy-orange')" title="Galaxy Sunset">
+              <div style="width:100%;height:100%;background:linear-gradient(160deg,#1a0e08 0%,#4a1a08 25%,#8a3a10 45%,#c46a20 60%,#e8a040 75%,#4a1a08 100%);"></div>
+            </div>
+            <div class="wp-thumb" onclick="setWallpaper('galaxy-rose')" title="Galaxy Rose">
+              <div style="width:100%;height:100%;background:linear-gradient(160deg,#1e0a14 0%,#4a1028 30%,#8a2050 50%,#c43070 65%,#4a1028 100%);"></div>
+            </div>
+            <div class="wp-thumb" onclick="setWallpaper('galaxy-night')" title="Galaxy Night">
+              <div style="width:100%;height:100%;background:linear-gradient(180deg,#020810 0%,#0a1428 40%,#0d1e3a 60%,#060e1e 100%);position:relative;overflow:hidden;"><div style="position:absolute;top:15%;left:25%;width:2px;height:2px;background:#fff;border-radius:50%;box-shadow:12px 8px 0 0 rgba(255,255,255,0.7),28px -4px 0 0 rgba(255,255,255,0.5),6px 20px 0 0 rgba(255,255,255,0.6),32px 16px 0 0 rgba(255,255,255,0.4),18px 28px 0 0 rgba(255,255,255,0.5);"></div></div>
+            </div>
+            <div class="wp-thumb" onclick="setWallpaper('galaxy-abstract')" title="Galaxy Abstract">
+              <div style="width:100%;height:100%;background:linear-gradient(135deg,#0a0a1e 0%,#1428a0 30%,#0381fe 50%,#64e9e3 70%,#0a1428 100%);"></div>
+            </div>
+          </div>
+        </div>
+        <div class="panel-section">
+          <div class="panel-label">Custom Wallpaper</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;gap:6px;">
+              <input type="file" id="wpUpload" accept="image/*" style="display:none;" onchange="uploadWallpaper(event)">
+              <button class="topbar-btn" style="flex:1;font-size:12px;padding:8px;" onclick="document.getElementById('wpUpload').click()">&#128247; Upload Image</button>
+              <button class="topbar-btn ai-btn" style="flex:1;font-size:12px;padding:8px;display:inline-flex;align-items:center;justify-content:center;gap:6px;" onclick="showAiWallpaper()"><span class="ai-star-slot"></span>AI Generate</button>
+            </div>
+            <div id="aiWpPanel" style="display:none;">
+              <div style="display:flex;gap:6px;">
+                <input type="text" id="aiWpPrompt" placeholder="Describe wallpaper... (e.g. aurora borealis)" style="flex:1;height:36px;border-radius:10px;border:1px solid var(--divider);background:var(--surface);color:var(--text);font-size:12px;padding:0 10px;font-family:var(--font);">
+                <button class="topbar-btn primary" style="font-size:12px;padding:8px 12px;" onclick="generateAiWallpaper()">Go</button>
+              </div>
+              <div class="wp-grid" id="aiWpResults" style="margin-top:8px;"></div>
+            </div>
+            <input type="text" id="wpUrl" placeholder="Or paste image URL..." style="height:36px;border-radius:10px;border:1px solid var(--divider);background:var(--surface);color:var(--text);font-size:12px;padding:0 10px;font-family:var(--font);" onchange="setWallpaperUrl(this.value)">
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL 3: GROUPING -->
+      <div class="panel" id="panel-3">
+        <div class="panel-section">
+          <div class="panel-label">Selection</div>
+          <p style="font-size:12px; color:var(--text-3); margin-bottom:12px; line-height:1.5;">Click components on canvas to select. Hold <strong style="color:var(--text-2);">Shift</strong> to multi-select. Then group them.</p>
+          <div class="group-actions">
+            <button class="group-btn" onclick="groupSelected()"><span>&#128230;</span>Group Selected</button>
+            <button class="group-btn" onclick="ungroupSelected()"><span>&#128194;</span>Ungroup</button>
+            <button class="group-btn" onclick="selectAll()"><span>&#9744;</span>Select All</button>
+            <button class="group-btn" onclick="deselectAll()"><span>&#9746;</span>Deselect All</button>
+          </div>
+        </div>
+        <div class="panel-section">
+          <div class="panel-label">Group Style</div>
+          <div class="spacing-control">
+            <span style="font-size:11px; color:var(--text-3);">Radius</span>
+            <input type="range" min="0" max="26" step="2" value="18" oninput="setGroupRadius(this.value)">
+            <div class="spacing-value" id="groupRadValue">18px</div>
+          </div>
+          <div class="spacing-control" style="margin-top:8px;">
+            <span style="font-size:11px; color:var(--text-3);">Padding</span>
+            <input type="range" min="0" max="32" step="4" value="12" oninput="setGroupPadding(this.value)">
+            <div class="spacing-value" id="groupPadValue">12px</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL 4: MOTION -->
+      <div class="panel" id="panel-4">
+        <div class="panel-section">
+          <div class="panel-label">Animation Type</div>
+          <div class="motion-grid">
+            <div class="motion-item selected" data-anim="fadeIn" onclick="selectMotion('fadeIn',this)"><span class="mi-curve">&#9676;</span>Fade In</div>
+            <div class="motion-item" data-anim="slideUp" onclick="selectMotion('slideUp',this)"><span class="mi-curve">&#8593;</span>Slide Up</div>
+            <div class="motion-item" data-anim="slideLeft" onclick="selectMotion('slideLeft',this)"><span class="mi-curve">&#8592;</span>Slide Left</div>
+            <div class="motion-item" data-anim="scaleUp" onclick="selectMotion('scaleUp',this)"><span class="mi-curve">&#8599;</span>Scale Up</div>
+            <div class="motion-item" data-anim="bounce" onclick="selectMotion('bounce',this)"><span class="mi-curve">&#9673;</span>Bounce</div>
+            <div class="motion-item" data-anim="springPop" onclick="selectMotion('springPop',this)"><span class="mi-curve">&#10024;</span>Spring Pop</div>
+            <div class="motion-item" data-anim="shake" onclick="selectMotion('shake',this)"><span class="mi-curve">&#8660;</span>Shake</div>
+            <div class="motion-item" data-anim="glassMat" onclick="selectMotion('glassMat',this)"><span class="mi-curve">&#10023;</span>Glass Mat.</div>
+            <div class="motion-item" data-anim="chromeFade" onclick="selectMotion('chromeFade',this)"><span class="mi-curve">&#9681;</span>Chrome Fade</div>
+          </div>
+        </div>
+        <div class="panel-section">
+          <div class="panel-label">Easing</div>
+          <div class="motion-grid">
+            <div class="motion-item selected" data-ease="cubic-bezier(0.22,0.25,0,1)" onclick="selectEasing(this)"><svg viewBox="0 0 20 20" width="18" height="18"><path d="M1,19 C5.4,5 1,1 19,1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Basic</div>
+            <div class="motion-item" data-ease="cubic-bezier(0.3,0,0,1)" onclick="selectEasing(this)"><svg viewBox="0 0 20 20" width="18" height="18"><path d="M1,19 C7,19 1,1 19,1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Standard</div>
+            <div class="motion-item" data-ease="cubic-bezier(0,0,0,1)" onclick="selectEasing(this)"><svg viewBox="0 0 20 20" width="18" height="18"><path d="M1,19 C1,19 1,1 19,1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Decel</div>
+            <div class="motion-item" data-ease="cubic-bezier(0.3,0,1,1)" onclick="selectEasing(this)"><svg viewBox="0 0 20 20" width="18" height="18"><path d="M1,19 C7,19 19,1 19,1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Accel</div>
+            <div class="motion-item" data-ease="cubic-bezier(0.2,0,0,1)" onclick="selectEasing(this)"><svg viewBox="0 0 20 20" width="18" height="18"><path d="M1,19 C5,19 1,1 19,1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Emphas</div>
+            <div class="motion-item" data-ease="cubic-bezier(0.2,0.6,0.4,1)" onclick="selectEasing(this)"><svg viewBox="0 0 20 20" width="18" height="18"><path d="M1,19 C5,8 9,1 19,1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Spring</div>
+            <div class="motion-item" data-ease="cubic-bezier(0.34,1.56,0.64,1)" onclick="selectEasing(this)"><svg viewBox="0 -3 20 26" width="18" height="18"><path d="M1,19 C8,-2 14,1 19,1" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>Bounce</div>
+            <div class="motion-item" data-ease="cubic-bezier(0.68,-0.55,0.27,1.55)" onclick="selectEasing(this)"><svg viewBox="0 -4 20 28" width="18" height="18"><path d="M1,19 C14,30 6,-3 19,1" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>Elastic</div>
+            <div class="motion-item" data-ease="linear" onclick="selectEasing(this)"><svg viewBox="0 0 20 20" width="18" height="18"><line x1="1" y1="19" x2="19" y2="1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Linear</div>
+            <div class="motion-item" data-ease="ease-in" onclick="selectEasing(this)"><svg viewBox="0 0 20 20" width="18" height="18"><path d="M1,19 C9,19 17,1 19,1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Ease In</div>
+            <div class="motion-item" data-ease="ease-out" onclick="selectEasing(this)"><svg viewBox="0 0 20 20" width="18" height="18"><path d="M1,19 C3,19 1,1 19,1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Ease Out</div>
+            <div class="motion-item" data-ease="ease-in-out" onclick="selectEasing(this)"><svg viewBox="0 0 20 20" width="18" height="18"><path d="M1,19 C9,19 11,1 19,1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>In Out</div>
+          </div>
+        </div>
+        <div class="panel-section">
+          <div class="panel-label">Duration</div>
+          <div class="dur-slider-wrap">
+            <div class="dur-slider-header">
+              <span class="dur-label" id="durLabel">Normal</span>
+              <span class="dur-value" id="durValue">300ms</span>
+            </div>
+            <input type="range" class="dur-slider" id="durSlider" min="100" max="800" step="50" value="300" oninput="onDurSlider(this.value)">
+            <div class="dur-ticks">
+              <span class="dur-tick" onclick="setDurSlider(100)">Instant</span>
+              <span class="dur-tick" onclick="setDurSlider(200)">Fast</span>
+              <span class="dur-tick" onclick="setDurSlider(300)">Normal</span>
+              <span class="dur-tick" onclick="setDurSlider(500)">Slow</span>
+              <span class="dur-tick" onclick="setDurSlider(800)">Page</span>
+            </div>
+          </div>
+        </div>
+        <div class="panel-section">
+          <button class="topbar-btn primary" style="width:100%; padding:12px;" onclick="previewMotion()">&#9654; Preview Motion</button>
+        </div>
+      </div>
+
+      <!-- PANEL 5: GENERATE -->
+      <div class="panel active" id="panel-5">
+
+        <!-- Error banner — shown when agent fails or returns a fallback -->
+        <div id="generateErrorBanner" style="display:none;margin-bottom:12px;padding:10px 12px;border-radius:10px;background:rgba(255,107,107,0.08);border:1px solid rgba(255,107,107,0.35);">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:10px;font-weight:600;color:#FF6B6B;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:2px;" id="generateErrorKind">ERROR</div>
+              <div id="generateErrorMessage" style="font-size:12px;color:var(--text);line-height:1.4;word-break:break-word;"></div>
+            </div>
+            <button id="generateErrorRetry" onclick="retryLastGenerate()" style="flex-shrink:0;padding:6px 12px;border-radius:6px;background:#FF6B6B;color:#fff;border:none;font-size:11px;font-weight:600;cursor:pointer;">Retry</button>
+          </div>
+        </div>
+
+        <!-- Generate history toolbar — prev / regenerate / next + count -->
+        <div id="generateHistoryBar" style="display:none;margin-bottom:12px;padding:6px 8px;border-radius:10px;background:var(--surface);border:1px solid var(--divider);">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+            <button id="historyPrevBtn" onclick="generateHistoryPrev()" title="Previous generation" style="width:28px;height:28px;border-radius:6px;background:transparent;border:1px solid var(--divider);color:var(--text-2);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;">&larr;</button>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+              <div id="historyLabel" style="font-size:10px;color:var(--text-3);font-weight:600;letter-spacing:0.6px;text-transform:uppercase;">History 1/1</div>
+              <button onclick="generateRegenerate()" title="Regenerate current" style="margin-top:2px;padding:3px 10px;border-radius:6px;background:transparent;border:1px solid var(--divider);color:var(--text);font-size:11px;font-weight:600;cursor:pointer;">Regenerate</button>
+            </div>
+            <button id="historyNextBtn" onclick="generateHistoryNext()" title="Next generation" style="width:28px;height:28px;border-radius:6px;background:transparent;border:1px solid var(--divider);color:var(--text-2);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;">&rarr;</button>
+          </div>
+        </div>
+
+        <!-- Critic score badge — updated when agent returns a response -->
+        <div id="criticBadge" style="display:none;margin-bottom:12px;padding:8px 12px;border-radius:10px;background:var(--surface);border:1px solid var(--divider);">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <div style="font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.6px;">Last critic</div>
+              <div id="criticBadgeTag" style="display:none;font-size:9px;font-weight:700;color:#F5A623;background:rgba(245,166,35,0.15);padding:2px 5px;border-radius:3px;letter-spacing:0.5px;text-transform:uppercase;">Fallback</div>
+              <div id="criticBadgeCached" style="display:none;font-size:9px;font-weight:700;color:#0FCF6E;background:rgba(15,207,110,0.15);padding:2px 5px;border-radius:3px;letter-spacing:0.5px;text-transform:uppercase;">Cached</div>
+            </div>
+            <div id="criticBadgeScore" style="font-size:16px;font-weight:700;color:#0FCF6E;letter-spacing:-0.2px;">—</div>
+          </div>
+          <div id="criticBadgeIssues" style="margin-top:4px;font-size:10px;color:var(--text-2);line-height:1.4;"></div>
+        </div>
+
+        <!-- 3. SCREENS (full-screen base surfaces) — 1×4 row -->
+        <div style="margin-bottom:10px;">
+          <div class="panel-label">Screens</div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;">
+            <button class="scene-btn" data-role="screen" onclick="generateScreen('lockscreen', this)"><span>Lock</span></button>
+            <button class="scene-btn" data-role="screen" onclick="generateScreen('home', this)"><span>Home</span></button>
+            <button class="scene-btn" data-role="screen" onclick="generateScreen('feed', this)"><span>List</span></button>
+            <button class="scene-btn" data-role="screen" onclick="generateScreen('detail', this)"><span>Detail</span></button>
+          </div>
+        </div>
+
+        <!-- 4. OVERLAYS (regions rendered over the current screen)
+             — toggle behavior: clicking an active overlay turns it off,
+             so a separate Clear button is redundant; the hint text was
+             also removed (the active button state itself communicates
+             which overlay is layered). -->
+        <div style="margin-bottom:14px;">
+          <div class="panel-label">Overlays</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;">
+            <button class="scene-btn" data-role="overlay" onclick="toggleOverlay('notifications', this)"><span>Notification</span></button>
+            <button class="scene-btn" data-role="overlay" onclick="toggleOverlay('quicksettings', this)"><span>Quick Setting</span></button>
+            <button class="scene-btn" data-role="overlay" onclick="toggleOverlay('dialog', this)"><span>Dialog</span></button>
+          </div>
+        </div>
+
+        <!-- 4.5 CACHED removed per user request — the Generate tab was
+             too crowded. saveCurrentScreen() and the cached-screens
+             rendering still exist in app/cached-screens.js for code
+             reuse, but the UI block (label + list + empty state) is
+             gone. To restore: re-insert the markup here and the
+             existing JS will populate it. -->
+
+        <!-- 5. CHAT (Generate) — merged: prompt + URL + image + send -->
+        <div style="margin-bottom:14px;">
+          <div class="panel-label">Generate</div>
+          <!-- Reference image preview (shown only when image attached) -->
+          <div id="refPreview" style="display:none;margin-bottom:8px;position:relative;">
+            <img id="refPreviewImg" style="width:100%;border-radius:10px;border:1px solid var(--divider);max-height:120px;object-fit:cover;">
+            <button onclick="clearRefImage()" title="Remove image" style="position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.6);color:#fff;border:none;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;">&times;</button>
+          </div>
+
+          <!-- Full-width chat input — auto-growing textarea (Enter = send, Shift+Enter = newline) -->
+          <div class="chat-input-wrap" style="position:relative;width:100%;">
+            <textarea id="genPrompt" rows="1"
+              onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();pipelineGenerate();}"
+              oninput="autoResizeChatInput(this)"
+              placeholder="Describe your screen :)"
+              style="width:100%;min-height:44px;max-height:240px;border-radius:12px;border:1.5px solid var(--primary, #0381FE);background:var(--surface);color:var(--text);font-family:var(--font);font-size:13px;line-height:20px;padding:11px 102px 11px 14px;box-sizing:border-box;resize:none;overflow-y:auto;display:block;box-shadow:0 0 0 3px rgba(3,129,254,0.10);"></textarea>
+
+            <!-- Image upload — One UI Design Kit image_outline (node 340:8900).
+                 Single-path outline: rounded square + mountains + sun dot. -->
+            <label class="chat-inline-btn" title="Attach reference image" style="position:absolute;right:68px;bottom:8px;width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-2);transition:all 0.15s;">
+              <svg width="16" height="16" viewBox="0 0 17.5 17.5" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M0.8574 14.666L5.2114 10.56C5.6024 10.192 6.2134 10.198 6.5974 10.573L7.9674 11.914C8.1644 12.106 8.4854 12.106 8.6814 11.914L12.0454 8.617C12.4404 8.23 13.0744 8.237 13.4614 8.632L16.6424 11.887M14.25 16.75H3.25C1.869 16.75 0.75 15.631 0.75 14.25V3.25C0.75 1.869 1.869 0.75 3.25 0.75H14.25C15.631 0.75 16.75 1.869 16.75 3.25V14.25C16.75 15.631 15.631 16.75 14.25 16.75ZM5.4922 7.3345C6.4572 7.3345 7.2422 6.5495 7.2422 5.5845C7.2422 4.6195 6.4572 3.8345 5.4922 3.8345C4.5272 3.8345 3.7422 4.6195 3.7422 5.5845C3.7422 6.5495 4.5272 7.3345 5.4922 7.3345Z"
+                      stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <input type="file" id="genImage" accept="image/*" style="display:none;" onchange="handleRefImage(this)">
+            </label>
+
+            <!-- Voice input (Korean) — One UI Design Kit mic_outline (node 552:1568).
+                 Three vectors composed into one 24x24 viewBox: capsule body +
+                 U-arc stand + bottom horizontal foot. -->
+            <button id="voiceBtn" class="chat-inline-btn" title="음성 입력 (한국어) — 클릭 후 말씀하세요" onclick="toggleVoiceInput()" style="position:absolute;right:40px;bottom:8px;width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-2);background:none;border:none;transition:all 0.15s;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="8.7" y="2.94" width="6.6" height="11.4" rx="3.3"/>
+                <path d="M5.97 11.04C5.97 14.37 8.67 17.07 12 17.07C15.33 17.07 18.03 14.37 18.03 11.04" fill="none"/>
+                <path d="M7.81 20.55H16.19"/>
+              </svg>
+            </button>
+
+            <!-- Send (rightmost) — AI star icon. Triggers Path A pipeline
+                 (interpret → select → compose → validate → explain). The
+                 Enter key in the textarea above does the same thing. -->
+            <button class="chat-inline-btn ai-send-btn" title="Generate (Path A pipeline) — Shift+Enter for newline" onclick="pipelineGenerate()" style="position:absolute;right:10px;bottom:8px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:none;border:none;padding:0;">
+              <span class="ai-star-slot" data-size="20"></span>
+            </button>
+          </div>
+
+          <div style="margin-top:8px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+            <!-- Run Pipeline button removed — the textarea's Enter key
+                 (and the inline ai-send-btn icon) both call pipelineGenerate()
+                 already, making the big button redundant. -->
+
+            <!-- Theme picker lives in .topbar-right (above) -->
+
+            <!-- Auto-iterate toggle: when ON, after each generate the system
+                 captures a snapshot, applies mechanical auto-fixes, and re-runs
+                 the pipeline. Stops when violations=0 OR max iterations OR user
+                 clicks "stop". Best iteration (fewest violations) is preserved. -->
+            <label class="auto-iter-toggle" title="When enabled, the pipeline runs in a loop, auto-fixes violations, and stops when clean (or after 5 iterations)." style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:8px;background:rgba(255,255,255,0.04);border:1px solid var(--divider);font-size:11px;color:var(--text-2);cursor:pointer;user-select:none;">
+              <input type="checkbox" id="autoIterToggle" style="margin:0;cursor:pointer;">
+              <span>Auto-iterate</span>
+            </label>
+
+            <!-- Log toggle (formerly "Output log"). Lives next to
+                 Auto-iterate so both run-preference toggles cluster
+                 together. ON (default) = full explainer prose +
+                 reasoning. OFF = fastMode (skip Stage 7, trim
+                 verbose notes; ~15–25 % faster). Same checkbox id
+                 keeps every downstream reader wired without change. -->
+            <label class="output-log-toggle" title="When ON (default): full output with explanations + reasoning. When OFF: fast mode — skips the explainer step, trims reasoning notes; ~15-25% faster." style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:8px;background:rgba(255,255,255,0.04);border:1px solid var(--divider);font-size:11px;color:var(--text-2);cursor:pointer;user-select:none;">
+              <input type="checkbox" id="outputLogToggle" checked style="margin:0;cursor:pointer;">
+              <span>Log</span>
+            </label>
+
+            <!-- Canvas controls row removed — Clear is no longer
+                 surfaced in the UI. The clearCanvas() function is
+                 still callable from JS (e.g. between auto-iterate
+                 runs) so nothing breaks. -->
+
+
+            <!-- Pipeline features panel — per-request toggles for each
+                 stage / post-fix. Default all ON so behavior matches
+                 pre-toggle. Designed for A/B latency / quality testing:
+                 turn features off, regenerate, watch the timing panel
+                 below the canvas to see the impact. State is persisted
+                 to localStorage so the user's toggle preferences
+                 survive reloads. Implementation: app/agent.js reads
+                 every checkbox's .checked into `features` and POSTs it
+                 with the scenario. -->
+            <details class="pipeline-features-details" id="pipelineFeaturesDetails" title="Turn individual pipeline features on/off and watch the latency / quality impact." style="flex-basis:100%;margin-top:6px;border-radius:8px;border:1px solid var(--divider);background:rgba(255,255,255,0.02);padding:8px 10px;">
+              <summary style="cursor:pointer;user-select:none;font-size:11px;color:var(--text-2);font-weight:600;display:flex;align-items:center;gap:6px;">
+                <span>Pipeline features</span>
+                <span id="pipelineFeaturesSummary" style="font-size:10px;color:var(--text-3);font-weight:400;">10 / 10 on</span>
+                <span style="flex:1;"></span>
+                <!-- Check/Uncheck all toggle. Lives inside the summary
+                     but click is captured (stopPropagation) so it does
+                     NOT collapse the details. Text label flips based on
+                     current state — "Uncheck all" when ≥1 is on,
+                     "Check all" when all are off. -->
+                <button type="button" id="pipelineFeaturesToggleAll"
+                        onclick="event.stopPropagation(); togglePipelineFeaturesAll();"
+                        title="Turn every feature on or off in one click"
+                        style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:6px;border:1px solid var(--divider);background:rgba(255,255,255,0.04);color:var(--text-2);cursor:pointer;font-family:var(--font);">Uncheck all</button>
+              </summary>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;margin-top:8px;">
+                <label class="pf-toggle" title="Stage 3.5 — parallel content bag (mini model). Fills empty / duplicated slots in the plan with varied facts. ~0s critical path." style="display:inline-flex;align-items:center;gap:6px;font-size:10.5px;color:var(--text-2);cursor:pointer;">
+                  <input type="checkbox" class="pf-flag" data-feature="contentBag" checked style="margin:0;">
+                  <span>Content bag</span>
+                </label>
+                <label class="pf-toggle" title="Stage 3 — RAG embedding shortlist (top-30 from 92). +~400ms." style="display:inline-flex;align-items:center;gap:6px;font-size:10.5px;color:var(--text-2);cursor:pointer;">
+                  <input type="checkbox" class="pf-flag" data-feature="rag" checked style="margin:0;">
+                  <span>RAG shortlist</span>
+                </label>
+                <label class="pf-toggle" title="Stage 7 — Explain (Why-this-UI prose). Adds ~3–5s. Note: legacy 'Output log' toggle also gates this." style="display:inline-flex;align-items:center;gap:6px;font-size:10.5px;color:var(--text-2);cursor:pointer;">
+                  <input type="checkbox" class="pf-flag" data-feature="explain" checked style="margin:0;">
+                  <span>Explain (S7)</span>
+                </label>
+                <label class="pf-toggle" title="Off by default (static presets × N with different text stays intact). When ON, removes duplicate-labeled rows." style="display:inline-flex;align-items:center;gap:6px;font-size:10.5px;color:var(--text-2);cursor:pointer;">
+                  <input type="checkbox" class="pf-flag" data-feature="dedup" style="margin:0;">
+                  <span>Dedup ladder</span>
+                </label>
+                <label class="pf-toggle" title="Off by default. When ON, limit to 24 instances per componentType (same preset repeated many times)." style="display:inline-flex;align-items:center;gap:6px;font-size:10.5px;color:var(--text-2);cursor:pointer;">
+                  <input type="checkbox" class="pf-flag" data-feature="typeCap" style="margin:0;">
+                  <span>Type cap (≤24)</span>
+                </label>
+                <label class="pf-toggle" title="Auto-grid: 3+ same-type TILE cards promote to 2-col grid. Whitelist excludes text-heavy cards." style="display:inline-flex;align-items:center;gap:6px;font-size:10.5px;color:var(--text-2);cursor:pointer;">
+                  <input type="checkbox" class="pf-flag" data-feature="autoGrid" checked style="margin:0;">
+                  <span>Auto-grid</span>
+                </label>
+                <label class="pf-toggle" title="Chrome migration: moves misplaced non-chrome children out of chrome groups." style="display:inline-flex;align-items:center;gap:6px;font-size:10.5px;color:var(--text-2);cursor:pointer;">
+                  <input type="checkbox" class="pf-flag" data-feature="chromeMigration" checked style="margin:0;">
+                  <span>Chrome migration</span>
+                </label>
+                <label class="pf-toggle" title="Role-based reorder within groups: subject → state → context → action → feedback." style="display:inline-flex;align-items:center;gap:6px;font-size:10.5px;color:var(--text-2);cursor:pointer;">
+                  <input type="checkbox" class="pf-flag" data-feature="roleReorder" checked style="margin:0;">
+                  <span>Role reorder</span>
+                </label>
+                <label class="pf-toggle" title="Composer backfill: re-add Selected Components the composer LLM silently dropped." style="display:inline-flex;align-items:center;gap:6px;font-size:10.5px;color:var(--text-2);cursor:pointer;">
+                  <input type="checkbox" class="pf-flag" data-feature="composerBackfill" checked style="margin:0;">
+                  <span>Composer backfill</span>
+                </label>
+                <label class="pf-toggle" title="Deterministic Step 4: lay out STEP-3 picks like the /customize gallery — one preset tile per row, reference order, 2-col grid when 2+ tiles. Skips composer LLM (faster)." style="display:inline-flex;align-items:center;gap:6px;font-size:10.5px;color:var(--text-2);cursor:pointer;">
+                  <input type="checkbox" class="pf-flag" data-feature="presetStitch" checked style="margin:0;">
+                  <span>Preset stitch (no composer LLM)</span>
+                </label>
+                <label class="pf-toggle" title="Mandatory injection: surface-required chrome (status-bar / header) added if LLM didn't pick it." style="display:inline-flex;align-items:center;gap:6px;font-size:10.5px;color:var(--text-2);cursor:pointer;">
+                  <input type="checkbox" class="pf-flag" data-feature="mandatoryInject" checked style="margin:0;">
+                  <span>Mandatory inject</span>
+                </label>
+                <label class="pf-toggle" title="Context-aware injection: morning → calendar, driving → navigation, etc." style="display:inline-flex;align-items:center;gap:6px;font-size:10.5px;color:var(--text-2);cursor:pointer;">
+                  <input type="checkbox" class="pf-flag" data-feature="contextInject" checked style="margin:0;">
+                  <span>Context inject</span>
+                </label>
+              </div>
+              <div id="pipelineTimingPanel" style="margin-top:10px;padding:8px 10px;border-radius:6px;background:rgba(0,0,0,0.25);border:1px solid var(--divider);font-family:ui-monospace,Consolas,monospace;font-size:10.5px;color:var(--text-3);line-height:1.55;display:none;">
+                <div style="font-weight:600;color:var(--text-2);margin-bottom:4px;">Last run</div>
+                <div id="pipelineTimingRows"></div>
+              </div>
+            </details>
+
+            <!-- 고급: userSupplements (JSON) panel removed from the UI —
+                 it was an internal pre-merge JSON injector that only
+                 advanced operators ever used. The reading code in
+                 app/scenes.js pipelineGenerate() safely handles a
+                 missing #genUserSupplements element (null check), so
+                 nothing breaks. To restore it, paste the original
+                 <details> block back here. -->
+
+            <button id="autoIterStopBtn" onclick="autoIterStop()" style="display:none;padding:6px 12px;border-radius:8px;background:rgba(239,68,68,0.15);color:#FCA5A5;border:1px solid rgba(239,68,68,0.35);font-size:11px;font-weight:600;cursor:pointer;">
+              Stop
+            </button>
+
+            <button id="autoIterHistoryBtn" onclick="autoIterShowHistory()" style="display:none;padding:6px 10px;border-radius:8px;background:rgba(255,255,255,0.04);color:var(--text-2);border:1px solid var(--divider);font-size:11px;font-weight:500;cursor:pointer;">
+              History
+              <span id="autoIterCount" style="margin-left:4px;color:#3E91FF;">(0)</span>
+            </button>
+
+            <!-- Theme picker + 연필(커스터마이즈)는 상단바. 커스터마이즈는
+                 customize.html 전체 페이지로 이동. -->
+
+            <span style="font-size:10px;color:var(--text-3);flex-basis:100%;margin-top:2px;">Streams each step&apos;s JSON output below</span>
+          </div>
+          <div id="pipelineOutput" style="display:none;margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--surface);border:1px solid var(--divider);font-size:11px;line-height:1.5;color:var(--text-2);max-height:320px;overflow:auto;"></div>
+        </div>
+
+        <!-- Hidden options for backward compat -->
+        <input type="checkbox" id="genMotion" checked style="display:none;">
+        <input type="checkbox" id="genStagger" checked style="display:none;">
+        <input type="checkbox" id="genGenStatic" style="display:none;">
+
+        <!-- Refine workflow — moved from its own sidebar tab into this
+             Generate panel as a default-closed <details>. Mental model:
+             generate → result → "I want to fix this" → click to unfold
+             → 4-step refine. All Refine JS (analyzeRefinement / planPatches /
+             applyPatches / acceptRefinement etc) operate on these
+             elements transparently — they're addressed by id, so the
+             new parent doesn't matter. -->
+        <details id="refineInlineDetails" style="margin-top:14px;border-radius:10px;border:1px solid var(--divider);background:rgba(255,255,255,0.02);padding:8px 10px;">
+          <summary style="cursor:pointer;user-select:none;font-size:11px;color:var(--text-2);font-weight:600;display:flex;align-items:center;gap:6px;">
+            <span>Refine this output</span>
+            <span style="font-size:10px;color:var(--text-3);font-weight:400;">feedback → patches → compare</span>
+          </summary>
+          <div style="margin-top:12px;">
+
+            <!-- Auto-Refine Loop Control -->
+            <div id="autoRefineBox" style="background:var(--surface);border:1px solid var(--divider);border-radius:10px;padding:10px 12px;margin-bottom:12px;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                <div style="font-size:12px;font-weight:600;color:var(--text);">Auto Refine Loop</div>
+                <div style="font-size:10px;color:var(--text-3);">analyze → patch → re-evaluate</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <label style="font-size:11px;color:var(--text-2);">Iterations</label>
+                <input id="autoRefineCount" type="number" min="0" max="5" step="1" value="0"
+                  style="width:56px;padding:6px 8px;border-radius:8px;border:1px solid var(--divider);background:var(--bg);color:var(--text);font-size:13px;text-align:center;font-family:var(--font);">
+                <button class="topbar-btn primary" id="autoRefineBtn" style="flex:1;padding:8px;font-size:11px;" onclick="runAutoRefine()">Start Auto Refine</button>
+              </div>
+              <div id="autoRefineStatus" style="font-size:11px;color:var(--text-3);margin-top:6px;min-height:14px;"></div>
+            </div>
+
+            <!-- Step 1: Feedback Input -->
+            <div class="refine-step visible" id="refineStep1">
+              <div class="refine-step-header">
+                <div class="refine-step-num">1</div>
+                <div class="refine-step-title">Describe what to improve</div>
+              </div>
+              <textarea class="refine-feedback" id="refineFeedback" placeholder="e.g. The spacing between cards feels too tight, and the title doesn't stand out enough..."></textarea>
+              <div class="refine-tags" id="refineTags">
+                <button class="refine-tag" data-issue="spacing" onclick="toggleRefineTag(this)">Spacing</button>
+                <button class="refine-tag" data-issue="density" onclick="toggleRefineTag(this)">Density</button>
+                <button class="refine-tag" data-issue="hierarchy" onclick="toggleRefineTag(this)">Hierarchy</button>
+                <button class="refine-tag" data-issue="alignment" onclick="toggleRefineTag(this)">Alignment</button>
+                <button class="refine-tag" data-issue="sizing" onclick="toggleRefineTag(this)">Sizing</button>
+                <button class="refine-tag" data-issue="readability" onclick="toggleRefineTag(this)">Readability</button>
+                <button class="refine-tag" data-issue="consistency" onclick="toggleRefineTag(this)">Consistency</button>
+                <button class="refine-tag" data-issue="semantic" onclick="toggleRefineTag(this)">Semantic</button>
+                <button class="refine-tag" data-issue="interaction" onclick="toggleRefineTag(this)">Flow</button>
+              </div>
+              <button class="topbar-btn primary" style="width:100%;padding:10px;margin-top:10px;font-size:12px;" onclick="analyzeRefinement()">Analyze Issues</button>
+            </div>
+
+            <!-- Step 2: Issues Found -->
+            <div class="refine-step" id="refineStep2">
+              <div class="refine-step-header">
+                <div class="refine-step-num">2</div>
+                <div class="refine-step-title">Issues identified</div>
+              </div>
+              <div id="refineIssuesList"></div>
+              <button class="topbar-btn primary" style="width:100%;padding:10px;margin-top:8px;font-size:12px;" onclick="planRefinementPatches()">Plan Patches</button>
+            </div>
+
+            <!-- Step 3: Patch Plan -->
+            <div class="refine-step" id="refineStep3">
+              <div class="refine-step-header">
+                <div class="refine-step-num">3</div>
+                <div class="refine-step-title">Patch plan</div>
+              </div>
+              <div id="refinePatchList"></div>
+              <button class="topbar-btn primary" style="width:100%;padding:10px;margin-top:8px;font-size:12px;" onclick="applyRefinementPatches()">Apply Patches</button>
+            </div>
+
+            <!-- Step 4: Compare & Decide -->
+            <div class="refine-step" id="refineStep4">
+              <div class="refine-step-header">
+                <div class="refine-step-num">4</div>
+                <div class="refine-step-title">Review changes</div>
+              </div>
+              <button class="topbar-btn" style="width:100%;padding:10px;font-size:12px;margin-bottom:8px;" onclick="showRefineComparison()">Show Before / After</button>
+              <div id="refineSummary" style="font-size:12px;color:var(--text-2);line-height:1.5;margin-bottom:8px;"></div>
+              <div class="refine-decision">
+                <button class="topbar-btn primary" onclick="acceptRefinement()">Accept</button>
+                <button class="topbar-btn" onclick="rejectRefinement()">Reject</button>
+                <button class="topbar-btn" onclick="revertRefinement()">Revert</button>
+              </div>
+            </div>
+
+            <!-- Critic Panel (populated by agent) -->
+            <div id="criticPanel"></div>
+
+            <!-- Save to Evolve / Reset -->
+            <div style="margin-top:12px;border-top:1px solid var(--divider);padding-top:10px;display:flex;gap:6px;">
+              <button class="topbar-btn" style="flex:1;font-size:11px;padding:8px;background:rgba(102,187,106,0.12);color:#66BB6A;border-color:rgba(102,187,106,0.2);" onclick="saveToEvolve()" id="btnSaveEvolve">Save to Evolve</button>
+              <button class="topbar-btn" style="flex:1;font-size:11px;padding:8px;" onclick="resetRefinement()">Reset</button>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <!-- PANEL 6: DESIGN (Combined: Hierarchy + Scene + Components + Layout + Colors + Motion) -->
+      <div class="panel" id="panel-6">
+
+        <!-- ── HIERARCHY ── visual-grammar rules that map 4+2+1 decisions
+             to on-canvas visuals. Lives ABOVE Scene because a designer
+             defines the grammar first, then inspects how it applied.
+             For now, each group is READ-ONLY (shows the mapping Claude
+             currently uses). Each row will later get an "Edit" affordance
+             so designers can override the rule (e.g. change the accent
+             color for urgency=high, swap the layout template for
+             focus_protection, etc.). -->
+        <div class="design-section open" id="ds-hierarchy">
+          <div class="design-section-header" onclick="toggleDesignSection('ds-hierarchy')">
+            <span class="design-section-title">Hierarchy</span>
+            <span class="design-section-arrow"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </div>
+          <div class="design-section-body">
+            <!-- Group 1: Classification → Path A Layout Recipe -->
+            <div class="panel-section" style="margin-bottom:12px;">
+              <div class="panel-label" style="display:flex;align-items:center;justify-content:space-between;">
+                <span>Classification &rarr; Path A Layout Recipe</span>
+                <span style="font-size:9px;color:var(--text-3);font-weight:400;letter-spacing:0.3px;">4 patterns</span>
+              </div>
+              <div class="hierarchy-rule-list" style="display:flex;flex-direction:column;gap:4px;">
+                <div class="hierarchy-rule">
+                  <span class="hr-key" style="color:#60a5fa;">&#9678; 몰입 보호형 (Focus Protection)</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val"><code>vertical-stack</code> · 1 primary-task with dominant subject + minimal state, supporting collapsed</span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key" style="color:#a78bfa;">&#9670; 맥락 재구성형 (Context Reconstruction)</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val"><code>grid</code> or <code>vertical-stack</code> · multiple supporting groups of context tiles (home widgets, notification shade, QS panel)</span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key" style="color:#4ade80;">&rarr; 흐름 연속형 (Flow Continuity)</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val"><code>vertical-stack</code> · primary-task with subject + state + action grouped, plus optional supporting context</span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key" style="color:#fb923c;">&#10216;&#10217; 다자 협업형 (Multi-party Coordination)</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val"><code>overlay-stack</code> · system-dialog overlay group on top of underlying surface (handoff, share, confirm)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Group 2: Attention Mode + Density Mode (Path A pipeline) -->
+            <div class="panel-section" style="margin-bottom:12px;">
+              <div class="panel-label" style="display:flex;align-items:center;justify-content:space-between;">
+                <span>Attention Mode &rarr; Density</span>
+                <span style="font-size:9px;color:var(--text-3);font-weight:400;letter-spacing:0.3px;">3 modes</span>
+              </div>
+              <div class="hierarchy-rule-list" style="display:flex;flex-direction:column;gap:4px;">
+                <div class="hierarchy-rule">
+                  <span class="hr-key">glanceable</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val">density=compressed; max 3 items, larger type, wide whitespace</span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key">distracted</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val">density=normal; default gap, mid type scale</span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key">focused</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val">density=expanded; compact gap, denser grid, many items</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Group 3: Urgency → Accent -->
+            <div class="panel-section" style="margin-bottom:12px;">
+              <div class="panel-label" style="display:flex;align-items:center;justify-content:space-between;">
+                <span>Urgency &rarr; Accent Color</span>
+                <span style="font-size:9px;color:var(--text-3);font-weight:400;letter-spacing:0.3px;">3 rules</span>
+              </div>
+              <div class="hierarchy-rule-list" style="display:flex;flex-direction:column;gap:4px;">
+                <div class="hierarchy-rule">
+                  <span class="hr-key">low</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:rgba(255,255,255,0.2);vertical-align:middle;"></span> neutral surface</span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key">medium</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#3388E9;vertical-align:middle;"></span> Samsung blue accent on hero</span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key">high</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#EF4444;vertical-align:middle;"></span> warning red ring on must_show</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Group 4a: Component Role (Path A pipeline — semantic role per child) -->
+            <div class="panel-section" style="margin-bottom:12px;">
+              <div class="panel-label" style="display:flex;align-items:center;justify-content:space-between;">
+                <span>Component Role &rarr; Visual Treatment</span>
+                <span style="font-size:9px;color:var(--text-3);font-weight:400;letter-spacing:0.3px;">7 roles</span>
+              </div>
+              <div class="hierarchy-rule-list" style="display:flex;flex-direction:column;gap:4px;">
+                <div class="hierarchy-rule">
+                  <span class="hr-key" style="color:#94A3B8;">chrome</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val">status bar, app bar, gesture bar — flush to frame, no card decoration</span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key" style="color:#86EFAC;">subject</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val">primary artifact (recipe step, message body, song) — dominant typography (19px bold), larger card padding</span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key" style="color:#A5B4FC;">state</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val">timer, progress, step counter — attached to subject (negative top margin), 13px subdued title</span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key" style="color:#FDE68A;">action</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val">user-triggerable (button, chip, toggle) — 600 weight label, stretched in primary-task</span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key" style="color:#FCA5A5;">feedback</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val">snackbar / inline confirmation — opacity 0.90, italic (transient)</span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key" style="color:#A78BFA;">context</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val">supporting info (weather next to clock, related card) — opacity 0.82, smaller card padding (14px)</span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key" style="color:#7DD3FC;">navigation</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val">tabs, bottom-nav, back arrow — neutral (opacity 0.96)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Group 4b: Group Role (Path A pipeline — semantic role per group) -->
+            <div class="panel-section" style="margin-bottom:12px;">
+              <div class="panel-label" style="display:flex;align-items:center;justify-content:space-between;">
+                <span>Group Role &rarr; Surface Treatment</span>
+                <span style="font-size:9px;color:var(--text-3);font-weight:400;letter-spacing:0.3px;">5 roles</span>
+              </div>
+              <div class="hierarchy-rule-list" style="display:flex;flex-direction:column;gap:4px;">
+                <div class="hierarchy-rule">
+                  <span class="hr-key" style="color:#94A3B8;">chrome</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val">device frame zones (topSystem / bottomNav) — absolute-positioned, no group wrapper</span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key" style="color:#A5F3FC;">primary-task</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val">main task unit — unified inner surface (28px radius, gradient, drop shadow, 20px padding)</span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key" style="color:#FDE68A;">supporting</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val">context that frames the primary — dashed border, indented (8px margin), opacity 0.90</span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key" style="color:#94A3B8;">tertiary</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val">low importance (badges, quiet notifications) — minimal, opacity 0.72</span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key" style="color:#CBD5E1;">meta</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val">overflow / settings shortcuts — subtle background, opacity 0.84</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Group 6: Pipeline Atomic Bridge (Path A) — foldable.
+                 Long table of 21 mappings; default folded so the
+                 Hierarchy view stays scannable. Click the summary
+                 row to expand. Default browser ▸ marker is hidden;
+                 we render our own chevron that rotates on [open]. -->
+            <details class="panel-section panel-section--foldable" style="margin-bottom:6px;">
+              <summary class="panel-label" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;list-style:none;">
+                <span style="display:inline-flex;align-items:center;gap:6px;">
+                  <span class="panel-foldable-chev" aria-hidden="true" style="display:inline-block;width:8px;font-size:9px;color:var(--text-3);transition:transform 0.15s ease;">&#9656;</span>
+                  <span>Pipeline Atomic Bridge</span>
+                </span>
+                <span style="font-size:9px;color:var(--text-3);font-weight:400;letter-spacing:0.3px;">21 mappings</span>
+              </summary>
+              <!-- Chrome bridge — absolute-positioned into device frame zones -->
+              <div class="hierarchy-rule-list" style="display:flex;flex-direction:column;gap:4px;margin-top:6px;">
+                <div class="hierarchy-rule">
+                  <span class="hr-key">container.status-bar-app</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val"><code>status-bar</code></span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key">status-bar.default</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val"><code>status-bar</code></span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key">container.header</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val"><code>collapsed-app-bar</code></span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key">container.nav-gestures-dark</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val"><code>gesture-bar</code></span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key">container.nav-buttons-light</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val"><code>nav-buttons</code></span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key">dialog.nav-gesture-bar</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val"><code>gesture-bar</code></span>
+                </div>
+              </div>
+
+              <!-- Body bridge — flow inline in canvas content -->
+              <div style="font-size:9px;color:var(--text-3);font-weight:600;letter-spacing:0.3px;margin:10px 0 4px;">BODY BRIDGE — 15 mappings (inline)</div>
+              <div class="hierarchy-rule-list" style="display:flex;flex-direction:column;gap:4px;">
+                <div class="hierarchy-rule">
+                  <span class="hr-key">input_summary_card</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val"><code>focus-block</code> (kind=secondary if value &gt; 28 chars)</span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key">weather_glance_card</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val"><code>focus-block</code></span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key">calendar_summary_card</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val"><code>focus-block</code></span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key">message_summary_card</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val"><code>focus-block</code></span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key">eta_card</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val"><code>focus-block</code></span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key">reminder_card</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val"><code>focus-block</code></span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key">media_control_bar</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val"><code>now-bar</code> (variant inferred — media)</span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key">now-bar.media-player</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val"><code>now-bar</code> (media)</span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key">now-bar.charging</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val"><code>now-bar</code> (charging)</span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key">navigation_turn_card</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val"><code>now-bar</code> (single-line / voice)</span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key">action_chip_row</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val"><code>action-row</code></span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key">quick_toggle_row</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val"><code>toggle-chip</code></span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key">notification-card</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val"><code>notif-card</code></span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key">notification.ai-regular</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val"><code>notif-card-ai</code></span>
+                </div>
+                <div class="hierarchy-rule">
+                  <span class="hr-key">lock-screen.clock</span>
+                  <span class="hr-arrow">&rarr;</span>
+                  <span class="hr-val"><code>clock</code></span>
+                </div>
+              </div>
+
+            </details>
+
+          </div>
+        </div>
+
+        <!-- ── SCENE (live inspector of the current canvas) ── -->
+        <div class="design-section" id="ds-scene">
+          <div class="design-section-header" onclick="toggleDesignSection('ds-scene')">
+            <span class="design-section-title">Scene</span>
+            <span class="design-section-arrow"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </div>
+          <div class="design-section-body">
+            <div class="panel-section">
+              <div class="panel-label">Layers</div>
+              <div id="sceneLayersList" class="scene-layers">
+                <div class="scene-empty">Generate a surface to see its components here.</div>
+              </div>
+            </div>
+            <div class="panel-section" id="scenePropsSection" style="display:none;">
+              <div class="panel-label" id="scenePropsLabel">Properties</div>
+              <div id="scenePropsBody" class="scene-props"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── COMPONENTS ── -->
+        <div class="design-section" id="ds-components">
+          <div class="design-section-header" onclick="toggleDesignSection('ds-components')">
+            <span class="design-section-title">Components</span>
+            <span class="design-section-arrow"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </div>
+          <div class="design-section-body">
+            <!-- 2-column layout: each category wrapped in its own card -->
+            <div class="comp-grid-2col">
+              <div class="comp-card">
+                <div class="panel-label">Buttons</div>
+                <div class="comp-palette">
+                  <div class="comp-item" onclick="addComp('btn-contained')"><span class="comp-icon">&#9632;</span>Contained</div>
+                  <div class="comp-item" onclick="addComp('btn-outlined')"><span class="comp-icon">&#9633;</span>Outlined</div>
+                  <div class="comp-item" onclick="addComp('btn-flat')"><span class="comp-icon">Aa</span>Flat</div>
+                  <div class="comp-item" onclick="addComp('fab')"><span class="comp-icon">+</span>FAB</div>
+                </div>
+              </div>
+              <div class="comp-card">
+                <div class="panel-label">Controls</div>
+                <div class="comp-palette">
+                  <div class="comp-item" onclick="addComp('switch')"><span class="comp-icon">&#8596;</span>Switch</div>
+                  <div class="comp-item" onclick="addComp('checkbox')"><span class="comp-icon">&#9745;</span>Checkbox</div>
+                  <div class="comp-item" onclick="addComp('radio')"><span class="comp-icon">&#9673;</span>Radio</div>
+                  <div class="comp-item" onclick="addComp('chip')"><span class="comp-icon">&#9679;</span>Chip</div>
+                </div>
+              </div>
+              <div class="comp-card">
+                <div class="panel-label">Navigation</div>
+                <div class="comp-palette">
+                  <div class="comp-item" onclick="addComp('appbar')"><span class="comp-icon">&#9776;</span>App Bar</div>
+                  <div class="comp-item" onclick="addComp('pill-tab')"><span class="comp-icon">&#9673;</span>Pill Tab</div>
+                  <div class="comp-item" onclick="addComp('tab-bar')"><span class="comp-icon">&#9135;</span>Tab Bar</div>
+                </div>
+              </div>
+              <div class="comp-card">
+                <div class="panel-label">Content</div>
+                <div class="comp-palette">
+                  <div class="comp-item" onclick="addComp('card')"><span class="comp-icon">&#9634;</span>Card</div>
+                  <div class="comp-item" onclick="addComp('list-item')"><span class="comp-icon">&#9776;</span>List</div>
+                  <div class="comp-item" onclick="addComp('dialog')"><span class="comp-icon">&#9635;</span>Dialog</div>
+                  <div class="comp-item" onclick="addComp('snackbar')"><span class="comp-icon">&#9644;</span>Snackbar</div>
+                </div>
+              </div>
+              <div class="comp-card" style="grid-column:1 / -1;">
+                <div class="panel-label">Inputs &amp; Utility</div>
+                <div class="comp-palette" style="grid-template-columns:repeat(4,1fr);">
+                  <div class="comp-item" onclick="addComp('input')"><span class="comp-icon">&#9998;</span>Text Field</div>
+                  <div class="comp-item" onclick="addComp('search')"><span class="comp-icon">&#128269;</span>Search</div>
+                  <div class="comp-item" onclick="addComp('divider')"><span class="comp-icon">&mdash;</span>Divider</div>
+                  <div class="comp-item" onclick="addComp('badge')"><span class="comp-icon">&#9679;</span>Badge</div>
+                </div>
+              </div>
+
+              <!-- OneUI 8.5 — structural surface primitives -->
+              <div class="comp-card" style="grid-column:1 / -1;">
+                <div class="panel-label">OneUI 8.5 · Surface</div>
+                <div class="comp-palette" style="grid-template-columns:repeat(3,1fr);">
+                  <div class="comp-item" onclick="addComp('status-bar')"><span class="comp-icon">&#9473;</span>Status Bar</div>
+                  <div class="comp-item" onclick="addComp('app-dock')"><span class="comp-icon">&#9635;</span>App Dock</div>
+                  <div class="comp-item" onclick="addComp('focus-block')"><span class="comp-icon">&#9678;</span>Focus Block</div>
+                  <div class="comp-item" onclick="addComp('search-bar')"><span class="comp-icon">&#128269;</span>Search Bar</div>
+                  <div class="comp-item" onclick="addComp('list-item')"><span class="comp-icon">&#9776;</span>List Row</div>
+                  <div class="comp-item" onclick="addComp('notifCard')"><span class="comp-icon">&#9888;</span>Notification Card</div>
+                  <div class="comp-item" onclick="addComp('bottom-navigation')"><span class="comp-icon">&#9644;</span>Bottom Nav</div>
+                  <div class="comp-item" onclick="addComp('bottom-bar')"><span class="comp-icon">&#9644;</span>Bottom Bar</div>
+                  <div class="comp-item" onclick="addComp('expandable-app-bar')"><span class="comp-icon">&#8853;</span>App Bar</div>
+                  <div class="comp-item" onclick="addComp('app-icon')"><span class="comp-icon">&#9633;</span>App Icon</div>
+                  <div class="comp-item" onclick="addComp('paragraph')"><span class="comp-icon">&#8254;</span>Paragraph</div>
+                  <div class="comp-item" onclick="addComp('action-row')"><span class="comp-icon">&#9678;</span>Actions</div>
+                </div>
+              </div>
+
+              <!-- OneUI 8.5 — Quick Setting / Media / Notification atomics
+                   extracted from Figma (Toggle chip / Toggle grid / Slider /
+                   Now bar / Media card / Notification AI / Output chip /
+                   Progress track / Drag handle) -->
+              <div class="comp-card" style="grid-column:1 / -1;">
+                <div class="panel-label">OneUI 8.5 &middot; Quick Setting / Media / Notification</div>
+                <div class="comp-palette" style="grid-template-columns:repeat(3,1fr);">
+                  <div class="comp-item" onclick="addComp('toggle-chip')"><span class="comp-icon">&#9673;</span>Toggle Chip</div>
+                  <div class="comp-item" onclick="addComp('toggle-grid')"><span class="comp-icon">&#9638;</span>Toggle Grid</div>
+                  <div class="comp-item" onclick="addComp('slider-pill')"><span class="comp-icon">&#9864;</span>Slider</div>
+                  <div class="comp-item" onclick="addComp('drag-handle')"><span class="comp-icon">&#9552;</span>Drag Handle</div>
+                  <div class="comp-item" onclick="addComp('now-bar')"><span class="comp-icon">&#9654;</span>Now Bar</div>
+                  <div class="comp-item" onclick="addComp('media-card')"><span class="comp-icon">&#9834;</span>Media Card</div>
+                  <div class="comp-item" onclick="addComp('notif-card-ai')"><span class="comp-icon">&#10024;</span>Notification &middot; AI</div>
+                  <div class="comp-item" onclick="addComp('output-chip')"><span class="comp-icon">&#128266;</span>Output Chip</div>
+                  <div class="comp-item" onclick="addComp('progress-track')"><span class="comp-icon">&#9868;</span>Progress</div>
+                </div>
+              </div>
+
+              <!-- OneUI 8.5 — Dialog atomics (Figma InternetPopOutMenu 3074:6464)
+                   Shell / Site header / Browser button bar / Icon grid -->
+              <div class="comp-card" style="grid-column:1 / -1;">
+                <div class="panel-label">OneUI 8.5 &middot; Dialog</div>
+                <div class="comp-palette" style="grid-template-columns:repeat(3,1fr);">
+                  <div class="comp-item" onclick="addComp('dialog-shell')"><span class="comp-icon">&#9634;</span>Dialog Shell</div>
+                  <div class="comp-item" onclick="addComp('dialog-site-header')"><span class="comp-icon">&#9998;</span>Site Header</div>
+                  <div class="comp-item" onclick="addComp('dialog-browser-bar')"><span class="comp-icon">&#9673;</span>Browser Bar</div>
+                  <div class="comp-item" onclick="addComp('dialog-icon-grid')"><span class="comp-icon">&#9641;</span>Icon Grid</div>
+                  <div class="comp-item" onclick="addComp('selection-dialog')"><span class="comp-icon">&#9776;</span>Selection</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── LAYOUT ── -->
+        <div class="design-section" id="ds-layout">
+          <div class="design-section-header" onclick="toggleDesignSection('ds-layout')">
+            <span class="design-section-title">Layout</span>
+            <span class="design-section-arrow"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </div>
+          <div class="design-section-body">
+            <div class="panel-section">
+              <div class="panel-label">레이아웃 프리셋</div>
+              <div class="layout-grid">
+                <div>
+                  <div class="layout-preset active" onclick="setLayout('column',this)">
+                    <div class="lp-bar" style="height:6px;"></div>
+                    <div class="lp-col"></div>
+                    <div class="lp-col"></div>
+                  </div>
+                  <div class="layout-label">세로 스택</div>
+                </div>
+                <div>
+                  <div class="layout-preset" onclick="setLayout('two-col',this)">
+                    <div class="lp-bar" style="height:6px;"></div>
+                    <div class="lp-row"><div class="lp-col"></div><div class="lp-col"></div></div>
+                  </div>
+                  <div class="layout-label">두 열</div>
+                </div>
+                <div>
+                  <div class="layout-preset" onclick="setLayout('grid',this)">
+                    <div class="lp-row"><div class="lp-col"></div><div class="lp-col"></div></div>
+                    <div class="lp-row"><div class="lp-col"></div><div class="lp-col"></div></div>
+                  </div>
+                  <div class="layout-label">2×2 그리드</div>
+                </div>
+                <div>
+                  <div class="layout-preset" onclick="setLayout('app',this)">
+                    <div class="lp-bar" style="height:8px;"></div>
+                    <div class="lp-col"></div>
+                    <div class="lp-bar" style="height:8px;"></div>
+                  </div>
+                  <div class="layout-label">앱 본문</div>
+                </div>
+                <div>
+                  <div class="layout-preset" onclick="setLayout('hero',this)">
+                    <div class="lp-col" style="flex:2;"></div>
+                    <div class="lp-bar" style="height:4px;"></div>
+                    <div class="lp-col"></div>
+                  </div>
+                  <div class="layout-label">히어로 + 목록</div>
+                </div>
+                <div>
+                  <div class="layout-preset" onclick="setLayout('free',this)">
+                    <div class="lp-col" style="opacity:0.3;"></div>
+                  </div>
+                  <div class="layout-label">자유 배치</div>
+                </div>
+              </div>
+            </div>
+            <div class="panel-section">
+              <div class="axis-pair">
+                <div class="axis-col">
+                  <span class="axis-col-label">Gap H</span>
+                  <div class="spacing-control">
+                    <input type="range" min="0" max="48" step="8" value="8" oninput="setGapH(this.value)">
+                    <div class="spacing-value" id="gapHValue">8px</div>
+                  </div>
+                </div>
+                <div class="axis-col">
+                  <span class="axis-col-label">Gap V</span>
+                  <div class="spacing-control">
+                    <input type="range" min="0" max="48" step="8" value="8" oninput="setGapV(this.value)">
+                    <div class="spacing-value" id="gapVValue">8px</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="panel-section">
+              <div class="axis-pair">
+                <div class="axis-col">
+                  <span class="axis-col-label">Padding H</span>
+                  <div class="spacing-control">
+                    <input type="range" min="0" max="48" step="8" value="16" oninput="setPaddingH(this.value)">
+                    <div class="spacing-value" id="padHValue">16px</div>
+                  </div>
+                </div>
+                <div class="axis-col">
+                  <span class="axis-col-label">Padding V</span>
+                  <div class="spacing-control">
+                    <input type="range" min="0" max="48" step="8" value="16" oninput="setPaddingV(this.value)">
+                    <div class="spacing-value" id="padVValue">16px</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="panel-section">
+              <div class="panel-label">Alignment</div>
+              <div class="align-row">
+                <button class="align-btn" onclick="setAlign('flex-start',this)">&#8676;</button>
+                <button class="align-btn active" onclick="setAlign('center',this)">&#8596;</button>
+                <button class="align-btn" onclick="setAlign('flex-end',this)">&#8677;</button>
+                <button class="align-btn" onclick="setAlign('stretch',this)">&#8644;</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── GROUPING ── -->
+        <div class="design-section collapsed" id="ds-grouping">
+          <div class="design-section-header" onclick="toggleDesignSection('ds-grouping')">
+            <span class="design-section-title">Grouping</span>
+            <span class="design-section-arrow"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </div>
+          <div class="design-section-body">
+            <div class="panel-section">
+              <div class="panel-label">Selection</div>
+              <p style="font-size:12px; color:var(--text-3); margin-bottom:12px; line-height:1.5;">Click components on canvas to select. Hold <strong style="color:var(--text-2);">Shift</strong> to multi-select.</p>
+              <div class="group-actions">
+                <button class="group-btn" onclick="groupSelected()"><span>&#128230;</span>Group Selected</button>
+                <button class="group-btn" onclick="ungroupSelected()"><span>&#128194;</span>Ungroup</button>
+                <button class="group-btn" onclick="selectAll()"><span>&#9744;</span>Select All</button>
+                <button class="group-btn" onclick="deselectAll()"><span>&#9746;</span>Deselect All</button>
+              </div>
+            </div>
+            <div class="panel-section">
+              <div class="panel-label">Group Style</div>
+              <div class="spacing-control">
+                <span style="font-size:11px; color:var(--text-3);">Radius</span>
+                <input type="range" min="0" max="26" step="2" value="18" oninput="setGroupRadius(this.value)">
+                <div class="spacing-value" id="groupRadValue2">18px</div>
+              </div>
+              <div class="spacing-control" style="margin-top:8px;">
+                <span style="font-size:11px; color:var(--text-3);">Padding</span>
+                <input type="range" min="0" max="32" step="4" value="12" oninput="setGroupPadding(this.value)">
+                <div class="spacing-value" id="groupPadValue2">12px</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── COLORS ── -->
+        <div class="design-section" id="ds-colors">
+          <div class="design-section-header" onclick="toggleDesignSection('ds-colors')">
+            <span class="design-section-title">Colors</span>
+            <span class="design-section-arrow"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </div>
+          <div class="design-section-body">
+            <div class="panel-section">
+              <div class="panel-label">Apply to</div>
+              <div class="color-target">
+                <button class="active" onclick="setColorTarget('bg',this)">Background</button>
+                <button onclick="setColorTarget('text',this)">Text</button>
+                <button onclick="setColorTarget('border',this)">Border</button>
+              </div>
+            </div>
+            <!-- 2-column layout: each subsection is a rounded card container -->
+            <div class="color-grid-2col">
+              <div class="color-card">
+                <div class="panel-label">Brand</div>
+                <div class="color-palette">
+                  <div class="color-swatch" style="background:#1428A0;" onclick="applyColor('#1428A0')"><span class="cs-label">Samsung Blue</span></div>
+                  <div class="color-swatch" style="background:#000;border:1px solid rgba(255,255,255,0.2);" onclick="applyColor('#000000')"><span class="cs-label">Black</span></div>
+                  <div class="color-swatch" style="background:#FFFFFF;" onclick="applyColor('#FFFFFF')"><span class="cs-label">White</span></div>
+                  <div class="color-swatch" style="background:#F7F7F7;" onclick="applyColor('#F7F7F7')"><span class="cs-label">Near White</span></div>
+                  <div class="color-swatch" style="background:#FFF01F;" onclick="applyColor('#FFF01F')"><span class="cs-label">Galaxy Yellow</span></div>
+                </div>
+              </div>
+              <div class="color-card">
+                <div class="panel-label">System</div>
+                <div class="color-palette">
+                  <div class="color-swatch" style="background:#0381FE;" onclick="applyColor('#0381FE')"><span class="cs-label">Primary</span></div>
+                  <div class="color-swatch" style="background:#0072DE;" onclick="applyColor('#0072DE')"><span class="cs-label">Primary Dark</span></div>
+                  <div class="color-swatch" style="background:#3E91FF;" onclick="applyColor('#3E91FF')"><span class="cs-label">Activated</span></div>
+                  <div class="color-swatch" style="background:#FCFCFC;" onclick="applyColor('#FCFCFC')"><span class="cs-label">Surface</span></div>
+                  <div class="color-swatch" style="background:#171717;" onclick="applyColor('#171717')"><span class="cs-label">Surface Dark</span></div>
+                  <div class="color-swatch" style="background:#D32F2F;" onclick="applyColor('#D32F2F')"><span class="cs-label">Error</span></div>
+                  <div class="color-swatch" style="background:#2E7D32;" onclick="applyColor('#2E7D32')"><span class="cs-label">Success</span></div>
+                  <div class="color-swatch" style="background:#387AFF;" onclick="applyColor('#387AFF')"><span class="cs-label">Nav Selected</span></div>
+                </div>
+              </div>
+              <div class="color-card">
+                <div class="panel-label">Text</div>
+                <div class="color-palette">
+                  <div class="color-swatch" style="background:#252525;" onclick="applyColor('#252525')"><span class="cs-label">Text Primary</span></div>
+                  <div class="color-swatch" style="background:#666666;" onclick="applyColor('#666666')"><span class="cs-label">Text Secondary</span></div>
+                  <div class="color-swatch" style="background:#858585;" onclick="applyColor('#858585')"><span class="cs-label">Text Disabled</span></div>
+                  <div class="color-swatch" style="background:#FAFAFA;" onclick="applyColor('#FAFAFA')"><span class="cs-label">Text Light</span></div>
+                </div>
+              </div>
+              <div class="color-card">
+                <div class="panel-label">Glass UI</div>
+                <div class="color-palette">
+                  <div class="color-swatch" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);" onclick="applyColor('rgba(255,255,255,0.06)')"><span class="cs-label">Glass BG</span></div>
+                  <div class="color-swatch" style="background:rgba(62,145,255,0.2);border:1px solid rgba(62,145,255,0.3);" onclick="applyColor('rgba(62,145,255,0.2)')"><span class="cs-label">Active Tile</span></div>
+                  <div class="color-swatch" style="background:#474747;" onclick="applyColor('#474747')"><span class="cs-label">Tooltip</span></div>
+                </div>
+              </div>
+              <div class="color-card" style="grid-column:1 / -1;">
+                <div class="panel-label">Illustration</div>
+                <div class="color-palette">
+                  <div class="color-swatch" style="background:#87CEEB;" onclick="applyColor('#87CEEB')"><span class="cs-label">Sky Blue</span></div>
+                  <div class="color-swatch" style="background:#006994;" onclick="applyColor('#006994')"><span class="cs-label">Ocean Blue</span></div>
+                  <div class="color-swatch" style="background:#008080;" onclick="applyColor('#008080')"><span class="cs-label">Teal</span></div>
+                  <div class="color-swatch" style="background:#B57EDC;" onclick="applyColor('#B57EDC')"><span class="cs-label">Lavender</span></div>
+                  <div class="color-swatch" style="background:#3EA055;" onclick="applyColor('#3EA055')"><span class="cs-label">Clover</span></div>
+                  <div class="color-swatch" style="background:#F4C430;" onclick="applyColor('#F4C430')"><span class="cs-label">Saffron</span></div>
+                  <div class="color-swatch" style="background:#FF7F50;" onclick="applyColor('#FF7F50')"><span class="cs-label">Coral</span></div>
+                </div>
+              </div>
+              <div class="color-card" style="grid-column:1 / -1;">
+                <div class="panel-label">Wallpaper</div>
+                <div class="wp-grid" style="grid-template-columns:repeat(4, 1fr);">
+                  <div class="wp-thumb active" onclick="setWallpaper('wp-1')" title="Wallpaper 1 (default)">
+                    <div style="width:100%;height:100%;background:url('wallpapers/1.webp') center/cover no-repeat;"></div>
+                  </div>
+                  <div class="wp-thumb" onclick="setWallpaper('wp-2')" title="Wallpaper 2">
+                    <div style="width:100%;height:100%;background:url('wallpapers/2.webp') center/cover no-repeat;"></div>
+                  </div>
+                  <div class="wp-thumb" onclick="setWallpaper('wp-3')" title="Wallpaper 3">
+                    <div style="width:100%;height:100%;background:url('wallpapers/3.webp') center/cover no-repeat;"></div>
+                  </div>
+                  <div class="wp-thumb" onclick="setWallpaper('wp-4')" title="Wallpaper 4">
+                    <div style="width:100%;height:100%;background:url('wallpapers/4.png') center/cover no-repeat;"></div>
+                  </div>
+                </div>
+                <div id="moreWpWrap" style="display:none;margin-top:6px;">
+                  <div class="wp-grid" style="grid-template-columns:repeat(4, 1fr);">
+                    <div class="wp-thumb" onclick="setWallpaper('none')" title="None">
+                      <div style="width:100%;height:100%;background:#171717;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text-3);">&#8709;</div>
+                    </div>
+                    <div class="wp-thumb" onclick="setWallpaper('galaxy-blue')" title="Galaxy Blue">
+                      <div style="width:100%;height:100%;background:linear-gradient(160deg,#0a1628 0%,#0d2847 25%,#1a4a7a 50%,#0d3b6e 75%,#081e3d 100%);"></div>
+                    </div>
+                    <div class="wp-thumb" onclick="setWallpaper('galaxy-purple')" title="Galaxy Purple">
+                      <div style="width:100%;height:100%;background:linear-gradient(160deg,#1a0a2e 0%,#2d1b69 30%,#5b2d8e 55%,#3a1d6e 75%,#1a0a3e 100%);"></div>
+                    </div>
+                    <div class="wp-thumb" onclick="setWallpaper('galaxy-green')" title="Galaxy Green">
+                      <div style="width:100%;height:100%;background:linear-gradient(160deg,#0a1e14 0%,#0d3a28 30%,#1a6b4a 55%,#0d4a32 75%,#081e14 100%);"></div>
+                    </div>
+                    <div class="wp-thumb" onclick="setWallpaper('galaxy-orange')" title="Galaxy Sunset">
+                      <div style="width:100%;height:100%;background:linear-gradient(160deg,#1a0e08 0%,#4a1a08 25%,#8a3a10 45%,#c46a20 60%,#e8a040 75%,#4a1a08 100%);"></div>
+                    </div>
+                    <div class="wp-thumb" onclick="setWallpaper('galaxy-rose')" title="Galaxy Rose">
+                      <div style="width:100%;height:100%;background:linear-gradient(160deg,#1e0a14 0%,#4a1028 30%,#8a2050 50%,#c43070 65%,#4a1028 100%);"></div>
+                    </div>
+                    <div class="wp-thumb" onclick="setWallpaper('galaxy-night')" title="Galaxy Night">
+                      <div style="width:100%;height:100%;background:linear-gradient(180deg,#020810 0%,#0a1428 40%,#0d1e3a 60%,#060e1e 100%);"></div>
+                    </div>
+                    <div class="wp-thumb" onclick="setWallpaper('galaxy-abstract')" title="Galaxy Abstract">
+                      <div style="width:100%;height:100%;background:linear-gradient(135deg,#0a0a1e 0%,#1428a0 30%,#0381fe 50%,#64e9e3 70%,#0a1428 100%);"></div>
+                    </div>
+                  </div>
+                </div>
+                <button class="topbar-btn" style="width:100%;margin-top:6px;font-size:11px;padding:6px;" onclick="this.textContent=this.textContent.includes('More')?'Less wallpapers':'More wallpapers';document.getElementById('moreWpWrap').style.display=document.getElementById('moreWpWrap').style.display==='none'?'block':'none';">More wallpapers</button>
+              </div>
+              <div class="color-card" style="grid-column:1 / -1;">
+                <div class="panel-label">Custom Wallpaper</div>
+                <!-- Unified input: describe for AI generation OR paste URL, with inline icons -->
+                <div style="position:relative;width:100%;">
+                  <input type="file" id="wpUpload2" accept="image/*" style="display:none;" onchange="uploadWallpaper(event)">
+                  <input type="text" id="wpUrl2"
+                    onkeydown="if(event.key==='Enter'){event.preventDefault();submitCustomWallpaper();}"
+                    placeholder="Describe a wallpaper or paste an image URL..."
+                    style="width:100%;height:44px;border-radius:12px;border:1px solid var(--divider);background:var(--surface);color:var(--text);font-size:12px;padding:0 72px 0 14px;font-family:var(--font);box-sizing:border-box;">
+
+                  <!-- Image upload (inline) -->
+                  <button class="chat-inline-btn" title="Upload image file" onclick="document.getElementById('wpUpload2').click()" style="position:absolute;right:38px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-2);background:none;border:none;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3.5" y="5.25" width="17" height="13.5" rx="1.75" stroke="currentColor" stroke-width="1.5"/><circle cx="8.5" cy="10" r="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M4 17L9.5 12L13.5 15.5L16.5 13L20 16.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+
+                  <!-- Send / AI Generate — ai-colour star, no container (opacity for hover) -->
+                  <button class="chat-inline-btn ai-send-btn" title="Apply URL or AI-generate from description" onclick="submitCustomWallpaper()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:none;border:none;padding:0;">
+                    <span class="ai-star-slot" data-size="20"></span>
+                  </button>
+                </div>
+                <!-- AI Generate results (shown after request) -->
+                <div id="aiWpPanel2" style="display:none;margin-top:8px;">
+                  <div class="wp-grid" id="aiWpResults2"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── MOTION ── -->
+        <div class="design-section" id="ds-motion">
+          <div class="design-section-header" onclick="toggleDesignSection('ds-motion')">
+            <span class="design-section-title">Motion</span>
+            <span class="design-section-arrow"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </div>
+          <div class="design-section-body">
+            <div class="panel-section">
+              <div class="panel-label">Animation Type</div>
+              <div class="motion-grid">
+                <div class="motion-item selected" data-anim="fadeIn" onclick="selectMotion('fadeIn',this)"><span class="mi-curve">&#9676;</span>Fade In</div>
+                <div class="motion-item" data-anim="slideUp" onclick="selectMotion('slideUp',this)"><span class="mi-curve">&#8593;</span>Slide Up</div>
+                <div class="motion-item" data-anim="slideLeft" onclick="selectMotion('slideLeft',this)"><span class="mi-curve">&#8592;</span>Slide Left</div>
+                <div class="motion-item" data-anim="scaleUp" onclick="selectMotion('scaleUp',this)"><span class="mi-curve">&#8599;</span>Scale Up</div>
+                <div class="motion-item" data-anim="bounce" onclick="selectMotion('bounce',this)"><span class="mi-curve">&#9673;</span>Bounce</div>
+                <div class="motion-item" data-anim="springPop" onclick="selectMotion('springPop',this)"><span class="mi-curve">&#10024;</span>Spring Pop</div>
+                <div class="motion-item" data-anim="shake" onclick="selectMotion('shake',this)"><span class="mi-curve">&#8660;</span>Shake</div>
+                <div class="motion-item" data-anim="glassMat" onclick="selectMotion('glassMat',this)"><span class="mi-curve">&#10023;</span>Glass Mat.</div>
+                <div class="motion-item" data-anim="chromeFade" onclick="selectMotion('chromeFade',this)"><span class="mi-curve">&#9681;</span>Chrome Fade</div>
+              </div>
+            </div>
+            <div class="panel-section">
+              <div class="panel-label">Easing</div>
+              <div class="motion-grid">
+                <div class="motion-item selected" data-ease="cubic-bezier(0.22,0.25,0,1)" onclick="selectEasing(this)"><svg viewBox="0 0 20 20" width="18" height="18"><path d="M1,19 C5.4,5 1,1 19,1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Basic</div>
+                <div class="motion-item" data-ease="cubic-bezier(0.3,0,0,1)" onclick="selectEasing(this)"><svg viewBox="0 0 20 20" width="18" height="18"><path d="M1,19 C7,19 1,1 19,1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Standard</div>
+                <div class="motion-item" data-ease="cubic-bezier(0,0,0,1)" onclick="selectEasing(this)"><svg viewBox="0 0 20 20" width="18" height="18"><path d="M1,19 C1,19 1,1 19,1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Decel</div>
+                <div class="motion-item" data-ease="cubic-bezier(0.3,0,1,1)" onclick="selectEasing(this)"><svg viewBox="0 0 20 20" width="18" height="18"><path d="M1,19 C7,19 19,1 19,1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Accel</div>
+                <div class="motion-item" data-ease="cubic-bezier(0.2,0,0,1)" onclick="selectEasing(this)"><svg viewBox="0 0 20 20" width="18" height="18"><path d="M1,19 C5,19 1,1 19,1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Emphas</div>
+                <div class="motion-item" data-ease="cubic-bezier(0.2,0.6,0.4,1)" onclick="selectEasing(this)"><svg viewBox="0 0 20 20" width="18" height="18"><path d="M1,19 C5,8 9,1 19,1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Spring</div>
+                <div class="motion-item" data-ease="cubic-bezier(0.34,1.56,0.64,1)" onclick="selectEasing(this)"><svg viewBox="0 -3 20 26" width="18" height="18"><path d="M1,19 C8,-2 14,1 19,1" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>Bounce</div>
+                <div class="motion-item" data-ease="cubic-bezier(0.68,-0.55,0.27,1.55)" onclick="selectEasing(this)"><svg viewBox="0 -4 20 28" width="18" height="18"><path d="M1,19 C14,30 6,-3 19,1" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>Elastic</div>
+                <div class="motion-item" data-ease="linear" onclick="selectEasing(this)"><svg viewBox="0 0 20 20" width="18" height="18"><line x1="1" y1="19" x2="19" y2="1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Linear</div>
+                <div class="motion-item" data-ease="ease-in" onclick="selectEasing(this)"><svg viewBox="0 0 20 20" width="18" height="18"><path d="M1,19 C9,19 17,1 19,1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Ease In</div>
+                <div class="motion-item" data-ease="ease-out" onclick="selectEasing(this)"><svg viewBox="0 0 20 20" width="18" height="18"><path d="M1,19 C3,19 1,1 19,1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Ease Out</div>
+                <div class="motion-item" data-ease="ease-in-out" onclick="selectEasing(this)"><svg viewBox="0 0 20 20" width="18" height="18"><path d="M1,19 C9,19 11,1 19,1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>In Out</div>
+              </div>
+            </div>
+            <div class="panel-section">
+              <div class="panel-label">Duration</div>
+              <div class="dur-slider-wrap">
+                <div class="dur-slider-header">
+                  <span class="dur-label" id="durLabel2">Normal</span>
+                  <span class="dur-value" id="durValue2">300ms</span>
+                </div>
+                <input type="range" class="dur-slider" id="durSlider2" min="100" max="800" step="50" value="300" oninput="onDurSlider(this.value)">
+                <div class="dur-ticks">
+                  <span class="dur-tick" onclick="setDurSlider(100)">Instant</span>
+                  <span class="dur-tick" onclick="setDurSlider(200)">Fast</span>
+                  <span class="dur-tick" onclick="setDurSlider(300)">Normal</span>
+                  <span class="dur-tick" onclick="setDurSlider(500)">Slow</span>
+                  <span class="dur-tick" onclick="setDurSlider(800)">Page</span>
+                </div>
+              </div>
+            </div>
+            <div class="panel-section">
+              <button class="topbar-btn primary" style="width:100%; padding:12px;" onclick="previewMotion()">&#9654; Preview Motion</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- PANEL 7: MLP PROTOTYPE — visual showcase, not reasoning.
+           Replaces the old Refine panel (Refine moved into Generate as a
+           default-closed details). MLPs = Most Lovable Product
+           prototypes: hand-curated visual artifacts the team wants to
+           share / pitch. Each card opens its prototype in a new tab. -->
+      <div class="panel" id="panel-7">
+
+        <!-- Header trimmed: description ("Most Lovable Product — visual
+             prototypes worth showing.") and "+ Add" button removed per
+             user request. Adding prototypes is a code edit on
+             #mlpGallery, not a runtime action, so the button was
+             misleading. Just the label remains. -->
+        <div class="panel-label" style="margin-bottom:12px;">MLP Prototype</div>
+
+        <!-- 3-column visual gallery. Tab switch to MLP Prototype widens
+             the sidebar (body.tab-mlp-active rule in css/genui.css) so
+             the 3-col grid breathes and all 5 tiles are visible without
+             scrolling. Each tile is a colored hero block themable per
+             slot via inline gradient. Clicks are no-op until paired
+             with real prototype URLs / Figma frames / video links. -->
+        <div class="mlp-gallery" id="mlpGallery" style="display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:10px;">
+          <div class="mlp-tile" tabindex="0" data-mlp-id="cooking-assistant"
+               style="aspect-ratio: 9 / 12; border-radius:14px; overflow:hidden; position:relative; cursor:pointer; background:linear-gradient(160deg,#FF8A8A,#F36F6F 50%,#A8327B); border:1px solid rgba(255,255,255,0.08);">
+            <div style="position:absolute; inset:auto 10px 10px 10px; color:#fff;">
+              <div style="font-size:9px;font-weight:600;letter-spacing:0.4px;opacity:0.85;text-transform:uppercase;">Cooking</div>
+              <div style="font-size:13px;font-weight:700;letter-spacing:-0.2px;line-height:1.2;">Cooking Assistant</div>
+            </div>
+          </div>
+          <div class="mlp-tile" tabindex="0" data-mlp-id="health-snapshot"
+               style="aspect-ratio: 9 / 12; border-radius:14px; overflow:hidden; position:relative; cursor:pointer; background:linear-gradient(160deg,#7BC8A4,#1D9C7C 50%,#0B5C66); border:1px solid rgba(255,255,255,0.08);">
+            <div style="position:absolute; inset:auto 10px 10px 10px; color:#fff;">
+              <div style="font-size:9px;font-weight:600;letter-spacing:0.4px;opacity:0.85;text-transform:uppercase;">Health</div>
+              <div style="font-size:13px;font-weight:700;letter-spacing:-0.2px;line-height:1.2;">Daily Snapshot</div>
+            </div>
+          </div>
+          <div class="mlp-tile" tabindex="0" data-mlp-id="navigation-glance"
+               style="aspect-ratio: 9 / 12; border-radius:14px; overflow:hidden; position:relative; cursor:pointer; background:linear-gradient(160deg,#B69EF0,#7B68EE 55%,#352970); border:1px solid rgba(255,255,255,0.08);">
+            <div style="position:absolute; inset:auto 10px 10px 10px; color:#fff;">
+              <div style="font-size:9px;font-weight:600;letter-spacing:0.4px;opacity:0.85;text-transform:uppercase;">Driving</div>
+              <div style="font-size:13px;font-weight:700;letter-spacing:-0.2px;line-height:1.2;">Navigation Glance</div>
+            </div>
+          </div>
+          <div class="mlp-tile" tabindex="0" data-mlp-id="messages-quick"
+               style="aspect-ratio: 9 / 12; border-radius:14px; overflow:hidden; position:relative; cursor:pointer; background:linear-gradient(160deg,#F5C16C,#E0913E 50%,#7A3B1C); border:1px solid rgba(255,255,255,0.08);">
+            <div style="position:absolute; inset:auto 10px 10px 10px; color:#fff;">
+              <div style="font-size:9px;font-weight:600;letter-spacing:0.4px;opacity:0.85;text-transform:uppercase;">Messages</div>
+              <div style="font-size:13px;font-weight:700;letter-spacing:-0.2px;line-height:1.2;">Quick Reply</div>
+            </div>
+          </div>
+          <div class="mlp-tile" tabindex="0" data-mlp-id="lock-glance"
+               style="aspect-ratio: 9 / 12; border-radius:14px; overflow:hidden; position:relative; cursor:pointer; background:linear-gradient(160deg,#5BC0EB,#2A7DAB 50%,#0C2841); border:1px solid rgba(255,255,255,0.08);">
+            <div style="position:absolute; inset:auto 10px 10px 10px; color:#fff;">
+              <div style="font-size:9px;font-weight:600;letter-spacing:0.4px;opacity:0.85;text-transform:uppercase;">Lock Screen</div>
+              <div style="font-size:13px;font-weight:700;letter-spacing:-0.2px;line-height:1.2;">Morning Glance</div>
+            </div>
+          </div>
+          <!-- Empty + tile removed — its click handler targeted the
+               removed mlpAddBtn so it became inert. Placeholder footer
+               note ("Tiles are placeholders…") also removed; wiring is
+               documented in the panel comment above. -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Sidebar collapse toggle — sits between sidebar and canvas.
+       Click to slide sidebar out / back in. State persists to
+       localStorage (oneui-sidebar-collapsed). -->
+  <button class="sidebar-collapse-toggle" id="sidebarCollapseToggle" onclick="toggleSidebar()"
+          title="Hide / show the sidebar" aria-label="Toggle sidebar">
+    <span id="sidebarCollapseChevron">‹</span>
+  </button>
+
+  <!-- CANVAS -->
+  <div style="flex:1;display:flex;flex-direction:column;min-width:0;">
+    <!-- Variant Controls removed — A/B toggle disabled per user request.
+         The underlying variant system remains for internal state tracking but
+         the UI affordance is hidden. -->
+    <div class="variant-bar" id="variantBar" style="display:none !important;"></div>
+
+    <!-- R4: Flow Navigator — appears above the canvas when the current
+         generation emitted a multi-node flow graph. Hidden for single-
+         screen results. Each dot swaps the canvas to the node's
+         renderModel without re-calling the AI. -->
+    <div class="flow-navigator" id="flowNavigator" hidden></div>
+
+    <div class="canvas-wrap" id="canvasWrap">
+      <!-- Primary canvas (Variant A or active variant) -->
+      <div style="position:relative;">
+        <div class="canvas-frame" id="canvasFrame">
+          <div class="canvas-notch"></div>
+          <div class="canvas-inner" id="canvas">
+          </div>
+          <!-- Before/After comparison overlay -->
+          <div class="refine-compare" id="refineCompare">
+            <button class="refine-close-compare" onclick="hideRefineComparison()">&times;</button>
+            <div class="refine-compare-side">
+              <div class="refine-compare-label before">Before</div>
+              <div class="refine-compare-canvas" id="refineBeforeCanvas"></div>
+            </div>
+            <div class="refine-compare-side">
+              <div class="refine-compare-label after">After</div>
+              <div class="refine-compare-canvas" id="refineAfterCanvas"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Compare mode: second canvas (hidden by default) -->
+      <div class="compare-frame" id="compareFrame">
+        <div class="compare-label b">Variant B</div>
+        <div class="canvas-frame" id="canvasFrameB">
+          <div class="canvas-notch"></div>
+          <div class="canvas-inner" id="canvasB">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="ui-state.js"></script>
+<script src="figma-refs/icon_library.js"></script>
+<script src="typography-rules.js"></script>
+<script src="generator.js"></script>
+<script src="design_memory.js"></script>
+<script src="app/state.js"></script>
+<script src="app/agent.js"></script>
+<script src="app/templates.js"></script>
+<script src="app/atomics.js"></script>
+<script src="app/design-doc.js"></script>
+<script src="app/interaction-state.js"></script>
+<script src="app/surface-layout.js"></script>
+<script src="app/settings.js"></script>
+<script src="app/canvas.js"></script>
+<script src="app/rules-renderer.js"></script>
+<script src="app/scenes.js"></script>
+<script src="app/scene-inspector.js"></script>
+<script src="app/cached-screens.js"></script>
+<script src="app/ui-panels.js?v=2026-05-13-customize-page"></script>
+<script src="app/main.js"></script>
+</body>
+</html>
