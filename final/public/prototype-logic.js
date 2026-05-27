@@ -185,21 +185,53 @@
     var dataArray = null;
     var micStream = null;
     var currentVolume = 0;
+    var audioInitId = 0;
+
+    function cleanupAudioAnalysis() {
+      if (micStream) {
+        micStream.getTracks().forEach(function (track) { track.stop(); });
+        micStream = null;
+      }
+      if (audioContext) {
+        audioContext.close();
+        audioContext = null;
+      }
+      analyser = null;
+      dataArray = null;
+    }
 
     async function initAudioAnalysis() {
       if (audioContext) return;
+
+      var initId = audioInitId;
+      var ctx = null;
+      var stream = null;
       try {
         var AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        audioContext = new AudioContextClass();
-        micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        var source = audioContext.createMediaStreamSource(micStream);
-        analyser = audioContext.createAnalyser();
+        if (!AudioContextClass || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+
+        ctx = new AudioContextClass();
+        audioContext = ctx;
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+        // stopListening() may run while awaiting mic permission/stream
+        if (initId !== audioInitId || !listening || audioContext !== ctx) {
+          stream.getTracks().forEach(function (track) { track.stop(); });
+          if (audioContext === ctx) cleanupAudioAnalysis();
+          return;
+        }
+
+        micStream = stream;
+        var source = ctx.createMediaStreamSource(stream);
+        analyser = ctx.createAnalyser();
         analyser.fftSize = 256;
         var bufferLength = analyser.frequencyBinCount;
         dataArray = new Uint8Array(bufferLength);
         source.connect(analyser);
       } catch (e) {
         console.error('Audio analysis init failed:', e);
+        if (stream) stream.getTracks().forEach(function (track) { track.stop(); });
+        if (audioContext === ctx) cleanupAudioAnalysis();
       }
     }
 
@@ -241,6 +273,7 @@
         var N = dots.length;
 
         var vol = updateVolume();
+        if (window.P2AgentFillGL) window.P2AgentFillGL.setAudio(vol);
         // Voice-reactive amplitude: base breathing (14) + voice boost (up to 26 more)
         var dynamicAmp = 14 + (vol * 26);
 
@@ -425,6 +458,13 @@
       seqAfterTitle: 380,
       seqRowStagger: 100
     };
+    var P2_TEST2_REVEAL_TIMING = {
+      phase1: 280,
+      phase2Pause: 120,
+      seqColor: 0,
+      seqAfterTitle: 180,
+      seqRowStagger: 72
+    };
 
     function wrapP2RevealStage(innerHtml, contentH) {
       return '<div class="p2-reveal-stage" style="--p2-reveal-h:' + Math.round(contentH) + 'px">' + innerHtml + '</div>';
@@ -483,23 +523,54 @@
       }
       defaults.style.opacity = '0';
       defaults.style.display = 'none';
+      var isTest2 = window.__mlpTestConfig && window.__mlpTestConfig.id === 'test2';
+      if (window.P2AgentFillGL) {
+        if (isTest2 && !slot.querySelector('.p2-contact-list')) {
+          window.P2AgentFillGL.setPhase('settling');
+          setTimeout(function () {
+            if (window.P2AgentFillGL) window.P2AgentFillGL.setPhase('fadeOut');
+          }, 900);
+        } else if (!isTest2) {
+          window.P2AgentFillGL.setPhase('fadeOut');
+        }
+      }
     }
 
     function runP2ContentSequence(slot, defaults, result, contentH) {
-      var t = P2_REVEAL_TIMING;
+      var isTest2 = window.__mlpTestConfig && window.__mlpTestConfig.id === 'test2';
+      var t = isTest2 ? P2_TEST2_REVEAL_TIMING : P2_REVEAL_TIMING;
+      var hasContactList = !!(slot.querySelector && slot.querySelector('.p2-contact-list'));
 
       if (contentH > P2_AREA_DEFAULT_H) {
-        setP2AreaHeight(contentH);
+        if (isTest2 && hasContactList && typeof window.applyTest2ContactListShellHeight === 'function') {
+          window.applyTest2ContactListShellHeight(slot);
+        } else {
+          setP2AreaHeight(contentH);
+        }
       }
 
       slot.classList.remove('p2-reveal-waiting');
-      slot.classList.add('p2-reveal-swap', 'p2-seq-color');
+      slot.classList.add('p2-reveal-swap', 'p2-seq-color', 'p2-seq-color-active');
       if (result) result.classList.add('p2-crossfade-out');
+      if (isTest2 && window.P2AgentFillGL) {
+        var flowShell = document.getElementById('p2-area');
+        if (flowShell) flowShell.classList.add('p2-agent-shell--flow-handoff');
+        window.P2AgentFillGL.setPhase('hollowReveal');
+      }
       void slot.offsetWidth;
 
-      requestAnimationFrame(function () {
-        slot.classList.add('p2-seq-color-active');
-      });
+      if (isTest2 && hasContactList) {
+        slot.classList.add('p2-seq-title');
+        if (typeof window.beginTest2LoadingChromeExit === 'function') {
+          window.beginTest2LoadingChromeExit(slot);
+        }
+        setTimeout(function () {
+          if (window.P2AgentFillGL && window.P2AgentFillGL.setPhase) {
+            window.P2AgentFillGL.setPhase('settling');
+          }
+        }, 80);
+        return;
+      }
 
       setTimeout(function () {
         slot.classList.add('p2-seq-title');
@@ -517,6 +588,8 @@
       var msg14 = document.getElementById('p2-msg14');
       var star = document.getElementById('p2-star');
       var result = resultEl || document.getElementById('p2-result');
+      var isTest2 = window.__mlpTestConfig && window.__mlpTestConfig.id === 'test2';
+      var t = isTest2 ? P2_TEST2_REVEAL_TIMING : P2_REVEAL_TIMING;
 
       slot.style.setProperty('--p2-reveal-h', Math.round(contentH) + 'px');
       if (result) result.style.setProperty('--p2-reveal-h', Math.round(contentH) + 'px');
@@ -535,6 +608,19 @@
         defaults.style.pointerEvents = 'none';
       });
 
+      if (isTest2) {
+        setTimeout(function () {
+          if (result) {
+            result.classList.add('p2-result-expanded');
+            void result.offsetWidth;
+          }
+          requestAnimationFrame(function () {
+            runP2ContentSequence(slot, defaults, result, contentH);
+          });
+        }, t.phase1);
+        return;
+      }
+
       setTimeout(function () {
         if (result) {
           result.classList.add('p2-result-expanded');
@@ -543,8 +629,8 @@
 
         setTimeout(function () {
           runP2ContentSequence(slot, defaults, result, contentH);
-        }, P2_REVEAL_TIMING.phase2Pause);
-      }, P2_REVEAL_TIMING.phase1);
+        }, t.phase2Pause);
+      }, t.phase1);
     }
 
     function mountResolvedComponent(component, attempt) {
@@ -666,6 +752,23 @@
       var canvas = document.getElementById('canvas');
       var userText = String(utt || '').trim();
       if (!userText) return;
+      var isTest2 = window.__mlpTestConfig && window.__mlpTestConfig.id === 'test2';
+
+      if (isTest2) {
+        var agentInput = document.querySelector('.p2-agent-input');
+        if (agentInput) {
+          agentInput.textContent = userText;
+          agentInput.classList.add('p2-agent-input--glow');
+        }
+        var loadingSubEarly = el.querySelector('.p2-result-loading__sub');
+        if (loadingSubEarly) loadingSubEarly.textContent = userText;
+        if (canvas) canvas.classList.add('p2-generating');
+        el.classList.add('is-loading');
+        if (window.P2AgentFillGL) window.P2AgentFillGL.setPhase('generating');
+        if (typeof window.syncTest2LoadingPresentation === 'function') {
+          window.syncTest2LoadingPresentation(el);
+        }
+      }
 
       resetP2AreaHeight();
       clearP2DefaultRevealState();
@@ -708,13 +811,18 @@
 
       // optimistic UI: show "thinking" state (crossfade overlay, keep base card intact)
       var loadingSub = el.querySelector('.p2-result-loading__sub');
-      if (loadingSub) loadingSub.textContent = '“' + userText.slice(0, 20) + '”';
-      el.classList.remove('is-loading');
-      void el.offsetWidth;
-      requestAnimationFrame(function () {
-        el.classList.add('is-loading');
-      });
-      if (canvas) canvas.classList.add('p2-generating');
+      if (loadingSub) loadingSub.textContent = isTest2 ? userText : ('“' + userText.slice(0, 20) + '”');
+      if (!isTest2) {
+        el.classList.remove('is-loading');
+        void el.offsetWidth;
+        requestAnimationFrame(function () {
+          el.classList.add('is-loading');
+        });
+        if (canvas) canvas.classList.add('p2-generating');
+        if (window.P2AgentFillGL) window.P2AgentFillGL.setPhase('generating');
+      } else if (typeof window.syncTest2LoadingPresentation === 'function') {
+        window.syncTest2LoadingPresentation(el);
+      }
       
       // Start generating animation for chord
       generating = true;
@@ -724,7 +832,9 @@
         var resolved = await resolveFromApi(userText);
         
         // Brief pause for dramatic "UI Reconstruction" effect
-        await new Promise(resolve => setTimeout(resolve, 1500)); // Increased for better visual of generating state
+        await new Promise(function (resolve) {
+          setTimeout(resolve, isTest2 ? 520 : 1500);
+        });
 
         applyTheme(resolved && resolved.themeKey);
         // Weather-like requests can also shift the wallpaper mood.
@@ -733,6 +843,9 @@
         if (resolved && resolved.component) {
           if (canvas) canvas.classList.remove('p2-generating');
           generating = false;
+          if (window.P2AgentFillGL && !isTest2) {
+            window.P2AgentFillGL.setPhase('settling');
+          }
 
           // Staged reveal: keep loading card through expand, morph at phase 3
           mountResolvedComponent(resolved.component);
@@ -742,6 +855,7 @@
         el.classList.remove('is-loading');
         if (canvas) canvas.classList.remove('p2-generating');
         generating = false;
+        if (window.P2AgentFillGL) window.P2AgentFillGL.setPhase('idle');
       } finally {
         // No-op, handled above
       }
@@ -751,25 +865,36 @@
       var canvas = document.getElementById('canvas');
       if (!canvas) return;
 
+      function bindP2FillGl() {
+        if (window.P2AgentFillGL) window.P2AgentFillGL.ensureBound();
+      }
+
+      bindP2FillGl();
+      if (typeof MutationObserver !== 'undefined') {
+        var mo = new MutationObserver(function () {
+          bindP2FillGl();
+        });
+        mo.observe(canvas, { childList: true, subtree: true });
+      } else {
+        var bindAttempts = 0;
+        var bindTimer = setInterval(function () {
+          bindP2FillGl();
+          bindAttempts += 1;
+          if (bindAttempts > 40) clearInterval(bindTimer);
+        }, 250);
+      }
+
       var Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       var rec = null;
 
       function stopListening() {
         listening = false;
+        audioInitId++;
         canvas.classList.remove('p2-listening');
         try { rec && rec.stop && rec.stop(); } catch (e) {}
         
-        // Clean up audio analysis
-        if (micStream) {
-          micStream.getTracks().forEach(function(track) { track.stop(); });
-          micStream = null;
-        }
-        if (audioContext) {
-          audioContext.close();
-          audioContext = null;
-        }
-        analyser = null;
-        dataArray = null;
+        // Clean up audio analysis (also cancels in-flight init after getUserMedia resolves)
+        cleanupAudioAnalysis();
       }
 
       function startListening() {
@@ -780,6 +905,11 @@
         chordTime = 0;
         formationLerp = 0;
         currentVolume = 0;
+
+        if (window.P2AgentFillGL) {
+          window.P2AgentFillGL.ensureBound();
+          window.P2AgentFillGL.setPhase('listening');
+        }
         
         initAudioAnalysis(); // Start tracking volume
         updateChordAnimation();

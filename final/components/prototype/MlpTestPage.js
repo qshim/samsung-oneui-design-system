@@ -11,25 +11,25 @@ const HOME_BG = "/assets/bg-new.png?v=2";
 
 const TESTS = [
   {
-    id: "test1", href: "/test1", label: "Persona 1", img: "/assets/persona-1.png", disabled: true,
+    id: "test1", href: "/test1", label: "Persona 1", img: "/assets/persona-1.png?v=3", disabled: true,
     name: "Junseo",
     age: "32, Office Worker",
     bio: "효율적인 일상을 추구하는 직장인.\n짧은 시간 안에 최대의 효과를 얻는 운동을 선호.",
     interests: ["Quick HIIT", "Meal prep", "Sleep tracking"],
   },
   {
-    id: "test2", href: "/test2", label: "Persona 2", img: "/assets/persona-2.png",
-    name: "Yujin",
-    age: "28, Designer",
-    bio: "감성과 일상의 균형을 중시.\n음악과 산책으로 영감을 얻는 라이프스타일.",
-    interests: ["Long walks", "Music curation", "Visual journals"],
+    id: "test2", href: "/test2", label: "Persona 2", img: "/assets/persona-2.png?v=3",
+    name: "박서현",
+    age: "28, Product Designer",
+    bio: "6일간 휴가 후 복귀. 분석적이고 계획적인 성격, 데이터 기반 의사결정과 체계적인 업무 진행 선호",
+    interests: ["Design reviews", "Dev collaboration", "Figma expert"],
   },
   {
-    id: "test3", href: "/test3", label: "Persona 3", img: "/assets/persona-3.png",
-    name: "Minho",
-    age: "29, Marathon Runner",
-    bio: "꾸준한 러닝과 페이스 관리로 건강을 챙기는 운동인.\n데이터 기반 트레이닝을 선호.",
-    interests: ["Long-distance running", "Pace analytics", "Recovery routines"],
+    id: "test3", href: "/test3", label: "Persona 3", img: "/assets/persona-3.png?v=3",
+    name: "유진",
+    age: "31, Backend Developer",
+    bio: "주 4-5회 한강 조깅, 인디 음악과 함께 혼자만의 시간을 즐김. 기록보다 꾸준함을 중시하는 데이터 기반 러너",
+    interests: ["Evening runner", "Indie music lover", "Data-driven fitness"],
   },
 ];
 
@@ -49,7 +49,7 @@ function TestScripts() {
       <Script src="/app/design-doc.js?v=2" strategy="beforeInteractive" />
       <Script src="/app/interaction-state.js?v=2" strategy="beforeInteractive" />
       <Script src="/app/dot-pair-rain.js?v=1" strategy="beforeInteractive" />
-      <Script src="/app/surface-layout.js?v=mlp-test3-music-1" strategy="beforeInteractive" />
+      <Script src="/app/surface-layout.js?v=mlp-test2-agent-gl-1" strategy="beforeInteractive" />
       <Script src="/app/settings.js?v=2" strategy="beforeInteractive" />
       <Script src="/app/canvas.js?v=2" strategy="beforeInteractive" />
       <Script src="/app/rules-renderer.js?v=2" strategy="beforeInteractive" />
@@ -58,6 +58,7 @@ function TestScripts() {
       <Script src="/app/cached-screens.js?v=2" strategy="beforeInteractive" />
       <Script src="/app/ui-panels.js?v=2" strategy="beforeInteractive" />
       <Script src="/app/main.js?v=2" strategy="beforeInteractive" />
+      <Script src="/app/p2-agent-fill-gl.js?v=22" strategy="beforeInteractive" />
       <Script src="/prototype-logic.js?v=mlp-test-split-1" strategy="lazyOnload" />
     </>
   );
@@ -279,14 +280,10 @@ export default function MlpTestPage({
   const activeIdx   = TESTS.findIndex(t => t.id === testId && !t.disabled);
   const focusIdx    = hoveredIdx >= 0 ? hoveredIdx : activeIdx;
 
-  // Per-badge palette extracted from each avatar image. Per user
-  // direction: each avatar should get colors derived from its OWN
-  // image (like the test2 purple-avatar treatment), with the saturation
-  // elevated so the ring reads as glowing neon rather than as a muted
-  // skin/clothing recolor. The conic-gradient in .persona-circle::before
-  // reads --persona-c1..c3 (set per badge below); a static white peak
-  // is hard-coded at the 50% stop so the music-card-style spotlight
-  // pattern is preserved.
+  // Per-badge palette extracted from each avatar image. Colors stay
+  // close to the portrait (background, skin, clothing) — no forced
+  // rainbow/neon hue rotation. The conic-gradient ring uses c1→c2→
+  // c3→c4 sorted by hue so the spin reads as the avatar's own palette.
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
     function rgbToHsl(r, g, b) {
@@ -324,32 +321,14 @@ export default function MlpTestPage({
       }
       return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
     }
-    // Push each extracted RGB into a high-saturation neon slice:
-    //   • saturation × 2.4 + 0.25, floored at 0.85 — even near-gray
-    //     hair/skin tones come out as a vivid hue.
-    //   • lightness mapped into 0.55-0.7 — bright enough to glow on
-    //     the dark badge background, dim enough to keep the hue.
-    //   • hue distinctness: if a candidate hue is within 30° of any
-    //     previously-emitted hue, rotate it in 60° steps until it
-    //     finds an unoccupied slot. Without this, two avatar samples
-    //     with similar hues (two pinks, two greens) collapse to the
-    //     same RGB and the conic gradient ends up with adjacent stops
-    //     showing the SAME color (rotation invisible across that arc).
-    function glowify(rgb, prevHues) {
+    function refineRingColor(rgb) {
       var hsl = rgbToHsl(rgb[0], rgb[1], rgb[2]);
-      var h = hsl[0];
-      var attempts = 0;
-      while (attempts < 12 && prevHues.some(function (ph) {
-        var d = Math.abs(h - ph);
-        if (d > 0.5) d = 1 - d;
-        return d < 0.0833; // 30° in 0..1 space
-      })) {
-        h = (h + 1 / 6) % 1;
-        attempts += 1;
-      }
-      var newS = Math.max(0.85, Math.min(1, hsl[1] * 2.4 + 0.25));
-      var newL = Math.max(0.55, Math.min(0.7, hsl[2] * 0.9 + 0.25));
-      return { rgb: hslToRgb(h, newS, newL), hue: h };
+      var newS = Math.max(0.28, Math.min(0.88, hsl[1] * 1.08 + 0.04));
+      var newL = Math.max(0.38, Math.min(0.76, hsl[2] * 0.94 + 0.04));
+      return hslToRgb(hsl[0], newS, newL);
+    }
+    function rgbToCss(rgb) {
+      return "rgb(" + rgb[0] + ", " + rgb[1] + ", " + rgb[2] + ")";
     }
     function extract(img) {
       try {
@@ -362,10 +341,11 @@ export default function MlpTestPage({
         var buckets = new Map();
         for (var i = 0; i < pixels.length; i += 4) {
           var r = pixels[i], g = pixels[i+1], b = pixels[i+2], a = pixels[i+3];
-          if (a < 200) continue;
-          var lum = 0.299 * r + 0.587 * g + 0.114 * b;
-          if (lum < 32 || lum > 232) continue;
-          var q = 28;
+          if (a < 180) continue;
+          var hslPx = rgbToHsl(r, g, b);
+          if (hslPx[2] < 0.1 || hslPx[2] > 0.96) continue;
+          if (hslPx[1] < 0.06 && hslPx[2] > 0.82) continue;
+          var q = 24;
           var key = (Math.round(r/q)*q) + "_" + (Math.round(g/q)*q) + "_" + (Math.round(b/q)*q);
           buckets.set(key, (buckets.get(key) || 0) + 1);
         }
@@ -376,25 +356,19 @@ export default function MlpTestPage({
           return Math.pow(p1[0]-p2[0],2) + Math.pow(p1[1]-p2[1],2) + Math.pow(p1[2]-p2[2],2);
         }
         var picked = [];
-        // Pick 3 colors (matches the music-card-style gradient: c1 → c2
-        // → WHITE → c3 → c1). Fewer colors means each gets a wider
-        // ARC of the ring, so the image-derived hues are more
-        // prominent against the white spotlight peak.
-        for (var j = 0; j < sorted.length && picked.length < 3; j++) {
+        for (var j = 0; j < sorted.length && picked.length < 4; j++) {
           var k = sorted[j][0];
-          var tooClose = picked.some(function(p) { return distSq(k, p) < 3500; });
+          var tooClose = picked.some(function(p) { return distSq(k, p) < 2800; });
           if (!tooClose) picked.push(k);
         }
-        while (picked.length < 3 && sorted.length) {
+        while (picked.length < 4 && sorted.length) {
           picked.push(sorted[picked.length % sorted.length][0]);
         }
-        var emittedHues = [];
-        return picked.map(function (k) {
-          var rgb = k.split("_").map(Number);
-          var glow = glowify(rgb, emittedHues);
-          emittedHues.push(glow.hue);
-          return "rgb(" + glow.rgb[0] + ", " + glow.rgb[1] + ", " + glow.rgb[2] + ")";
+        var rgbs = picked.map(function (k) { return k.split("_").map(Number); });
+        rgbs.sort(function (a, b) {
+          return rgbToHsl(a[0], a[1], a[2])[0] - rgbToHsl(b[0], b[1], b[2])[0];
         });
+        return rgbs.map(refineRingColor).map(rgbToCss);
       } catch (_) { return null; }
     }
     function apply(badge) {
@@ -402,10 +376,11 @@ export default function MlpTestPage({
       if (!img) return;
       function go() {
         var colors = extract(img);
-        if (!colors || colors.length < 3) return;
+        if (!colors || colors.length < 4) return;
         badge.style.setProperty("--persona-c1", colors[0]);
         badge.style.setProperty("--persona-c2", colors[1]);
         badge.style.setProperty("--persona-c3", colors[2]);
+        badge.style.setProperty("--persona-c4", colors[3]);
       }
       if (img.complete && img.naturalWidth > 0) go();
       else img.addEventListener("load", go, { once: true });
@@ -722,30 +697,18 @@ export default function MlpTestPage({
             inset: 0;
             border-radius: 50%;
             padding: 2px;
-            /* Music-card-style "BPM gradient wheel" pattern with PER-
-               BADGE image-derived colors. The three --persona-c{1,2,3}
-               values are set per badge in the mount effect above
-               (extract→glowify pipeline, saturation boosted to 0.85+).
-               Hex defaults are the previous fixed palette (purple/pink/
-               blue) — used if extraction fails or before it has run.
-               The 50% stop is hard-coded WHITE so a clear spotlight
-               peak rotates around the ring (matches the music card's
-               BPM wheel). 0% and 100% are the SAME color (c1) for a
-               seamless loop closure. */
-            /* Default gradient = music-card-style with image-derived
-               colors. The editor tool can override via the
-               --persona-custom-gradient inline variable (set per-badge
-               when the editor is open); when the editor is closed the
-               variable is cleared and this default falls through. */
+            /* Image-picked palette (--persona-c1..c4 set per badge in
+               the mount effect above). Four stops sorted by hue from
+               the avatar — no forced white/rainbow peak. */
             background: var(
               --persona-custom-gradient,
               conic-gradient(
                 from 0deg,
-                var(--persona-c1, #c084fc)   0%,
-                var(--persona-c2, #f472b6)  25%,
-                #FFFFFF                     50%,
-                var(--persona-c3, #38bdf8)  75%,
-                var(--persona-c1, #c084fc) 100%
+                var(--persona-c1, #8a8a92)   0deg,
+                var(--persona-c2, #a8a8b0)  90deg,
+                var(--persona-c3, #c0c0c8) 180deg,
+                var(--persona-c4, #b0b0b8) 270deg,
+                var(--persona-c1, #8a8a92) 360deg
               )
             );
             -webkit-mask:
@@ -1129,6 +1092,140 @@ export default function MlpTestPage({
             padding: 4px 9px;
             border-radius: 99px;
           }
+          /* test2 (박서현) — solid card, cream tags, bio below tags */
+          .persona-profile-card--test2 {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            width: 409px;
+            padding: 22px 30px;
+            gap: 0;
+            border-radius: 24.882px;
+            background: rgba(40, 42, 44, 0.7);
+            -webkit-backdrop-filter: blur(16px) saturate(120%);
+                    backdrop-filter: blur(16px) saturate(120%);
+            border: none;
+            box-shadow: 0 20px 60px -20px rgba(0, 0, 0, 0.45);
+          }
+          .persona-profile-card--test2 .persona-profile-card__head {
+            margin-bottom: 26px;
+          }
+          .persona-profile-card--test2 .persona-profile-card__heading {
+            gap: 0;
+          }
+          .persona-profile-card--test2 .persona-profile-card__name {
+            font-family: 'Pretendard', var(--font), sans-serif;
+            font-weight: 700;
+            font-size: 24.0526px;
+            line-height: 1.8;
+            letter-spacing: -0.02em;
+            color: #FFFFFF;
+          }
+          .persona-profile-card--test2 .persona-profile-card__age {
+            font-family: 'Pretendard', var(--font), sans-serif;
+            font-weight: 600;
+            font-size: 14.9292px;
+            line-height: 1.8;
+            letter-spacing: -0.02em;
+            color: #FFEDBB;
+            opacity: 0.6;
+          }
+          .persona-profile-card--test2 .persona-profile-card__interests {
+            gap: 8.29px;
+            margin: 0 0 9px;
+          }
+          .persona-profile-card--test2 .persona-profile-card__tag {
+            font-family: 'Pretendard', var(--font), sans-serif;
+            font-weight: 500;
+            font-size: 11.6116px;
+            letter-spacing: -0.02em;
+            line-height: 1.8;
+            color: #282A2C;
+            background: #FFEDBB;
+            border: none;
+            padding: 2.4882px 10.7822px 3.3176px;
+            border-radius: 828.572px;
+          }
+          .persona-profile-card--test2 .persona-profile-card__bio {
+            font-family: 'Pretendard', var(--font), sans-serif;
+            font-weight: 400;
+            font-size: 14.9292px;
+            line-height: 1.5;
+            letter-spacing: -0.02em;
+            color: #EBE8DF;
+            margin: 0;
+            white-space: normal;
+          }
+          .persona-profile-card--test2.is-visible .persona-profile-card__bio {
+            animation: personaCardTextRise 320ms cubic-bezier(0.2, 0, 0.05, 1) 540ms both;
+          }
+          /* test3 (유진) — solid card, mint tags, bio below tags */
+          .persona-profile-card--test3 {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            width: 409px;
+            padding: 22px 35px 22px 30px;
+            gap: 0;
+            border-radius: 24.882px;
+            background: rgba(40, 42, 44, 0.7);
+            -webkit-backdrop-filter: blur(16px) saturate(120%);
+                    backdrop-filter: blur(16px) saturate(120%);
+            border: none;
+            box-shadow: 0 20px 60px -20px rgba(0, 0, 0, 0.45);
+          }
+          .persona-profile-card--test3 .persona-profile-card__head {
+            margin-bottom: 26px;
+          }
+          .persona-profile-card--test3 .persona-profile-card__heading {
+            gap: 0;
+          }
+          .persona-profile-card--test3 .persona-profile-card__name {
+            font-family: 'Pretendard', var(--font), sans-serif;
+            font-weight: 700;
+            font-size: 24.0526px;
+            line-height: 1.8;
+            letter-spacing: -0.02em;
+            color: #FFFFFF;
+          }
+          .persona-profile-card--test3 .persona-profile-card__age {
+            font-family: 'Pretendard', var(--font), sans-serif;
+            font-weight: 600;
+            font-size: 14.9292px;
+            line-height: 1.8;
+            letter-spacing: -0.02em;
+            color: #BDE5EC;
+            opacity: 0.6;
+          }
+          .persona-profile-card--test3 .persona-profile-card__interests {
+            gap: 8.29px;
+            margin: 0 0 9px;
+          }
+          .persona-profile-card--test3 .persona-profile-card__tag {
+            font-family: 'Pretendard', var(--font), sans-serif;
+            font-weight: 500;
+            font-size: 11.6116px;
+            letter-spacing: -0.02em;
+            line-height: 1.8;
+            color: #282A2C;
+            background: #BDE5EC;
+            border: none;
+            padding: 2.4882px 10.7822px 3.3176px;
+            border-radius: 828.572px;
+          }
+          .persona-profile-card--test3 .persona-profile-card__bio {
+            font-family: 'Pretendard', var(--font), sans-serif;
+            font-weight: 400;
+            font-size: 14.9292px;
+            line-height: 1.5;
+            letter-spacing: -0.02em;
+            color: #EBE8DF;
+            margin: 0;
+            white-space: normal;
+          }
+          .persona-profile-card--test3.is-visible .persona-profile-card__bio {
+            animation: personaCardTextRise 320ms cubic-bezier(0.2, 0, 0.05, 1) 540ms both;
+          }
           /* Staggered text reveal with COUNTER-MOTION per user
              direction "카드들은 위에서 아래로 내려오니 역방향으로
              아래에서 위로 올라가게": the card itself slides DOWN (18px
@@ -1369,7 +1466,7 @@ export default function MlpTestPage({
                 currently hovered. */}
             <div
               ref={profileCardRef}
-              className={`persona-profile-card${cardVisible ? " is-visible" : ""}`}
+              className={`persona-profile-card${cardVisible ? " is-visible" : ""}${hoveredTest?.id === "test2" ? " persona-profile-card--test2" : ""}${hoveredTest?.id === "test3" ? " persona-profile-card--test3" : ""}`}
               style={{ "--hover-idx": Math.max(0, hoveredIdx) }}
               aria-hidden={cardVisible ? "false" : "true"}
             >
@@ -1381,13 +1478,28 @@ export default function MlpTestPage({
                       <div className="persona-profile-card__age">{hoveredTest.age}</div>
                     </div>
                   </div>
-                  <p className="persona-profile-card__bio">{hoveredTest.bio}</p>
-                  {hoveredTest.interests && hoveredTest.interests.length > 0 && (
-                    <ul className="persona-profile-card__interests">
-                      {hoveredTest.interests.map((it) => (
-                        <li key={it} className="persona-profile-card__tag">{it}</li>
-                      ))}
-                    </ul>
+                  {hoveredTest.id === "test2" || hoveredTest.id === "test3" ? (
+                    <>
+                      {hoveredTest.interests && hoveredTest.interests.length > 0 && (
+                        <ul className="persona-profile-card__interests">
+                          {hoveredTest.interests.map((it) => (
+                            <li key={it} className="persona-profile-card__tag">{it}</li>
+                          ))}
+                        </ul>
+                      )}
+                      <p className="persona-profile-card__bio">{hoveredTest.bio}</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="persona-profile-card__bio">{hoveredTest.bio}</p>
+                      {hoveredTest.interests && hoveredTest.interests.length > 0 && (
+                        <ul className="persona-profile-card__interests">
+                          {hoveredTest.interests.map((it) => (
+                            <li key={it} className="persona-profile-card__tag">{it}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </>
                   )}
                 </>
               )}
@@ -1489,8 +1601,8 @@ export default function MlpTestPage({
                 </div>
                 <div className="grad-editor__avatars">
                   {[
-                    { id: "test2", label: "Mid avatar (Yujin)" },
-                    { id: "test3", label: "3rd avatar (Minho)" },
+                    { id: "test2", label: "Mid avatar (서현)" },
+                    { id: "test3", label: "3rd avatar (유진)" },
                   ].map((a) => (
                     <button
                       key={a.id}

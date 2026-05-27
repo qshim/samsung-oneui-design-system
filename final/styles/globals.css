@@ -8,6 +8,38 @@
   --font-dot: "Ndot55", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
+/* Animatable custom properties (must be top-level for Turbopack CSS parser) */
+@property --music-shimmer-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+@property --intro-outline-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+@property --test3-radar-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+@property --dot-music1-ring-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+@property --dot-music1-glow-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+@property --dot-music1-blob-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
 @font-face {
   font-family: "Ndot 55 V2";
   src: url("/fonts/Ndot55_v2.woff2") format("woff2");

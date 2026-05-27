@@ -1,8 +1,7 @@
 import "../styles/globals.css";
 import "../styles/theme-page.css";
 import "../styles/genui.css";
-import { useEffect } from "react";
-import { mountDotStepsDecryptedText } from "../components/DotDecryptedMount";
+import { useEffect } from "react";import { mountDotStepsDecryptedText } from "../components/DotDecryptedMount";
 
 export default function App({ Component, pageProps }) {
   useEffect(() => {
