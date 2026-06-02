@@ -1,0 +1,279 @@
+/* VER1 intro block — paste between test1-assist-pill-motion-ver1:start and :intro-end */
+  /* test1 intro — assist pill hidden until prep/run */
+  #canvas[data-test-scope="test1"]:not([data-test1-reveal-all]):not([data-test1-pill-prep]):not([data-test1-pill-run]) .canvas-item[data-role="test1-assist-pill"],
+  #canvas[data-test-scope="test1"]:not([data-test1-reveal-all]):not([data-test1-pill-prep]):not([data-test1-pill-run]) #test1-assist-pill {
+    display: none !important;
+    pointer-events: none !important;
+  }
+
+  #canvas[data-test-scope="test1"][data-test1-pill-prep]:not([data-test1-reveal-all]) .canvas-item[data-role="test1-assist-pill"],
+  #canvas[data-test-scope="test1"][data-test1-pill-prep]:not([data-test1-reveal-all]) #test1-assist-pill,
+  #canvas[data-test-scope="test1"][data-test1-pill-run]:not([data-test1-reveal-all]) .canvas-item[data-role="test1-assist-pill"],
+  #canvas[data-test-scope="test1"][data-test1-pill-run]:not([data-test1-reveal-all]) #test1-assist-pill {
+    display: block !important;
+    visibility: visible !important;
+    pointer-events: none !important;
+    overflow: visible;
+    background: transparent;
+  }
+
+  #canvas[data-test-scope="test1"] .test1-assist-pill-wrap {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  #canvas[data-test-scope="test1"] .test1-assist-pill-stage {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 36px;
+    height: 36px;
+    overflow: hidden;
+    opacity: 0;
+    z-index: 1;
+    transform: translate3d(-50%, 0, 0);
+    will-change: transform, opacity, left, width;
+    background: transparent;
+    pointer-events: none;
+  }
+
+  #canvas[data-test-scope="test1"] .test1-assist-pill-shell {
+    display: block;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 36px;
+    border-radius: 18px;
+    background: rgba(146, 146, 151, 0.92);
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  #canvas[data-test-scope="test1"] .test1-assist-pill-body {
+    position: relative;
+    z-index: 1;
+    width: 127px;
+    height: 36px;
+    flex-shrink: 0;
+  }
+
+  #canvas[data-test-scope="test1"] .test1-assist-pill-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  #canvas[data-test-scope="test1"] .test1-assist-pill-bg,
+  #canvas[data-test-scope="test1"] .test1-assist-pill-icon {
+    opacity: 0;
+  }
+
+  #canvas[data-test-scope="test1"][data-test1-reveal-all] .test1-assist-pill-stage {
+    left: 0;
+    width: 100%;
+    transform: none;
+    opacity: 1;
+  }
+
+  #canvas[data-test-scope="test1"][data-test1-reveal-all] .test1-assist-pill-shell {
+    display: none;
+  }
+
+  #canvas[data-test-scope="test1"][data-test1-reveal-all] .canvas-item[data-role="test1-assist-pill"],
+  #canvas[data-test-scope="test1"][data-test1-reveal-all] #test1-assist-pill {
+    display: block !important;
+    pointer-events: auto !important;
+  }
+
+  #canvas[data-test-scope="test1"][data-test1-reveal-all] .test1-assist-pill-bg,
+  #canvas[data-test-scope="test1"][data-test1-reveal-all] .test1-assist-pill-icon {
+    opacity: 1;
+  }
+
+  #canvas[data-test-scope="test1"][data-test1-pill-run]:not([data-test1-reveal-all]) .test1-assist-pill-stage {
+    animation:
+      test1AssistPillFadeIn 0.532s cubic-bezier(0.33, 1, 0.68, 1) both,
+      test1AssistPillSlideLeft 1.14s cubic-bezier(0.45, 0, 0.55, 1) 0.532s both,
+      test1AssistPillExpandWidth 2.128s cubic-bezier(0.16, 1, 0.3, 1) 1.672s both;
+  }
+
+  #canvas[data-test-scope="test1"][data-test1-pill-run]:not([data-test1-reveal-all]) .test1-assist-pill-shell {
+    animation: test1AssistPillShellColor 2.128s cubic-bezier(0.16, 1, 0.3, 1) 1.672s both;
+  }
+
+  #canvas[data-test-scope="test1"][data-test1-pill-run]:not([data-test1-reveal-all]) .test1-assist-pill-icon--1 {
+    animation: test1AssistPillIcon1 3.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  #canvas[data-test-scope="test1"][data-test1-pill-run]:not([data-test1-reveal-all]) .test1-assist-pill-icon--2 {
+    animation: test1AssistPillIcon2 3.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  #canvas[data-test-scope="test1"][data-test1-pill-run]:not([data-test1-reveal-all]) .test1-assist-pill-icon--3 {
+    animation: test1AssistPillIcon3 3.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  #canvas[data-test-scope="test1"][data-test1-pill-run]:not([data-test1-reveal-all]) .test1-assist-pill-icon--4 {
+    animation: test1AssistPillIcon4 3.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  /* 원 등장 14%(0.532s) 유지 → 슬라이드 14~44% → 1.672s에 expand 동시 시작 */
+  @keyframes test1AssistPillFadeIn {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes test1AssistPillSlideLeft {
+    0% {
+      left: 50%;
+      transform: translate3d(-50%, 0, 0);
+    }
+    100% {
+      left: 0;
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  @keyframes test1AssistPillExpandWidth {
+    0% {
+      width: 36px;
+    }
+    100% {
+      width: 100%;
+    }
+  }
+
+  @keyframes test1AssistPillShellColor {
+    0% {
+      background-color: rgba(146, 146, 151, 0.92);
+    }
+    100% {
+      background-color: rgba(23, 23, 26, 0.6);
+    }
+  }
+
+  @keyframes test1AssistPillIcon1 {
+    0%, 48% {
+      opacity: 0;
+    }
+    62% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes test1AssistPillIcon2 {
+    0%, 56% {
+      opacity: 0;
+    }
+    70% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes test1AssistPillIcon3 {
+    0%, 64% {
+      opacity: 0;
+    }
+    78% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes test1AssistPillIcon4 {
+    0%, 72% {
+      opacity: 0;
+    }
+    86% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #canvas[data-test-scope="test1"][data-test1-pill-run]:not([data-test1-reveal-all]) .test1-assist-pill-stage,
+    #canvas[data-test-scope="test1"][data-test1-pill-run]:not([data-test1-reveal-all]) .test1-assist-pill-shell,
+    #canvas[data-test-scope="test1"][data-test1-pill-run]:not([data-test1-reveal-all]) .test1-assist-pill-bg,
+    #canvas[data-test-scope="test1"][data-test1-pill-run]:not([data-test1-reveal-all]) .test1-assist-pill-icon {
+      animation: none;
+    }
+    #canvas[data-test-scope="test1"][data-test1-pill-run]:not([data-test1-reveal-all]) .test1-assist-pill-stage {
+      left: 0;
+      width: 100%;
+      transform: none;
+      opacity: 1;
+    }
+    #canvas[data-test-scope="test1"][data-test1-pill-run]:not([data-test1-reveal-all]) .test1-assist-pill-shell {
+      display: none;
+    }
+    #canvas[data-test-scope="test1"][data-test1-pill-run]:not([data-test1-reveal-all]) .test1-assist-pill-bg,
+    #canvas[data-test-scope="test1"][data-test1-pill-run]:not([data-test1-reveal-all]) .test1-assist-pill-icon {
+      opacity: 1;
+    }
+  }
+
+
+/* VER1 lifecycle block — paste between :lifecycle-start and :end */
+  /* test1 intro — stack 3초 후 assist pill fade out */
+  #canvas[data-test-scope="test1"] {
+    --test1-pill-out-dur: 0.8s;
+  }
+
+  #canvas[data-test-scope="test1"][data-test1-pill-out-animate][data-test1-pill-out]:not([data-test1-reveal-all]) .canvas-item[data-role="test1-assist-pill"],
+  #canvas[data-test-scope="test1"][data-test1-pill-out-animate][data-test1-pill-out]:not([data-test1-reveal-all]) #test1-assist-pill {
+    animation: test1PillOutFade var(--test1-pill-out-dur) cubic-bezier(0.22, 1, 0.36, 1) both;
+    pointer-events: none !important;
+  }
+
+  #canvas[data-test-scope="test1"][data-test1-pill-out-animate][data-test1-pill-out][data-test1-stack-run]:not([data-test1-reveal-all]) .canvas-item[data-role="test1-assist-pill"],
+  #canvas[data-test-scope="test1"][data-test1-pill-out-animate][data-test1-pill-out][data-test1-stack-run]:not([data-test1-reveal-all]) #test1-assist-pill {
+    transform: translate3d(0, 88px, 0);
+  }
+
+  #canvas[data-test-scope="test1"][data-test1-pill-out]:not([data-test1-reveal-all]):not([data-test1-pill-out-animate]) .canvas-item[data-role="test1-assist-pill"],
+  #canvas[data-test-scope="test1"][data-test1-pill-out]:not([data-test1-reveal-all]):not([data-test1-pill-out-animate]) #test1-assist-pill {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  #canvas[data-test-scope="test1"][data-test1-gradient-run]:not([data-test1-reveal-all]) .canvas-item[data-role="test1-assist-pill"],
+  #canvas[data-test-scope="test1"][data-test1-gradient-run]:not([data-test1-reveal-all]) #test1-assist-pill {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  @keyframes test1PillOutFade {
+    0% {
+      opacity: 1;
+      visibility: visible;
+      filter: blur(0px);
+    }
+    40% {
+      opacity: 0.82;
+      filter: blur(0.45px);
+    }
+    100% {
+      opacity: 0;
+      visibility: hidden;
+      filter: blur(2.2px);
+    }
+  }
+

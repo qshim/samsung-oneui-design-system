@@ -37,8 +37,8 @@ export default async function handler(req, res) {
 
     const COMPONENTS = [
       // PLAN / LIST
-      { role: "dot-schedule-4x2", note: "WIDE PLAN/LIST (340x168). Provide variant.date + variant.items(3). Use for schedules, task summaries, or message cleanups (메시지 정리). LIMIT ITEMS TO MAX 3." },
-      { role: "dot-schedule-2x2", note: "SQUARE PLAN/LIST (168x168). Provide variant.date + variant.items(3). LIMIT ITEMS TO MAX 3." },
+      { role: "dot-schedule-4x2", note: "WIDE PLAN/LIST (340x168). Provide variant.date (section title, prefer 'Needs' for priority tasks) + variant.items(3). Each item MUST include app (exact app name), text, subtitle (person · context), time (Now/Today/Check or clock). LIMIT ITEMS TO MAX 3." },
+      { role: "dot-schedule-2x2", note: "SQUARE PLAN/LIST (168x168). Provide variant.date + variant.items(3). Each item SHOULD include app when relevant. LIMIT ITEMS TO MAX 3." },
       { role: "dot-weather-2x1-v1-1", note: "WEATHER (168x82). Provide variant.location + variant.weather." },
       { role: "dot-temperature-1x1", note: "TEMP (82x82). Provide variant.value + variant.unit ('℃')." },
       { role: "dot-date-1x1-v1-1", note: "DATE (82x82). Provide variant.text (e.g. 'MAY\\n20')." },
@@ -63,6 +63,10 @@ export default async function handler(req, res) {
       "   - 🛑 DO NOT create new layout variations inside a single component. Use 'composite-set' to arrange multiple components.",
       "   - 🛑 COMPONENT SELECTION RULES:",
       "     - For message cleanup or summaries: Use 'dot-schedule-4x2' (340x168) or a 'composite-set' with multiple components.",
+      "     - For priority / needs lists: Use 'dot-schedule-4x2' with variant.date='Needs' and 3 items. Each item needs app + text + subtitle + time.",
+      "     - APP ICON RULE (test2 Needs list): Each item.app MUST be one exact name:",
+      "       Figma, Notion, Miro, Trello, Zoom, Claude, Discord, Slack, Kakaotalk, Gmail, Messages, Meet, Google Maps, Calendar, Docs, Notes, Weather, Phone, Music, Health, Naver map.",
+      "       Pick the app that best matches the task source (e.g. Slack for team chat, Figma for design, Notion for docs).",
       "     - For cooking or recipes: ALWAYS USE a list/schedule component like 'dot-schedule-4x2' to show the recipe or ingredients. DO NOT use image/gallery components for cooking.",
       "     - For weather (RICH): Use 'composite-set' containing 'dot-weather-2x1-v1-1' and 'dot-temperature-1x1' side-by-side, OR use 'dot-weather-2x1-v1-1'. DO NOT use 'dot-weather21'.",
       "     - For fitness/running: Use 'dot-goal' (340x168) or 'composite-set' with fitness elements.",
@@ -144,7 +148,7 @@ export default async function handler(req, res) {
       "    \"role\": \"composite-set\",",
       "    \"variant\": {",
       "      \"children\": [",
-      "        { \"role\": \"dot-schedule-4x2\", \"x\": 0, \"y\": 0, \"w\": 340, \"h\": 168, \"variant\": { \"date\": \"Messages\", \"items\": [ { \"text\": \"김팀장: 보고서 확인\", \"tone\": \"accent\", \"time\": \"10:00\" }, { \"text\": \"슬랙: 신규 알림\", \"tone\": \"muted\", \"time\": \"09:30\" } ] } }",
+      "        { \"role\": \"dot-schedule-4x2\", \"x\": 0, \"y\": 0, \"w\": 340, \"h\": 168, \"variant\": { \"date\": \"Needs\", \"items\": [ { \"app\": \"Figma\", \"text\": \"지금 가장 급한 일 한 가지\", \"subtitle\": \"이인재 · 프로토타입 확인 후 피드백 요청\", \"time\": \"Now\", \"tone\": \"accent\" }, { \"app\": \"Slack\", \"text\": \"오늘 꼭 끝내고 싶은 일\", \"subtitle\": \"김지훈 · 쇼핑몰 개편 2차 시안 준비\", \"time\": \"Today\", \"tone\": \"muted\" }, { \"app\": \"Notion\", \"text\": \"밀린 확인만 빠르게 정리\", \"subtitle\": \"김지훈 · Figma 완료, Notion 문서화만 남음\", \"time\": \"Check\", \"tone\": \"muted\" } ] } }",
       "      ]",
       "    }",
       "  }",

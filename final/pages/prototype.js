@@ -307,7 +307,7 @@ export default function PrototypePage() {
             border-radius: 50% !important;
             overflow: hidden !important;
             border: 2px solid rgba(255,255,255,0.1) !important;
-            box-shadow: 0 6px 16px rgba(0,0,0,0.4) !important;
+            box-shadow: none !important;
             transition: all 0.3s ease !important;
             background: #1a1a1e !important;
             display: block !important;
@@ -465,9 +465,9 @@ export default function PrototypePage() {
 
         <div className="mlp-workspace">
           <aside className="mlp-left">
-            <span className="persona-circle is-disabled" aria-disabled="true" title="준비 중">
-              <img src="/assets/persona-1.png?v=3" alt="Persona 1" className="persona-img" />
-            </span>
+            <Link href="/test1" className="persona-circle">
+              <img src="/assets/persona01.png" alt="Persona 1" className="persona-img" />
+            </Link>
             <Link href="/test2" className="persona-circle" style={{ cursor: 'pointer', border: scenario === 'lockscreen-persona2' ? '3px solid #fff' : 'none' }}>
               <img src="/assets/persona-2.png?v=2" alt="Persona 2" className="persona-img" />
             </Link>

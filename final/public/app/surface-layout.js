@@ -19,29 +19,691 @@ window.SURFACE_TYPES = {
 
 window.currentSurfaceType = window.SURFACE_TYPES.FIRST_DEPTH_LIST;
 
-// test3 home card stack — Figma-tight vertical gap (4px). Horizontal
-// half-card gap stays 4px on the 340px grid.
-var TEST3_GOAL_TOP = 42;
-var TEST3_GOAL_H = 168;
-var TEST3_CARD_GAP = 4;
-var TEST3_ROW2_TOP = TEST3_GOAL_TOP + TEST3_GOAL_H + TEST3_CARD_GAP;
+// test3 home card stack — 340px row: half-card + gap + half-card.
+// Below status bar (safe.top 16 + topSystem 38 + 8 gap) — matches test2 top chrome.
+var TEST3_GOAL_TOP = 62;
+/* 340×245 — 4:3 goal/map card (tuned −10px) */
+var TEST3_GOAL_H = 245;
+/* Slightly shorter than goal card; Figma 5247:16990 base, tuned −10px */
+var TEST3_MUSIC_EXPAND_H = 218;
+/* Figma 5247:16913 expanded — 274.587@320w → ~292@340w (+pill tune) */
+var TEST3_MUSIC_LYRICS_H = Math.round(274.587 * 340 / 320) + 6;
+var TEST3_MUSIC_LYRICS_CONTROLS_H = 72;
+var TEST3_MUSIC_LYRICS_PILL_CONTROLS_GAP = 17;
+var TEST3_MUSIC_LYRICS_PILL_STACK_GAP = 10;
+var TEST3_MUSIC_LYRICS_OPEN_H =
+  TEST3_MUSIC_LYRICS_H -
+  TEST3_MUSIC_LYRICS_CONTROLS_H -
+  TEST3_MUSIC_LYRICS_PILL_CONTROLS_GAP +
+  TEST3_MUSIC_LYRICS_PILL_STACK_GAP +
+  56;
+/* Uniform vertical gap: goal↔music, music↔weather/steps, compact pill stack */
+var TEST3_CARD_GAP_V = 8;
+var TEST3_CARD_GAP_H = 5;
+var TEST3_HALF_COL_W = (340 - TEST3_CARD_GAP_H) / 2;
+var TEST3_HALF_COL_X = 24 + TEST3_HALF_COL_W + TEST3_CARD_GAP_H;
+var TEST3_PILL_SLOT_H = 76;
+// Music mounts as an 82px capsule on row 2; pills drop to sit below it.
+var TEST3_MUSIC_SPAWN_H = 82;
+var TEST3_WEATHER_DROP = TEST3_MUSIC_SPAWN_H + TEST3_CARD_GAP_V;
+var TEST3_WEATHER_PREP_DROP_MS = 360;
+var TEST3_ROW2_TOP = TEST3_GOAL_TOP + TEST3_GOAL_H + TEST3_CARD_GAP_V;
 // Grid 1×1 half-column — outer shell must match weather/steps column (168px).
 var TEST3_MUSIC_COMPACT = 168;
-var TEST3_MUSIC_TITLE = '러닝에 어울리는 신스팝 플레이리스트 재생';
-var TEST3_MUSIC_FOLD_TITLE = '러닝에 어울리는\n신스팝 플레이리스트 재생';
-var TEST3_MUSIC_COMPACT_FOLD = '러닝에 어울리는\n신스팝 플레이리스트';
-var TEST3_MUSIC_LYRICS_TITLE = '저녁 한강 러닝에 어울리는\nBPM 120-140 신스팝 플레이리스트';
-var TEST3_MUSIC_SEARCH_LINE2 = '러닝에 어울리는 신스팝 플레이리스트 재생';
-var TEST3_GOAL_UNIFIED_RISE_MS = 520;
+/* Figma 5247:16990 — bar inset tracks --test3-music-pad-x on #canvas[test3] */
+var TEST3_MUSIC_PAD_X = 28;
+var TEST3_MUSIC_BAR_W = 340 - 2 * TEST3_MUSIC_PAD_X;
+var TEST3_MUSIC_COMPACT_PAD_X = 14;
+var TEST3_MUSIC_COMPACT_BAR_W = TEST3_MUSIC_COMPACT - 2 * TEST3_MUSIC_COMPACT_PAD_X;
+var TEST3_MUSIC_COMPACT_BAR_TRACK = Math.round(
+  TEST3_MUSIC_COMPACT_BAR_W * TEST3_MUSIC_ELAPSED_S / (TEST3_MUSIC_ELAPSED_S + TEST3_MUSIC_REMAINING_S)
+);
+/* Figma settled player — 01:35 elapsed, 02:30 remaining (95 / 245 of bar) */
+var TEST3_MUSIC_ELAPSED_S = 95;
+var TEST3_MUSIC_REMAINING_S = 150;
+var TEST3_MUSIC_BAR_TRACK = Math.round(
+  TEST3_MUSIC_BAR_W * TEST3_MUSIC_ELAPSED_S / (TEST3_MUSIC_ELAPSED_S + TEST3_MUSIC_REMAINING_S)
+);
+var TEST3_MUSIC_TITLE = '저녁 한강 러닝 플레이리스트\n5km 페이스에 맞춰 준비했어요';
+var TEST3_MUSIC_FOLD_TITLE = '저녁 한강 러닝\n플레이리스트';
+var TEST3_MUSIC_COMPACT_FOLD = '저녁 한강 러닝\n플레이리스트';
+var TEST3_MUSIC_LYRICS_TITLE = '저녁 한강에 어울리는\nBPM 120-140 신스팝 플레이리스트';
+var TEST3_MUSIC_SEARCH_LINE1 = '러닝 bgm을 찾고 있어요';
+var TEST3_MUSIC_SEARCH_LINE2 = '5km 페이스에 맞는 음악 선택';
+var TEST3_MUSIC_SEARCH_LINE1_IN_MS = 520;
+var TEST3_MUSIC_SEARCH_LINE2_IN_MS = 260;
+var TEST3_MUSIC_SEARCH_LINE2_HOLD_MS = 1000;
+var TEST3_MUSIC_SEARCH_LINE2_OUT_MS = 540;
+var TEST3_MUSIC_SEARCH_LINE2_MS =
+  TEST3_MUSIC_SEARCH_LINE2_IN_MS +
+  TEST3_MUSIC_SEARCH_LINE2_HOLD_MS +
+  TEST3_MUSIC_SEARCH_LINE2_OUT_MS;
+/* Galaxy star on capsule disc before search copy + dot grid. */
+var TEST3_MUSIC_DISC_STAR_ONLY_MS = 880;
+/** test2 agent orange orb — sparkle image ↔ dot grid. */
+var TEST2_ORB_SPARKLE_SRC = '/assets/test2-orange-orb-sparkle.png?v=1';
+/** test2 Needs list — Figma app icons (filename = app name + .png). */
+var TEST2_ICONS_DIR = '/assets/test2/';
+var TEST2_ICON_FILES = {
+  'Figma': 'Figma.png',
+  'Notion': 'Notion.png',
+  'Miro': 'Miro.png',
+  'Trello': 'Trello.png',
+  'Zoom': 'Zoom.png',
+  'Claude': 'Claude.png',
+  'Discord': 'Discord.png',
+  'Slack': 'Slack.png',
+  'Kakaotalk': 'Kakaotalk.png',
+  'Gmail': 'Gmail.png',
+  'Messages': 'Messages.png',
+  'Meet': 'Meet.png',
+  'Google Maps': 'Google Maps.png',
+  'Calendar': 'Calendar.png',
+  'Docs': 'Docs.png',
+  'Notes': 'Notes.png',
+  'Weather': 'Weather.png',
+  'Phone': 'Phone.png',
+  'Music': 'Music.png',
+  'Health': 'Health.png',
+  'Naver map': 'Naver map.png'
+};
+var TEST2_APP_TEXT_HINTS = [
+  { app: 'Slack', re: /slack|슬랙/i },
+  { app: 'Figma', re: /figma/i },
+  { app: 'Notion', re: /notion/i },
+  { app: 'Miro', re: /miro/i },
+  { app: 'Trello', re: /trello/i },
+  { app: 'Zoom', re: /zoom/i },
+  { app: 'Claude', re: /claude/i },
+  { app: 'Discord', re: /discord/i },
+  { app: 'Kakaotalk', re: /kakaotalk|카카오톡|카톡/i },
+  { app: 'Gmail', re: /gmail|지메일/i },
+  { app: 'Messages', re: /messages|메시지|메세지|문자/i },
+  { app: 'Meet', re: /google\s*meet|meet\b|미트/i },
+  { app: 'Google Maps', re: /google\s*maps|구글\s*지도|google\s*map/i },
+  { app: 'Calendar', re: /calendar|캘린더|일정/i },
+  { app: 'Docs', re: /google\s*docs|\bdocs\b|문서/i },
+  { app: 'Notes', re: /samsung\s*notes|\bnotes\b|노트/i },
+  { app: 'Weather', re: /weather|날씨/i },
+  { app: 'Phone', re: /phone|전화|통화/i },
+  { app: 'Music', re: /music|뮤직|음악/i },
+  { app: 'Health', re: /health|삼성\s*헬스|헬스/i },
+  { app: 'Naver map', re: /naver\s*map|네이버\s*지도|네이버맵/i }
+];
+/** test3 music capsule (right of mini orb) — Galaxy AI star → dot grid when fill starts. */
+var TEST3_CAPSULE_STAR_SVG_HTML =
+  '<svg class="test3-music-capsule-chrome__starSvg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+    '<g transform="translate(8.306, 4.843)"><path fill-rule="evenodd" clip-rule="evenodd" d="M8.022 4.617L6.328 0.303C6.123 -0.101 5.547 -0.101 5.342 0.303L3.647 4.617L0.303 6.314C-0.101 6.518 -0.101 7.095 0.303 7.3L3.647 8.997L5.342 13.311C5.547 13.715 6.123 13.715 6.328 13.311L8.022 8.997L11.367 7.3C11.77 7.095 11.77 6.518 11.367 6.314L8.022 4.617Z" fill="#FFFFFF"/></g>' +
+    '<g transform="translate(3.703, 8.532)"><path fill-rule="evenodd" clip-rule="evenodd" d="M3.94625 0.228C4.09725 -0.076 4.52325 -0.076 4.67425 0.228L5.18825 1.562L4.77725 1.772C3.34525 2.524 3.61825 3.924 4.74525 4.42L4.77725 4.437L7.54725 5.842L7.57425 5.912L5.92625 6.765L4.67425 10.008C4.52325 10.312 4.09725 10.312 3.94625 10.008L2.69425 6.765L0.22425 5.489C-0.07475 5.335 -0.07475 4.901 0.22425 4.747L2.69425 3.471L3.94625 0.228Z" fill="#FFFFFF"/></g>' +
+    '<g transform="translate(6.565, 2.8985)"><path fill-rule="evenodd" clip-rule="evenodd" d="M1.21625 1.52675L1.78125 0.09975C1.84925 -0.03325 2.04125 -0.03325 2.10925 0.09975L2.67425 1.52675L3.78925 2.08875C3.92425 2.15575 3.92425 2.34675 3.78925 2.41475L2.67425 2.97675L2.10925 4.40375C2.04125 4.53675 1.84925 4.53675 1.78125 4.40375L1.21625 2.97675L0.10125 2.41475C-0.03375 2.34675 -0.03375 2.15575 0.10125 2.08875L1.21625 1.52675Z" fill="#FFFFFF" opacity="0.92"/></g>' +
+    '<g transform="translate(16.395, 16.518)"><path fill-rule="evenodd" clip-rule="evenodd" d="M1.21625 1.52775L1.78125 0.09975C1.84925 -0.03325 2.04125 -0.03325 2.10925 0.09975L2.67425 1.52775L3.78925 2.08875C3.92325 2.15675 3.92325 2.34775 3.78925 2.41475L2.67425 2.97675L2.10925 4.40375C2.04125 4.53775 1.84925 4.53775 1.78125 4.40375L1.21625 2.97675L0.10125 2.41475C-0.03375 2.34775 -0.03375 2.15675 0.10125 2.08875L1.21625 1.52775Z" fill="#FFFFFF" opacity="0.92"/></g>' +
+  '</svg>';
+var TEST2_ORB_DOTS_SVG_HTML =
+  '<svg class="dot-icon11__dotsSvg" width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+    '<circle class="dot-icon11__waveDot dot-icon11__waveDot--a" cx="7.5" cy="36.5" r="2.5" fill="white"/>' +
+    '<circle class="dot-icon11__waveDot dot-icon11__waveDot--b" cx="14.5" cy="36.5" r="2.5" fill="white"/>' +
+    '<circle class="dot-icon11__waveDot dot-icon11__waveDot--c" cx="21.5" cy="36.5" r="2.5" fill="white"/>' +
+    '<ellipse class="dot-icon11__waveDot dot-icon11__waveDot--d" cx="35.5" cy="36" rx="2.5" ry="5" fill="white"/>' +
+    '<ellipse class="dot-icon11__waveDot dot-icon11__waveDot--b" cx="35.5" cy="27" rx="2.5" ry="3" fill="white"/>' +
+    '<ellipse class="dot-icon11__waveDot dot-icon11__waveDot--a" cx="42.5" cy="28" rx="1.5" ry="2" fill="white"/>' +
+    '<ellipse class="dot-icon11__waveDot dot-icon11__waveDot--c" cx="49.5" cy="31" rx="1.5" ry="2" fill="white"/>' +
+    '<ellipse class="dot-icon11__waveDot dot-icon11__waveDot--d" cx="28.5" cy="28" rx="1.5" ry="2" fill="white"/>' +
+    '<ellipse class="dot-icon11__waveDot dot-icon11__waveDot--b" cx="21.5" cy="31" rx="1.5" ry="2" fill="white"/>' +
+    '<ellipse class="dot-icon11__waveDot dot-icon11__waveDot--a" cx="42.5" cy="43" rx="1.5" ry="2" fill="white"/>' +
+    '<ellipse class="dot-icon11__waveDot dot-icon11__waveDot--c" cx="28.5" cy="43" rx="1.5" ry="2" fill="white"/>' +
+    '<ellipse class="dot-icon11__waveDot dot-icon11__waveDot--d" cx="35.5" cy="45" rx="2.5" ry="3" fill="white"/>' +
+    '<ellipse class="dot-icon11__waveDot dot-icon11__waveDot--b" cx="42.5" cy="36" rx="2.5" ry="4" fill="white"/>' +
+    '<ellipse class="dot-icon11__waveDot dot-icon11__waveDot--c" cx="28.5" cy="36" rx="2.5" ry="4" fill="white"/>' +
+    '<circle class="dot-icon11__waveDot dot-icon11__waveDot--a" cx="35.5" cy="20.5" r="2.5" fill="white"/>' +
+    '<circle class="dot-icon11__waveDot dot-icon11__waveDot--d" cx="35.5" cy="15.5" r="1.5" fill="white"/>' +
+    '<circle class="dot-icon11__waveDot dot-icon11__waveDot--c" cx="35.5" cy="56.5" r="1.5" fill="white"/>' +
+    '<circle class="dot-icon11__waveDot dot-icon11__waveDot--b" cx="35.5" cy="51.5" r="2.5" fill="white"/>' +
+    '<circle class="dot-icon11__waveDot dot-icon11__waveDot--a" cx="49.5" cy="36.5" r="2.5" fill="white"/>' +
+    '<circle class="dot-icon11__waveDot dot-icon11__waveDot--b" cx="56.5" cy="36.5" r="2.5" fill="white"/>' +
+    '<circle class="dot-icon11__waveDot dot-icon11__waveDot--c" cx="63.5" cy="36.5" r="2.5" fill="white"/>' +
+  '</svg>';
+
+function renderTest2OrangeOrbInnerHtml(sparkleSrc) {
+  var src = sparkleSrc || TEST2_ORB_SPARKLE_SRC;
+  return '' +
+    '<div class="dot-icon11__grad" aria-hidden="true"></div>' +
+    '<img class="dot-icon11__layer dot-icon11__layer--from" src="' + src + '" alt="" />' +
+    '<div class="dot-icon11__layer dot-icon11__layer--to" aria-hidden="true">' +
+      TEST2_ORB_DOTS_SVG_HTML +
+    '</div>';
+}
+
+function renderTest2OrangeOrbHtml(sparkleSrc) {
+  return '<div class="dot-icon11 dot-icon11--orange dot-icon11--music-orb" aria-hidden="true">' +
+    renderTest2OrangeOrbInnerHtml(sparkleSrc) +
+  '</div>';
+}
+
+/** test3 disc loader — p2 breathing-chord style (sparse dots, vertical bounce; image-1 reference). */
+var TEST3_DISC_LOADER_PX = 112;
+var TEST3_DISC_LOADER_N = 5;
+var TEST3_DISC_LOADER_TEMPO = 2.1;
+var TEST3_DISC_LOADER_BLEND = 0.38;
+var TEST3_DISC_LOADER_TRAIL_LEN = 10;
+var TEST3_DISC_LOADER_VOICES = [
+  { noiseSeed: 12.4, alpha: 0.68 },
+  { noiseSeed: 48.9, alpha: 0.82 },
+  { noiseSeed: 91.2, alpha: 0.96 },
+  { noiseSeed: 133.7, alpha: 0.78 },
+  { noiseSeed: 176.1, alpha: 0.72 },
+];
+var TEST3_DISC_CROSSFADE_MS = 720;
+var TEST3_DISC_CROSSFADE_OVERLAP_MS = 220;
+var TEST3_DISC_CROSSFADE_EASE = 'cubic-bezier(0.22, 0.82, 0.24, 1)';
+
+function renderTest3MusicDiscLoaderHtml() {
+  return '<canvas class="test3-music-disc__loaderCanvas" width="' + TEST3_DISC_LOADER_PX +
+    '" height="' + TEST3_DISC_LOADER_PX + '" aria-hidden="true"></canvas>';
+}
+
+function _test3DiscLoaderLerp(a, b, t) {
+  return a + (b - a) * t;
+}
+function _test3DiscLoaderEase(x) {
+  return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+}
+function _test3DiscLoaderHash(n) {
+  var s = Math.sin(n * 127.1 + 311.7) * 43758.5453;
+  return s - Math.floor(s);
+}
+function _test3DiscLoaderNoise(x) {
+  var i = Math.floor(x);
+  var f = x - i;
+  var u = f * f * (3 - 2 * f);
+  return _test3DiscLoaderLerp(_test3DiscLoaderHash(i), _test3DiscLoaderHash(i + 1), u);
+}
+function _test3DiscLoaderFreshTrails() {
+  var trails = [];
+  var i;
+  for (i = 0; i < TEST3_DISC_LOADER_N; i++) trails.push([]);
+  return trails;
+}
+function _test3DiscLoaderDrawFrame(canvas, st, dt) {
+  var ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  var px = canvas.width || TEST3_DISC_LOADER_PX;
+  var cx = px / 2;
+  var cy = px / 2;
+  var pad = 10;
+  var inner = px - pad * 2;
+  var spreadT = 0.92;
+  var baseDiameter = inner * 0.14;
+  var baseR = baseDiameter / 2;
+  var minGap = baseDiameter * 1.42;
+  var spread = Math.max(0, inner - baseDiameter);
+  var spacing = TEST3_DISC_LOADER_N > 1 ? Math.max(minGap, spread / (TEST3_DISC_LOADER_N - 1) * 1.08) : 0;
+  var totalW = spacing * (TEST3_DISC_LOADER_N - 1);
+  var startX = cx - totalW / 2;
+  var maxAmp = Math.max(0, inner / 2 - baseR - 2);
+  var ampPx = maxAmp * 0.92;
+  var t = st.time;
+  var phaseStep = (Math.PI * 2) / TEST3_DISC_LOADER_N;
+  var phaseStep2 = phaseStep * 0.45;
+  var positions = [];
+  var i;
+  var v;
+  var targetX;
+  var x;
+  var off;
+  var off2;
+  var sinY;
+  var noiseY;
+  var yMix;
+  var y;
+  var swell;
+  var dotR;
+
+  st.time += dt * TEST3_DISC_LOADER_TEMPO;
+  ctx.clearRect(0, 0, px, px);
+
+  for (i = 0; i < TEST3_DISC_LOADER_N; i++) {
+    v = TEST3_DISC_LOADER_VOICES[i];
+    targetX = startX + i * spacing;
+    x = _test3DiscLoaderLerp(cx, targetX, spreadT);
+    off = i * phaseStep;
+    off2 = i * phaseStep2;
+    sinY = Math.sin(t * 1.6 - off) * 0.65 + Math.sin(t * 0.7 - off2) * 0.45;
+    noiseY =
+      (_test3DiscLoaderNoise(v.noiseSeed + t * 0.9 - i * 0.55) - 0.5) * 2 * 0.65 +
+      (_test3DiscLoaderNoise(v.noiseSeed + 50 + t * 0.45 - i * 0.3) - 0.5) * 2 * 0.45;
+    yMix = _test3DiscLoaderLerp(sinY, noiseY, TEST3_DISC_LOADER_BLEND);
+    y = cy + ampPx * yMix;
+    swell = 1;
+    dotR = baseR * swell;
+    positions.push({
+      x: x,
+      y: y,
+      r: dotR,
+      alpha: v.alpha != null ? v.alpha : 0.88,
+    });
+  }
+
+  for (i = 0; i < TEST3_DISC_LOADER_N; i++) {
+    st.trails[i].push({ x: positions[i].x, y: positions[i].y, r: positions[i].r });
+    if (st.trails[i].length > TEST3_DISC_LOADER_TRAIL_LEN) st.trails[i].shift();
+  }
+
+  for (i = 0; i < TEST3_DISC_LOADER_N; i++) {
+    var pulse = 1;
+    var a = Math.min(1, Math.max(0.52, positions[i].alpha * pulse));
+    ctx.fillStyle = 'rgba(255, 255, 255, ' + a.toFixed(3) + ')';
+    ctx.beginPath();
+    ctx.arc(positions[i].x, positions[i].y, positions[i].r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+function _test3DiscLoaderStopCanvas(canvas) {
+  if (!canvas || !canvas.__test3DiscLoader) return;
+  if (canvas.__test3DiscLoader.rafId) {
+    cancelAnimationFrame(canvas.__test3DiscLoader.rafId);
+  }
+  delete canvas.__test3DiscLoader;
+}
+function _stopTest3MusicDiscLoader(music) {
+  var canvases;
+  var i;
+  if (music) {
+    canvases = music.querySelectorAll('.test3-music-disc__loaderCanvas');
+    for (i = 0; i < canvases.length; i++) _test3DiscLoaderStopCanvas(canvases[i]);
+    return;
+  }
+  canvases = document.querySelectorAll('#test3-music .test3-music-disc__loaderCanvas');
+  for (i = 0; i < canvases.length; i++) _test3DiscLoaderStopCanvas(canvases[i]);
+}
+function _test3DiscLoaderTick(canvas) {
+  var st = canvas.__test3DiscLoader;
+  if (!st || !canvas.isConnected) {
+    _test3DiscLoaderStopCanvas(canvas);
+    return;
+  }
+  var now = performance.now();
+  var dt = st.lastTs ? (now - st.lastTs) / 1000 : 0;
+  st.lastTs = now;
+  _test3DiscLoaderDrawFrame(canvas, st, dt);
+  st.rafId = requestAnimationFrame(function () {
+    _test3DiscLoaderTick(canvas);
+  });
+}
+function _startTest3MusicDiscLoaderCanvas(canvas) {
+  if (!canvas) return;
+  _test3DiscLoaderStopCanvas(canvas);
+  canvas.__test3DiscLoader = {
+    time: 0,
+    lastTs: 0,
+    trails: _test3DiscLoaderFreshTrails(),
+    rafId: 0,
+  };
+  _test3DiscLoaderTick(canvas);
+}
+function _startTest3MusicDiscLoader(music) {
+  music = music || document.querySelector('#test3-music');
+  if (!music) return;
+  var canvases = music.querySelectorAll('.test3-music-disc__loaderCanvas');
+  var i;
+  for (i = 0; i < canvases.length; i++) _startTest3MusicDiscLoaderCanvas(canvases[i]);
+}
+function _syncTest3MusicDiscLoaderAfterRender() {
+  var music = document.querySelector('#test3-music');
+  if (!music) return;
+  if (
+    music.getAttribute('data-test3-music-capsule-phase') === 'dots' ||
+    music.getAttribute('data-test3-music-stroke-ready') === '1'
+  ) {
+    _startTest3MusicDiscLoader(music);
+  }
+}
+
+/** test3 disc star phase — reuses test1 Galaxy AI logo motion (white-only). */
+var TEST3_DISC_SPARKLE_PX = 112;
+
+function renderTest3MusicDiscSparkleHtml() {
+  return '<canvas class="test3-music-disc__sparkleCanvas" width="' + TEST3_DISC_SPARKLE_PX +
+    '" height="' + TEST3_DISC_SPARKLE_PX + '" aria-hidden="true"></canvas>';
+}
+
+function _test3SparkleStopCanvas(canvas) {
+  if (!canvas) return;
+  if (window.__test1GalaxyAiLogo && typeof window.__test1GalaxyAiLogo.unmountCanvas === 'function') {
+    window.__test1GalaxyAiLogo.unmountCanvas(canvas);
+  }
+}
+function _stopTest3MusicDiscSparkle(music) {
+  var canvases;
+  var i;
+  if (music) {
+    canvases = music.querySelectorAll('.test3-music-disc__sparkleCanvas');
+    for (i = 0; i < canvases.length; i++) _test3SparkleStopCanvas(canvases[i]);
+    return;
+  }
+  canvases = document.querySelectorAll('#test3-music .test3-music-disc__sparkleCanvas');
+  for (i = 0; i < canvases.length; i++) _test3SparkleStopCanvas(canvases[i]);
+}
+function _startTest3MusicDiscSparkleCanvas(canvas) {
+  if (!canvas) return;
+  _test3SparkleStopCanvas(canvas);
+  _ensureTest1GalaxyAiLogoScript(function () {
+    if (!canvas.isConnected) return;
+    if (window.__test1GalaxyAiLogo && typeof window.__test1GalaxyAiLogo.mountCanvas === 'function') {
+      window.__test1GalaxyAiLogo.mountCanvas(canvas, { whiteOnly: true, fixedLayout: true });
+    }
+  });
+}
+function _startTest3MusicDiscSparkle(music) {
+  music = music || document.querySelector('#test3-music');
+  if (!music) return;
+  var canvases = music.querySelectorAll('.test3-music-disc__sparkleCanvas');
+  var i;
+  for (i = 0; i < canvases.length; i++) _startTest3MusicDiscSparkleCanvas(canvases[i]);
+}
+function _isTest3MusicDiscDotsPhase(music) {
+  if (!music) return false;
+  return (
+    music.getAttribute('data-test3-music-capsule-phase') === 'dots' ||
+    music.getAttribute('data-test3-music-stroke-ready') === '1'
+  );
+}
+function _applyTest3MusicDiscPhase(music, phase, opts) {
+  music = music || document.querySelector('#test3-music');
+  if (!music) return;
+  opts = opts || {};
+  var toDots = phase === 'dots';
+  var crossfadeMs = opts.crossfadeMs != null ? opts.crossfadeMs : TEST3_DISC_CROSSFADE_MS;
+  var overlapMs = opts.overlapMs != null ? opts.overlapMs : TEST3_DISC_CROSSFADE_OVERLAP_MS;
+  var instant = opts.instant === true;
+
+  if (window.__mlpTest3DiscCrossfadeStarTimer) {
+    clearTimeout(window.__mlpTest3DiscCrossfadeStarTimer);
+    window.__mlpTest3DiscCrossfadeStarTimer = null;
+  }
+  if (window.__mlpTest3DiscCrossfadeDotsTimer) {
+    clearTimeout(window.__mlpTest3DiscCrossfadeDotsTimer);
+    window.__mlpTest3DiscCrossfadeDotsTimer = null;
+  }
+
+  music.style.setProperty('--test3-disc-crossfade-ms', crossfadeMs + 'ms');
+  music.style.setProperty('--test3-disc-crossfade-ease', TEST3_DISC_CROSSFADE_EASE);
+
+  if (toDots) {
+    music.setAttribute('data-test3-music-capsule-phase', 'dots');
+    music.setAttribute('data-test3-music-stroke-ready', '1');
+  } else {
+    music.removeAttribute('data-test3-music-stroke-ready');
+    music.removeAttribute('data-test3-music-capsule-phase');
+  }
+  void music.offsetWidth;
+
+  if (instant) {
+    if (toDots) {
+      _stopTest3MusicDiscSparkle(music);
+      _startTest3MusicDiscLoader(music);
+    } else {
+      _stopTest3MusicDiscLoader(music);
+      _startTest3MusicDiscSparkle(music);
+    }
+    return;
+  }
+
+  if (toDots) {
+    window.__mlpTest3DiscCrossfadeDotsTimer = setTimeout(function () {
+      window.__mlpTest3DiscCrossfadeDotsTimer = null;
+      if (!_isTest3MusicDiscDotsPhase(music)) return;
+      _startTest3MusicDiscLoader(music);
+    }, overlapMs);
+    window.__mlpTest3DiscCrossfadeStarTimer = setTimeout(function () {
+      window.__mlpTest3DiscCrossfadeStarTimer = null;
+      if (!_isTest3MusicDiscDotsPhase(music)) return;
+      _stopTest3MusicDiscSparkle(music);
+    }, crossfadeMs);
+  } else {
+    window.__mlpTest3DiscCrossfadeStarTimer = setTimeout(function () {
+      window.__mlpTest3DiscCrossfadeStarTimer = null;
+      if (_isTest3MusicDiscDotsPhase(music)) return;
+      _startTest3MusicDiscSparkle(music);
+    }, overlapMs);
+    window.__mlpTest3DiscCrossfadeDotsTimer = setTimeout(function () {
+      window.__mlpTest3DiscCrossfadeDotsTimer = null;
+      if (_isTest3MusicDiscDotsPhase(music)) return;
+      _stopTest3MusicDiscLoader(music);
+    }, crossfadeMs);
+  }
+}
+function _syncTest3MusicDiscLayersAfterRender() {
+  var music = document.querySelector('#test3-music');
+  if (!music) return;
+  _applyTest3MusicDiscPhase(
+    music,
+    _isTest3MusicDiscDotsPhase(music) ? 'dots' : 'star',
+    { instant: true }
+  );
+}
+/** test3 capsule left disc — test1 Galaxy AI star motion (white), then breathing-chord loader on fill. */
+function renderTest3MusicDiscInnerHtml() {
+  return '' +
+    '<div class="test3-music-disc__layer test3-music-disc__layer--star" aria-hidden="true">' +
+      renderTest3MusicDiscSparkleHtml() +
+    '</div>' +
+    '<div class="test3-music-disc__layer test3-music-disc__layer--dots" aria-hidden="true">' +
+      renderTest3MusicDiscLoaderHtml() +
+    '</div>';
+}
+
+function renderTest3MusicDiscHtml() {
+  return '<div class="dot-icon11 dot-icon11--music-orb dot-icon11--test3-disc" aria-hidden="true">' +
+    renderTest3MusicDiscInnerHtml() +
+  '</div>';
+}
+
+var TEST3_SPOTIFY_ICON_HTML =
+  '<svg class="dot-music3__spotifyMark" viewBox="0 0 14.1793 14.0925" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+    '<circle cx="7.08965" cy="7.04625" r="7.04625" fill="#1DB954"/>' +
+    '<path d="M9.17561 5.4186C10.0477 5.65802 10.7113 6.0071 11.5452 6.30844C11.9658 6.46038 12.4768 5.75963 12.115 5.35328C11.3943 4.5438 9.5748 4.13225 8.57048 3.96037C7.67785 3.81072 6.77431 3.73506 5.8691 3.73419C5.17369 3.77041 4.42185 3.80936 3.74863 3.92768C3.22671 4.03182 2.14159 4.14123 2.24282 4.89263C2.32879 5.53023 2.85263 5.48936 3.33523 5.3669C5.16522 4.90247 7.35771 4.9873 9.17561 5.4186Z" fill="#000000"/>' +
+    '<path d="M9.25342 7.82623C9.65653 8.00033 10.7049 8.61237 10.9907 8.42303C11.714 7.94393 11.0058 7.40954 10.5977 7.22348C8.96119 6.47759 6.87635 6.01825 5.08436 6.20696C4.62431 6.25421 3.13645 6.39568 2.84267 6.74445C2.75059 6.85224 2.70512 6.99186 2.7162 7.13284C2.78342 7.95056 3.9342 7.41623 4.4051 7.34243C5.97675 7.09606 7.76948 7.2589 9.25342 7.82623Z" fill="#000000"/>' +
+    '<path d="M8.75917 9.80906C8.98673 9.9119 9.21754 10.0181 9.43906 10.1329C9.83925 10.3401 10.0337 10.5068 10.3741 10.1144C10.5968 9.27238 8.12506 8.65416 7.48305 8.56506C6.77238 8.46643 5.71392 8.40662 5.01204 8.49677C4.39488 8.57243 3.64746 8.61305 3.11564 8.90671C2.92508 9.19821 2.97454 9.42426 3.30689 9.58505C3.63824 9.63279 4.25197 9.46203 4.61372 9.41002C6.00746 9.19975 7.4319 9.3369 8.75917 9.80906Z" fill="#000000"/>' +
+  '</svg>';
+function _test3MusicLyricsHeight(music) {
+  music = music || document.querySelector('#test3-music');
+  if (music && music.getAttribute('data-test3-playlist-open') === '1') {
+    return TEST3_MUSIC_LYRICS_OPEN_H;
+  }
+  return TEST3_MUSIC_LYRICS_H;
+}
+function _test3MusicPlaylistPillHtml(modifier, title, meta, thumbMod) {
+  modifier = modifier || '';
+  title = title || '3,2,1 러닝 시작';
+  meta = meta || '10곡 · 38분 34초';
+  var modClass = modifier ? (' dot-music3__playlistPill--' + modifier) : '';
+  var hidden = modifier === 'secondary' ? ' aria-hidden="true"' : '';
+  var thumbClass = 'dot-music3__playlistThumb' + (thumbMod ? (' dot-music3__playlistThumb--' + thumbMod) : '');
+  return (
+    '<div class="dot-music3__playlistPill' + modClass + '"' + hidden + '>' +
+      '<span class="' + thumbClass + '" aria-hidden="true"></span>' +
+      '<div class="dot-music3__playlistCopy">' +
+        '<span class="dot-music3__playlistTitle">' + title + '</span>' +
+        '<span class="dot-music3__playlistMeta">' + meta + '</span>' +
+      '</div>' +
+      '<span class="dot-music3__playlistChevron" aria-hidden="true"></span>' +
+    '</div>'
+  );
+}
+function _toggleTest3PlaylistOpen(music) {
+  music = music || document.querySelector('#test3-music');
+  if (!music) return;
+  if ((music.getAttribute('data-music-state') || 'normal') !== 'lyrics') return;
+  if (music.getAttribute('data-test3-playlist-open') === '1') return;
+  music.setAttribute('data-test3-playlist-open', '1');
+  if (typeof _applyTest3MusicLyricsLayout === 'function') {
+    _applyTest3MusicLyricsLayout(music);
+  }
+  if (typeof _layoutTest3Cards === 'function') _layoutTest3Cards();
+}
+var TEST3_GOAL_SHELL_MS = 520;
+/* Expanded chrome (map + copy) appears once after shell height finishes — not during rise. */
+var TEST3_GOAL_CONTENT_REVEAL_MS = TEST3_GOAL_SHELL_MS;
+var TEST3_GOAL_INNER_RISE_MS = 560;
+var TEST3_GOAL_INNER_LAST_DELAY_MS = 180;
+var TEST3_GOAL_UNIFIED_RISE_MS = TEST3_GOAL_SHELL_MS + TEST3_GOAL_INNER_LAST_DELAY_MS + TEST3_GOAL_INNER_RISE_MS;
+/* Goal expand + ivory overlay — do not wait for pill icon/text hold (was 2480ms freeze). */
+var TEST3_GOAL_EXPAND_START_MS = 120;
+var TEST3_PILL_REVEAL_LOAD_MS = 0;
+var TEST3_PILL_REVEAL_ICON_MS = 480;
+/* Circle hold before horizontal widen — icon pop (480ms) + hold = 1.2s total. */
+var TEST3_PILL_PRE_EXPAND_WAIT_MS = 1200;
+var TEST3_PILL_REVEAL_ICON_HOLD_MS = TEST3_PILL_PRE_EXPAND_WAIT_MS - TEST3_PILL_REVEAL_ICON_MS;
+/* Pill copy: widen → text emerge → hold → drop (shine runs in parallel, snaps on drop). */
+var TEST3_PILL_TEXT_EMERGE_MS = 720;
+var TEST3_PILL_SHINE_PASS_MS = 900;
+var TEST3_PILL_SHINE_TITLE_PASSES = 2;
+var TEST3_PILL_SHINE_SUB_PASSES = 2;
+var TEST3_PILL_SHINY_ACTIVE_MS =
+  TEST3_PILL_TEXT_EMERGE_MS + TEST3_PILL_SHINE_PASS_MS * TEST3_PILL_SHINE_TITLE_PASSES;
+var TEST3_PILL_TEXT_SETTLE_MS = 480;
+var TEST3_PILL_TEXT_HOLD_BEFORE_DROP_MS = 800;
+var TEST3_PILL_TEXT_START_MS = TEST3_PILL_PRE_EXPAND_WAIT_MS;
+var TEST3_PILL_TEXT_READY_MS = TEST3_PILL_TEXT_START_MS + TEST3_PILL_TEXT_EMERGE_MS;
+/* Lock to ink after all shine passes finish. */
+var TEST3_PILL_BLACK_AT_MS =
+  TEST3_PILL_TEXT_READY_MS + TEST3_PILL_SHINE_PASS_MS * TEST3_PILL_SHINE_TITLE_PASSES;
+var TEST3_PILL_DROP_AFTER_BLACK_MS = 150;
+var TEST3_PILL_DROP_AT_MS = TEST3_PILL_BLACK_AT_MS + TEST3_PILL_DROP_AFTER_BLACK_MS;
+var TEST3_PILL_REVEAL_TEXT_MS =
+  TEST3_PILL_TEXT_EMERGE_MS + TEST3_PILL_TEXT_HOLD_BEFORE_DROP_MS;
+var TEST3_PILL_REVEAL_TOTAL_MS =
+  TEST3_PILL_REVEAL_LOAD_MS +
+  TEST3_PILL_REVEAL_ICON_MS +
+  TEST3_PILL_REVEAL_ICON_HOLD_MS +
+  TEST3_PILL_REVEAL_TEXT_MS;
+/* Music mounts shortly after pills begin dropping (sequential handoff). */
+var TEST3_MUSIC_MOUNT_DELAY_MS = 360;
 var TEST3_MUSIC_MOTION_MS = 14000;
 var TEST3_MUSIC_PRE_DELAY_MS = Math.round(TEST3_MUSIC_MOTION_MS * 0.10);
-var TEST3_MUSIC_EXPAND_START_MS = Math.round(TEST3_MUSIC_MOTION_MS * 0.57);
+/* Align with CSS keyframes that use animation-delay: --test3-music-spawn-delay-ms. */
+var TEST3_MUSIC_EXPAND_START_MS =
+  TEST3_MUSIC_MOUNT_DELAY_MS + Math.round(TEST3_MUSIC_MOTION_MS * 0.57);
 var TEST3_MUSIC_EXPAND_DUR_MS = Math.round(TEST3_MUSIC_MOTION_MS * 0.11);
-var TEST3_MUSIC_EXPAND_END_MS = TEST3_MUSIC_EXPAND_START_MS + TEST3_MUSIC_EXPAND_DUR_MS;
-var TEST3_MUSIC_FILL_START_MS = Math.round(TEST3_MUSIC_MOTION_MS * 0.14);
-var TEST3_MUSIC_IMAGE1_HOLD_MS = 320;
-var TEST3_MUSIC_SETTLE_MS = 1000;
+var TEST3_MUSIC_EXPAND_END_MS =
+  TEST3_MUSIC_MOUNT_DELAY_MS + Math.round(TEST3_MUSIC_MOTION_MS * 0.68);
+var TEST3_MUSIC_FILL_START_MS =
+  TEST3_MUSIC_MOUNT_DELAY_MS + Math.round(TEST3_MUSIC_MOTION_MS * 0.14);
+var TEST3_MUSIC_RESOLVE_MS =
+  TEST3_MUSIC_MOUNT_DELAY_MS + Math.round(TEST3_MUSIC_MOTION_MS * 0.43);
+var TEST3_MUSIC_IVORY_HANDOFF_MS = 1280;
+var TEST3_MUSIC_IMAGE1_HOLD_MS = 0;
+var TEST3_MUSIC_ORB_ABSORB_MS = 880;
+var TEST3_MUSIC_SETTLE_ACTIVE_DELAY_MS = 0;
+var TEST3_MUSIC_SETTLE_TEXT_STAGGER_MS = 0;
+var TEST3_MUSIC_SETTLE_TEXT_DUR_MS = 560;
+var TEST3_MUSIC_SETTLE_TAIL_MS = 60;
+var TEST3_MUSIC_SETTLE_REVEAL_MS = TEST3_MUSIC_SETTLE_TEXT_DUR_MS;
+var TEST3_MUSIC_SETTLE_MS =
+  TEST3_MUSIC_SETTLE_ACTIVE_DELAY_MS +
+  TEST3_MUSIC_SETTLE_TEXT_STAGGER_MS +
+  TEST3_MUSIC_SETTLE_TEXT_DUR_MS +
+  TEST3_MUSIC_SETTLE_TAIL_MS;
+var TEST3_MUSIC_GLOW_HOLD_MS = 1000;
+var TEST3_MUSIC_GLOW_FADE_MS = 1000;
+var TEST3_MUSIC_FILL_FADE_MS = 1400;
 var TEST3_MUSIC_ENTRANCE_END_MS = TEST3_MUSIC_MOTION_MS;
+
+/** Figma 5436:15945 — test1 status bar (time + live pill + system icons). */
+function renderTest1HealthStatusBar(props) {
+  var p = props || {};
+  var asset = 'assets/test1/status-bar/';
+  var time = p.time || '9:41';
+  var liveTimer = p.liveTimer || '1:02:59';
+  var fill = 'width:100%;height:100%;box-sizing:border-box;';
+  return '<div class="test1-status-bar" style="' + fill + '">' +
+           '<div class="test1-status-bar__left">' +
+             '<span class="test1-status-bar__time">' + time + '</span>' +
+             '<div class="test1-status-bar__live" aria-hidden="true">' +
+               '<span class="test1-status-bar__live-icon">' +
+                 '<img src="' + asset + 'phone-live.svg" alt="" />' +
+               '</span>' +
+               '<span class="test1-status-bar__live-timer">' + liveTimer + '</span>' +
+             '</div>' +
+           '</div>' +
+           '<div class="test1-status-bar__right">' +
+             '<div class="test1-status-bar__icon test1-status-bar__icon--wifi" aria-hidden="true">' +
+               '<img src="' + asset + 'wifi.svg" alt="" />' +
+             '</div>' +
+             '<div class="test1-status-bar__icon test1-status-bar__icon--cell" aria-hidden="true">' +
+               '<img src="' + asset + 'cellular.svg" alt="" />' +
+             '</div>' +
+             '<div class="test1-status-bar__battery" aria-hidden="true">' +
+               '<img class="test1-status-bar__battery-left" src="' + asset + 'battery-left.svg" alt="" />' +
+               '<img class="test1-status-bar__battery-right" src="' + asset + 'battery-right.svg" alt="" />' +
+             '</div>' +
+           '</div>' +
+         '</div>';
+}
+
+/** Figma 5436:15945 — test2 status bar (time + live pill + system icons). */
+function renderTest2HealthStatusBar(props) {
+  var p = props || {};
+  var asset = 'assets/test2/status-bar/';
+  var time = p.time || '9:41';
+  var liveTimer = p.liveTimer || '1:02:59';
+  var fill = 'width:100%;height:100%;box-sizing:border-box;';
+  return '<div class="test2-status-bar" style="' + fill + '">' +
+           '<div class="test2-status-bar__left">' +
+             '<span class="test2-status-bar__time">' + time + '</span>' +
+             '<div class="test2-status-bar__live" aria-hidden="true">' +
+               '<span class="test2-status-bar__live-icon">' +
+                 '<img src="' + asset + 'phone-live.svg" alt="" />' +
+               '</span>' +
+               '<span class="test2-status-bar__live-timer">' + liveTimer + '</span>' +
+             '</div>' +
+           '</div>' +
+           '<div class="test2-status-bar__right">' +
+             '<div class="test2-status-bar__icon test2-status-bar__icon--wifi" aria-hidden="true">' +
+               '<img src="' + asset + 'wifi.svg" alt="" />' +
+             '</div>' +
+             '<div class="test2-status-bar__icon test2-status-bar__icon--cell" aria-hidden="true">' +
+               '<img src="' + asset + 'cellular.svg" alt="" />' +
+             '</div>' +
+             '<div class="test2-status-bar__battery" aria-hidden="true">' +
+               '<img class="test2-status-bar__battery-left" src="' + asset + 'battery-left.svg" alt="" />' +
+               '<img class="test2-status-bar__battery-right" src="' + asset + 'battery-right.svg" alt="" />' +
+             '</div>' +
+           '</div>' +
+         '</div>';
+}
+
+/** Figma 5436:15945 — test3 status bar (time + live pill + system icons). */
+function renderTest3HealthStatusBar(props) {
+  var p = props || {};
+  var asset = 'assets/test3/';
+  var time = p.time || '9:41';
+  var liveTimer = p.liveTimer || '1:03:59';
+  var fill = 'width:100%;height:100%;box-sizing:border-box;';
+  return '<div class="test3-status-bar" style="' + fill + '">' +
+           '<div class="test3-status-bar__left">' +
+             '<span class="test3-status-bar__time">' + time + '</span>' +
+             '<div class="test3-status-bar__live" aria-hidden="true">' +
+               '<span class="test3-status-bar__live-icon">' +
+                 '<img src="' + asset + 'phone-live.svg" alt="" />' +
+               '</span>' +
+               '<span class="test3-status-bar__live-timer">' + liveTimer + '</span>' +
+             '</div>' +
+           '</div>' +
+           '<div class="test3-status-bar__right">' +
+             '<div class="test3-status-bar__icon test3-status-bar__icon--wifi" aria-hidden="true">' +
+               '<img src="' + asset + 'wifi.svg" alt="" />' +
+             '</div>' +
+             '<div class="test3-status-bar__icon test3-status-bar__icon--cell" aria-hidden="true">' +
+               '<img src="' + asset + 'cellular.svg" alt="" />' +
+             '</div>' +
+             '<div class="test3-status-bar__battery" aria-hidden="true">' +
+               '<img class="test3-status-bar__battery-left" src="' + asset + 'battery-left.svg" alt="" />' +
+               '<img class="test3-status-bar__battery-right" src="' + asset + 'battery-right.svg" alt="" />' +
+             '</div>' +
+           '</div>' +
+         '</div>';
+}
 
 /** Themes set `--oneui-chroma: mono` (e.g. Mono · Grayscale) so skies/icons stay neutral — no chroma accents in markup. */
 function _isMonoChromaRoot() {
@@ -362,28 +1024,71 @@ window.composeSurfacePlan = function composeSurfacePlan(surfaceType, layout) {
         };
       }
       if (window.__mlpTestConfig && window.__mlpTestConfig.id === 'test1') {
-        // Persona 1 Gen Home (Figma 75:13339) — Goal + Music + Steps + Jogging + dot clock
+        // Persona 1 — lockscreen intro + pre-mounted home widgets (revealed on pill swipe)
+        var test1RevealAll = !!(window.__mlpTestConfig && window.__mlpTestConfig.test1RevealAll);
+        var test1StackGap = 16;
+        var test1LotteY = test1RevealAll ? (411 + 72 + test1StackGap) : 411;
+        var test1TransitScale = 1.177;
+        var test1TransitVisW = Math.round(294 * test1TransitScale);
+        var test1TransitVisH = Math.round(134 * test1TransitScale);
+        var test1TransitX = Math.round((388 - test1TransitVisW) / 2) - 2;
+        var test1ShortcutY = 797;
+        var test1TransitGapAboveShortcut = test1StackGap;
+        var test1TransitY = test1ShortcutY - test1TransitGapAboveShortcut - test1TransitVisH;
+        var test1LotteStackY = test1LotteY + 88;
+        var test1HomeColX = 21;
+        var test1HomeColW = 346;
+        var test1HomeHeaderY = 72;
+        var test1HomeHeaderH = 62;
+        var test1HomeSmallW = 163;
+        var test1HomeSmallH = 178;
+        var test1HomeSmallGap = 14;
+        var test1HomeRowY = test1HomeHeaderY + test1HomeHeaderH + 6;
+        var test1HomeRowX = test1HomeColX + Math.round((test1HomeColW - (test1HomeSmallW * 2 + test1HomeSmallGap)) / 2);
+        var test1HomeFoodW = 340;
+        var test1HomeFoodY = test1HomeRowY + test1HomeSmallH + 10;
+        var test1HomeFoodH = 668 - test1HomeFoodY;
+        var test1HomeFoodX = test1HomeColX + Math.round((test1HomeColW - test1HomeFoodW) / 2);
+        var test1LockStackW = 236;
+        var test1LockStackX = Math.round((388 - test1LockStackW) / 2);
         return {
           surfaceType,
           components: [
-            { id: 'status-bar', role: 'status-bar', zone: 'topSystem' },
-            { id: 'p1-goal', role: 'dot-goal', zone: 'viewing',
-              variant: { title: "Today's Goal", time: '01:42:43', timeSuffix: 'Within', distance: '15km' },
-              _rect: { x: 24, y: 42, w: 340, h: 168 } },
-            { id: 'p1-music', role: 'dot-music-1x1', zone: 'viewing',
-              variant: { artist: 'Jimmy Hall', album: 'Album', song: 'Concierto', current: '0:40', remaining: '-1:10', barFull: 120, barTrack: 31.48 },
-              _rect: { x: 24, y: 214, w: 168, h: 168 } },
-            { id: 'p1-steps', role: 'dot-total-steps-2x1', zone: 'viewing',
-              variant: { count: '5,543' },
-              _rect: { x: 196, y: 214, w: 168, h: 82 } },
-            { id: 'p1-run', role: 'dot-running-compact', zone: 'viewing',
-              variant: { label: 'Jogging', time: '10:35' },
-              _rect: { x: 196, y: 300, w: 168, h: 82 } },
-            { id: 'p1-timemat', role: 'dot-time-matrix', zone: 'viewing',
-              variant: { bgColor: 'transparent', dotColor: '#FF7F24', time: '12:45', meta: 'MON', dayDigits: '  ' },
-              _rect: { x: 26, y: 386, w: 335, h: 165 } },
-            { id: 'app-dock', role: 'app-dock', zone: 'bottomNav',
-              content: { apps: ['Camera','Gallery','Maps','YT Music'] } },
+            { id: 'test1-lock-indicator', role: 'lockIndicator', zone: 'viewing',
+              _rect: { x: Math.round((388 - 24) / 2), y: 56, w: 24, h: 24 } },
+            { id: 'test1-lock-stack', role: 'test1-lock-stack', zone: 'viewing',
+              _rect: { x: test1LockStackX, y: 114, w: test1LockStackW, h: 248 } },
+            { id: 'test1-now-bar-b', role: 'test1-now-bar-b', zone: 'viewing',
+              _rect: { x: 21, y: 421, w: 346, h: 72 } },
+            { id: 'test1-now-bar', role: 'test1-now-bar', zone: 'viewing',
+              _rect: { x: 21, y: test1LotteY, w: 346, h: 72 } },
+            { id: 'test1-transit-card', role: 'test1-transit-card', zone: 'viewing',
+              _rect: { x: test1TransitX, y: test1TransitY, w: test1TransitVisW, h: test1TransitVisH } },
+            { id: 'test1-gradient-sweep-a', role: 'test1-gradient-sweep', zone: 'viewing',
+              _rect: { x: test1HomeRowX, y: test1HomeRowY, w: test1HomeSmallW, h: test1HomeSmallH }, variant: { sweepShape: 'home-widget' } },
+            { id: 'test1-gradient-sweep-b', role: 'test1-gradient-sweep', zone: 'viewing',
+              _rect: { x: test1HomeRowX + test1HomeSmallW + test1HomeSmallGap, y: test1HomeRowY, w: test1HomeSmallW, h: test1HomeSmallH }, variant: { sweepShape: 'home-widget' } },
+            { id: 'test1-gradient-sweep-c', role: 'test1-gradient-sweep', zone: 'viewing',
+              _rect: { x: test1HomeFoodX, y: test1HomeFoodY, w: test1HomeFoodW, h: test1HomeFoodH }, variant: { sweepShape: 'home-widget' } },
+            { id: 'test1-l-shortcut', role: 'test1-lock-shortcut-l', zone: 'bottomNav',
+              _rect: { x: 16.5, y: 795, w: 64, h: 57 } },
+            { id: 'test1-r-shortcut', role: 'test1-lock-shortcut-r', zone: 'bottomNav',
+              _rect: { x: 307.5, y: 795, w: 64, h: 57 } },
+            { id: 'test1-bottom-pill', role: 'test1-bottom-pill', zone: 'bottomNav',
+              _rect: { x: 96.5, y: 797, w: 215, h: 57 } },
+            { id: 'status-bar', role: 'status-bar', zone: 'topSystem',
+              variant: { time: '9:41', liveTimer: '1:02:59' } },
+            { id: 'test1-home-header', role: 'test1-home-header', zone: 'viewing',
+              _rect: { x: test1HomeColX, y: test1HomeHeaderY, w: test1HomeColW, h: test1HomeHeaderH } },
+            { id: 'test1-home-map', role: 'test1-home-map', zone: 'viewing',
+              _rect: { x: test1HomeRowX, y: test1HomeRowY, w: test1HomeSmallW, h: test1HomeSmallH } },
+            { id: 'test1-home-message', role: 'test1-home-message', zone: 'viewing',
+              _rect: { x: test1HomeRowX + test1HomeSmallW + test1HomeSmallGap, y: test1HomeRowY, w: test1HomeSmallW, h: test1HomeSmallH } },
+            { id: 'test1-home-food', role: 'test1-home-food', zone: 'viewing',
+              _rect: { x: test1HomeFoodX, y: test1HomeFoodY, w: test1HomeFoodW, h: test1HomeFoodH } },
+            { id: 'test1-page-dots', role: 'test1-page-dots', zone: 'viewing',
+              _rect: { x: 0, y: 662, w: 388, h: 24 } },
+            { id: 'test1-app-dock', role: 'test1-app-dock', zone: 'bottomNav' },
             { id: 'gesture-bar', role: 'gestureBar', zone: 'bottomAction' }
           ]
         };
@@ -406,7 +1111,8 @@ window.composeSurfacePlan = function composeSurfacePlan(surfaceType, layout) {
           return {
             surfaceType,
             components: [
-              { id: 'status-bar', role: 'status-bar', zone: 'topSystem' },
+              { id: 'status-bar', role: 'status-bar', zone: 'topSystem',
+                variant: { layout: 'test3-health', theme: 'dark', time: '9:41', liveTimer: '1:03:59' } },
               { id: 'test3-intro-run', role: 'dot-running-prompt', zone: 'viewing',
                 /* Intro sequence: compact pill shows "Running Now"
                    first (see test3IntroTitleStart in theme-page.css),
@@ -418,14 +1124,12 @@ window.composeSurfacePlan = function composeSurfacePlan(surfaceType, layout) {
                   titleAtEnd: 'Running Now',
                   mlpAction: 'mlp-intro-to-home'
                 },
-                /* y=42 (was 56) so the intro pill sits at the SAME y
+                /* y=TEST3_GOAL_TOP so the intro pill sits at the SAME y
                    as the goal card it morphs into. Without this match
-                   the wrapper jumped UP 14 px at the rename moment
-                   (when finishTransition sets the goal's plan top of
-                   42 px), which the user saw as the card "popping up"
-                   after the morph. Now the y is identical from start
-                   to end — only the height changes (82 → 168). */
-                _rect: { x: 24, y: 42, w: 340, h: 82 } },
+                   the wrapper jumps at the rename moment (when
+                   finishTransition pins the goal rect), which reads as
+                   the card "popping" after the morph. */
+                _rect: { x: 24, y: TEST3_GOAL_TOP, w: 340, h: 82 } },
               { id: 'test3-page-dots', role: 'test3-page-dots', zone: 'viewing',
                 _rect: { x: 0, y: 714, w: 388, h: 24 } },
               { id: 'app-dock', role: 'app-dock', zone: 'bottomNav',
@@ -437,7 +1141,8 @@ window.composeSurfacePlan = function composeSurfacePlan(surfaceType, layout) {
         return {
           surfaceType,
           components: [
-            { id: 'status-bar', role: 'status-bar', zone: 'topSystem' },
+            { id: 'status-bar', role: 'status-bar', zone: 'topSystem',
+              variant: { layout: 'test3-health', theme: 'dark', time: '9:41', liveTimer: '1:03:59' } },
             { id: 'test3-goal', role: 'dot-goal', zone: 'viewing',
               /* Title was "Today's Goal" but the card actually appears
                  AFTER the user accepts the workout prompt — so it's a
@@ -455,8 +1160,16 @@ window.composeSurfacePlan = function composeSurfacePlan(surfaceType, layout) {
                  time once per second; _startTest3GoalDistanceTicker
                  advances the distance at ~3.33 m/s (5:00 min/km pace),
                  formatted as "Xm" under 1000 and "X.Y km" past that. */
-              variant: { title: "Running Now", time: '00:01:42', timeSuffix: 'Within', distance: '180m', useRealMap: true },
-              _rect: { x: 24, y: 42, w: 340, h: 168 } },
+              variant: {
+                title: "Running Now",
+                time: '00:01:42',
+                timeSuffix: 'Within',
+                distance: '180m',
+                useRealMap: true,
+                mapStatus: '러닝 장소에 도달했습니다.',
+                mapLocation: '반포 한강공원'
+              },
+              _rect: { x: 24, y: TEST3_GOAL_TOP, w: 340, h: TEST3_GOAL_H } },
             musicShifted ? { id: 'test3-music', role: 'dot-music-1x1', zone: 'viewing',
               variant: {
                 compactTitle: '러닝을 위한 음악을 찾고 있어요',
@@ -465,26 +1178,29 @@ window.composeSurfacePlan = function composeSurfacePlan(surfaceType, layout) {
                 expandedBarFull: 246,
                 expandedBarTrack: 188
               },
-              _rect: { x: 24, y: test3Row2Y, w: 340, h: 168 } } : null,
+              _rect: { x: 24, y: test3Row2Y, w: 340, h: TEST3_MUSIC_EXPAND_H } } : null,
             { id: 'test3-weather', role: 'dot-weather-2x1-v1-1', zone: 'viewing',
               variant: {
                 partyPill: {
-                  title: '러닝 파티 모드',
-                  subtitle: '실시간 경로 수정 중',
-                  expandTitle: '러닝 아일랜드 모드',
-                  expandBody: '고요한 러닝을 위해 현재 사람이 적은\n한강 공원으로 경로를 수정했어요'
+                  title: '목표 페이스',
+                  subtitle: '7\'00"/KM',
+                  stats: [
+                    { type: 'run', label: '달리기' },
+                    { type: 'level', value: '6', label: '러닝레벨' },
+                    { type: 'energy', value: '86', label: '에너지' }
+                  ]
                 }
               },
-              _rect: { x: 24, y: test3Row2Y, w: 168, h: 82 } },
+              _rect: { x: 24, y: test3Row2Y, w: TEST3_HALF_COL_W, h: TEST3_PILL_SLOT_H } },
             { id: 'test3-steps', role: 'dot-total-steps-2x1', zone: 'viewing',
               variant: {
                 pacePill: {
-                  title: '러닝 페이스',
-                  subtitle: '현재 7\'00"',
-                  expandTitle: '러닝 페이스'
+                  title: '한강 공원',
+                  subtitle: '러닝 경로 최적화',
+                  expandBody: '실시간 혼잡도를 분석해 러닝 경로를 최적화했어요'
                 }
               },
-              _rect: { x: 196, y: test3Row2Y, w: 168, h: 82 } },
+              _rect: { x: TEST3_HALF_COL_X, y: test3Row2Y, w: TEST3_HALF_COL_W, h: TEST3_PILL_SLOT_H } },
             { id: 'test3-page-dots', role: 'test3-page-dots', zone: 'viewing',
               _rect: { x: 0, y: 714, w: 388, h: 24 } },
             { id: 'app-dock', role: 'app-dock', zone: 'bottomNav',
@@ -1044,6 +1760,7 @@ window.resolveComponentRect = function resolveComponentRect(comp, layout, plan) 
 
     case 'bottom-navigation':
     case 'app-dock':
+    case 'test1-app-dock':
       return {
         x: z.bottomNav.x,
         y: z.bottomNav.y,
@@ -1146,9 +1863,12 @@ window.resolveComponentRect = function resolveComponentRect(comp, layout, plan) 
 
     case 'persona2-widgets':
       if (window.__mlpTestConfig && window.__mlpTestConfig.id === 'test2') {
+        var test2ClockY = 112 + (window.currentSurfaceType === 'lockscreen-persona2' ? 28 : 0);
+        var test2ClockH = 176;
+        var test2WidgetsGap = 10;
         return {
           x: 0,
-          y: 326,
+          y: test2ClockY + test2ClockH + test2WidgetsGap,
           w: vw,
           h: 240
         };
@@ -1626,6 +2346,45 @@ function _escP2Html(str) {
     .replace(/"/g, '&quot;');
 }
 
+function _canonicalTest2AppName(name) {
+  var raw = String(name || '').trim();
+  if (!raw) return '';
+  if (TEST2_ICON_FILES[raw]) return raw;
+  var lower = raw.toLowerCase();
+  var keys = Object.keys(TEST2_ICON_FILES);
+  for (var i = 0; i < keys.length; i++) {
+    if (keys[i].toLowerCase() === lower) return keys[i];
+  }
+  return '';
+}
+
+function _resolveTest2ContactAppName(item) {
+  if (!item) return '';
+  var explicit = _canonicalTest2AppName(item.app || item.iconApp || item.sourceApp || item.icon);
+  if (explicit) return explicit;
+  var hay = [
+    item.text,
+    item.subtitle,
+    item.note,
+    item.meta,
+    item.title
+  ].filter(Boolean).join(' ');
+  if (!hay) return '';
+  for (var i = 0; i < TEST2_APP_TEXT_HINTS.length; i++) {
+    var hint = TEST2_APP_TEXT_HINTS[i];
+    if (hint.re.test(hay)) return hint.app;
+  }
+  return '';
+}
+
+function _renderTest2ContactIcon(appName) {
+  var canonical = _canonicalTest2AppName(appName);
+  if (!canonical) return '';
+  var file = TEST2_ICON_FILES[canonical];
+  if (!file) return '';
+  return '<img class="p2-contact-list__icon-img" src="' + TEST2_ICONS_DIR + encodeURI(file).replace(/#/g, '%23') + '" alt="" />';
+}
+
 function _computeP2ContactListHeight(itemCount) {
   var count = Math.max(1, Math.min(itemCount || 3, 3));
   var padTop = 20;
@@ -1641,29 +2400,46 @@ function _renderP2ContactList(variant, rect) {
   var v = variant || {};
   var w = (rect && rect.w) || 340;
   var rawItems = Array.isArray(v.items) ? v.items : [];
-  var defaultTimes = ['3일 전', '2일 전', '4일 전'];
-  var defaultTitles = [
-    '체크아웃 개선 리서치 공유',
-    '슬랙: 신규 알림 2건',
-    'Figma: 디자인 시스템 업데이트'
-  ];
-  var defaultSubs = [
-    '이민재 · 프로토타입 확인 후 피드백 요청',
-    '김지훈 · 쇼핑몰 개편 2차 시안 준비',
-    '김지훈 · Figma 완료, Notion 문서화만 남음'
-  ];
+  var isTest2 = _isTest2Scope();
+  var defaultTimes = isTest2
+    ? ['Now', 'Today', 'Check']
+    : ['3일 전', '2일 전', '4일 전'];
+  var defaultTitles = isTest2
+    ? [
+        '지금 가장 급한 일 한 가지',
+        '오늘 꼭 끝내고 싶은 일',
+        '밀린 확인만 빠르게 정리'
+      ]
+    : [
+        '체크아웃 개선 리서치 공유',
+        '슬랙: 신규 알림 2건',
+        'Figma: 디자인 시스템 업데이트'
+      ];
+  var defaultSubs = isTest2
+    ? [
+        '이인재 · 프로토타입 확인 후 피드백 요청',
+        '김지훈 · 쇼핑몰 개편 2차 시안 준비',
+        '김지훈 · Figma 완료, Notion 문서화만 남음'
+      ]
+    : [
+        '이민재 · 프로토타입 확인 후 피드백 요청',
+        '김지훈 · 쇼핑몰 개편 2차 시안 준비',
+        '김지훈 · Figma 완료, Notion 문서화만 남음'
+      ];
+  var defaultApps = ['Figma', 'Slack', 'Notion'];
   var items = rawItems.slice(0, 3);
   while (items.length < 3) {
     var fillIdx = items.length;
     items.push({
       text: defaultTitles[fillIdx] || ('항목 ' + (fillIdx + 1)),
       time: defaultTimes[fillIdx] || '',
-      subtitle: defaultSubs[fillIdx] || ''
+      subtitle: defaultSubs[fillIdx] || '',
+      app: isTest2 ? (defaultApps[fillIdx] || '') : ''
     });
   }
-  var header = v.title || v.section || v.date || '휴가 중 디자인 피드백';
+  var header = v.title || v.section || v.date || (isTest2 ? 'Needs' : '휴가 중 디자인 피드백');
   if (/^(summary|may\s+\d+|today|messages)$/i.test(String(header).trim())) {
-    header = '휴가 중 디자인 피드백';
+    header = isTest2 ? 'Needs' : '휴가 중 디자인 피드백';
   }
   var chevron = '<svg class="p2-contact-list__chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">' +
     '<path d="M6 4l4 4-4 4" stroke="rgba(255,255,255,0.5)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -1671,8 +2447,11 @@ function _renderP2ContactList(variant, rect) {
     var title = (it && it.text) || defaultTitles[idx] || ('항목 ' + (idx + 1));
     var time = (it && it.time) || defaultTimes[idx] || '';
     var sub = (it && (it.subtitle || it.note || it.meta)) || defaultSubs[idx] || '';
-    return '<div class="p2-contact-list__item dot-sch__row">' +
-      '<div class="p2-contact-list__icon" aria-hidden="true"></div>' +
+    var appName = isTest2 ? (_resolveTest2ContactAppName(it) || defaultApps[idx] || '') : '';
+    var iconHtml = isTest2 ? _renderTest2ContactIcon(appName) : '';
+    return '<div class="p2-contact-list__item dot-sch__row"' +
+      (appName ? ' data-app="' + _escP2Html(appName) + '"' : '') + '>' +
+      '<div class="p2-contact-list__icon" aria-hidden="true">' + iconHtml + '</div>' +
       '<div class="p2-contact-list__body">' +
         '<div class="p2-contact-list__title-row">' +
           '<span class="p2-contact-list__title">' + _escP2Html(title) + '</span>' +
@@ -1852,9 +2631,27 @@ window.renderAtomicForRole = function renderAtomicForRole(comp, rect) {
     }
     case 'status-bar':
       var sbv = (comp && comp.variant) || {};
+      if (window.__mlpTestConfig && window.__mlpTestConfig.id === 'test1') {
+        return renderTest1HealthStatusBar({
+          time: sbv.time || '9:41',
+          liveTimer: sbv.liveTimer || '1:02:59'
+        });
+      }
+      if (window.__mlpTestConfig && window.__mlpTestConfig.id === 'test2') {
+        return renderTest2HealthStatusBar({
+          time: sbv.time || '9:41',
+          liveTimer: sbv.liveTimer || '1:02:59'
+        });
+      }
+      if (sbv.layout === 'test3-health' || (window.__mlpTestConfig && window.__mlpTestConfig.id === 'test3')) {
+        return renderTest3HealthStatusBar({
+          time: sbv.time || '9:41',
+          liveTimer: sbv.liveTimer || '1:03:59'
+        });
+      }
       var sbTheme = sbv.theme || (window.currentSurfaceType === window.SURFACE_TYPES.HEALTH_MLP ? 'light' : 'dark');
       return A.StatusBar
-        ? A.StatusBar({ theme: sbTheme, battery: 69, carrier: 'TJG' })
+        ? A.StatusBar({ theme: sbTheme, battery: 69, carrier: sbv.carrier || 'TJG' })
         : '<div style="height:100%;display:flex;align-items:center;justify-content:space-between;' +
             _T('caption', { color: 'statusBar' }) +
           '"><span>12:45</span><span>69%</span></div>';
@@ -3863,16 +4660,6 @@ window.renderAtomicForRole = function renderAtomicForRole(comp, rect) {
       var gDist = gv.distance || '15km';
       var gMap = gv.mapSrc || '/prototype-assets/goal-map.png';
 
-      // Two map render modes:
-      //   useRealMap (test3): empty Leaflet container, init post-mount
-      //   default            : the static PNG asset
-      var mapInnerHtml;
-      if (gv.useRealMap) {
-        mapInnerHtml = '<div class="dot-goal__map-leaflet" data-map-init="0"></div>';
-      } else {
-        mapInnerHtml = '<img src="' + gMap + '" alt="" />';
-      }
-
       var gTitleHtml = gTitle;
       if (gv.titleWave) {
         var _charIdx = 0;
@@ -3891,9 +4678,53 @@ window.renderAtomicForRole = function renderAtomicForRole(comp, rect) {
         }).join('');
       }
 
+      // Two map render modes:
+      //   useRealMap (test3): empty Leaflet container, init post-mount
+      //   default            : the static PNG asset
+      var mapInnerHtml;
+      var mapLightMainHtml = '';
+      if (gv.useRealMap) {
+        var gMapStatus = gv.mapStatus || '러닝 장소에 도달했습니다.';
+        var gMapLocation = gv.mapLocation || '반포 한강공원';
+        var gLocIconHtml =
+          '<span class="dot-goal__location-icon" aria-hidden="true">' +
+            '<svg viewBox="0 0 7.2155 8.97319" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+              '<path fill-rule="evenodd" clip-rule="evenodd" d="M3.6075 5.071C2.7795 5.071 2.1075 4.3995 2.1075 3.57C2.1075 2.7425 2.7795 2.071 3.6075 2.071C4.436 2.071 5.1075 2.7425 5.1075 3.57C5.1075 4.3995 4.436 5.071 3.6075 5.071ZM3.607 0C1.618 0 0 1.618 0 3.6065C0 4.984 1.0475 6.144 1.0885 6.188L3.038 8.7115C3.3375 9.0605 3.8775 9.0605 4.177 8.711L6.122 6.1925C6.167 6.144 7.2155 4.984 7.2155 3.6065C7.2155 1.618 5.597 0 3.607 0Z" fill="#4C5B17"/>' +
+            '</svg>' +
+          '</span>';
+        mapInnerHtml =
+          '<div class="dot-goal__map-dark">' +
+            '<div class="dot-goal__map-leaflet" data-map-init="0"></div>' +
+          '</div>' +
+          '<div class="dot-goal__map-light" aria-hidden="true">' +
+            '<img class="dot-goal__map-photo" src="/assets/test3/test3-goal-map-expanded.png" alt="" />' +
+            '<img class="dot-goal__map-pin" src="/assets/test3/test3-goal-map-pin.svg" alt="" />' +
+          '</div>';
+        mapLightMainHtml =
+          '<div class="dot-goal__main dot-goal__main--light" aria-hidden="true">' +
+            '<div class="dot-goal__title">' + gTitleHtml + '</div>' +
+            '<div class="dot-goal__unit dot-goal__unit--expanded">' +
+              '<div class="dot-goal__status">' + gMapStatus + '</div>' +
+              '<div class="dot-goal__location">' +
+                gLocIconHtml +
+                '<span>' + gMapLocation + '</span>' +
+              '</div>' +
+            '</div>' +
+          '</div>';
+      } else {
+        mapInnerHtml = '<img src="' + gMap + '" alt="" />';
+      }
+
       return '' +
         '<div class="dot-card dot-goal" data-state="' + (gv.state || 'idle') + '">' +
-          '<div class="dot-goal__main">' +
+          (gv.useRealMap ? '<div class="dot-goal__theme-overlay" aria-hidden="true"></div>' : '') +
+          (gv.useRealMap
+            ? '<div class="dot-goal__map-slot" aria-hidden="true">' +
+                '<div class="dot-goal__map-seed" aria-hidden="true"></div>' +
+                '<div class="dot-goal__map">' + mapInnerHtml + '</div>' +
+              '</div>'
+            : '') +
+          '<div class="dot-goal__main' + (gv.useRealMap ? ' dot-goal__main--dark' : '') + '">' +
             '<div class="dot-goal__title">' + gTitleHtml + '</div>' +
             '<div class="dot-goal__unit">' +
               '<div class="dot-goal__timeRow">' +
@@ -3902,12 +4733,10 @@ window.renderAtomicForRole = function renderAtomicForRole(comp, rect) {
               '<div class="dot-goal__distance">' + gDist + '</div>' +
             '</div>' +
           '</div>' +
-          (gv.useRealMap
-            ? '<div class="dot-goal__map-slot" aria-hidden="true">' +
-                '<div class="dot-goal__map-seed" aria-hidden="true"></div>' +
-                '<div class="dot-goal__map">' + mapInnerHtml + '</div>' +
-              '</div>'
-            : '<div class="dot-goal__map" aria-hidden="true">' + mapInnerHtml + '</div>') +
+          mapLightMainHtml +
+          (!gv.useRealMap
+            ? '<div class="dot-goal__map" aria-hidden="true">' + mapInnerHtml + '</div>'
+            : '') +
         '</div>';
     }
 
@@ -4265,8 +5094,8 @@ window.renderAtomicForRole = function renderAtomicForRole(comp, rect) {
       var isTest3Music =
         (window.__mlpTestConfig && window.__mlpTestConfig.id === 'test3') ||
         (document.body && document.body.dataset && document.body.dataset.mlpTest === 'test3');
-      var expandedBarW = mv.expandedBarFull != null ? mv.expandedBarFull : 292;
-      var expandedBarTrack = mv.expandedBarTrack != null ? mv.expandedBarTrack : 77;
+      var expandedBarW = mv.expandedBarFull != null ? mv.expandedBarFull : (isTest3Music ? TEST3_MUSIC_BAR_W : 292);
+      var expandedBarTrack = mv.expandedBarTrack != null ? mv.expandedBarTrack : (isTest3Music ? TEST3_MUSIC_BAR_TRACK : 77);
       var iconTitle = mv.iconTitle || '가벼운 러닝에는 부드럽고 상쾌한\nConcierto가 좋을거같아요!';
       var iconSubtitle = mv.iconSubtitle || 'Jim Hall - Concierto';
       if (isTest3Music) {
@@ -4282,17 +5111,14 @@ window.renderAtomicForRole = function renderAtomicForRole(comp, rect) {
           barTrack: expandedBarTrack
         }
       }, rect);
-      // Search/loading copy that appears WHILE the LLM resolves a real
-      // track recommendation. Previously a generic "운동할 때 듣기 좋은
-      // 곡을 찾아드릴게요"; now references the three real factors the
-      // recommendation actually uses — pace BPM, weather tone, distance-
-      // based historical preference — to make the wait feel like the AI
-      // is actively reasoning about THIS run. Uses {weather} / {distance}
-      // template substitution from the searchWeather / searchDistance
-      // overrides (defaults: '비 오는 날' / '5km').
-      var _sw = mv.searchWeather  || '비 오는 날';
-      var _sd = mv.searchDistance || '5km';
-      var compactTitle = mv.compactTitle || (_sw + ' ' + _sd + ' 러닝에 맞는\nBPM과 선호 톤으로\n트랙을 찾고 있어요');
+      // Compact loading copy shown while the track recommendation resolves.
+      var compactTitleHtml = mv.compactTitle
+        ? String(mv.compactTitle).split('\n').map(function (line) {
+            return '<span class="dot-music1__singerLine">' + line + '</span>';
+          }).join('')
+        : ('<span class="dot-music1__singerLine">비 오는 날 러닝에</span>' +
+           '<span class="dot-music1__singerLine">맞는 BPM과 트랙을</span>' +
+           '<span class="dot-music1__singerLine">찾고\u00A0있어요.</span>');
       var compactIconHtml = '' +
         '<svg class="dot-music1__noteSvg" width="32" height="32" viewBox="-2 -2 68 68" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
           '<circle cx="19.85" cy="3.49" r="3.5" fill="#000000"/><circle cx="27.98" cy="3.49" r="3.5" fill="#000000"/><circle cx="35.66" cy="3.49" r="3.5" fill="#000000"/><circle cx="44.25" cy="3.49" r="3.5" fill="#000000"/><circle cx="52.39" cy="3.49" r="3.5" fill="#000000"/><circle cx="60.52" cy="3.49" r="3.5" fill="#000000"/>' +
@@ -4304,18 +5130,17 @@ window.renderAtomicForRole = function renderAtomicForRole(comp, rect) {
           '<circle cx="3.49" cy="53.32" r="3.5" fill="#000000"/><circle cx="11.62" cy="53.32" r="3.5" fill="#000000"/><circle cx="19.85" cy="53.32" r="3.5" fill="#000000"/><circle cx="44.25" cy="53.32" r="3.5" fill="#000000"/><circle cx="52.39" cy="53.32" r="3.5" fill="#000000"/><circle cx="60.52" cy="53.32" r="3.5" fill="#000000"/>' +
           '<circle cx="3.49" cy="61.45" r="3.5" fill="#000000"/><circle cx="11.62" cy="61.45" r="3.5" fill="#000000"/><circle cx="44.25" cy="61.45" r="3.5" fill="#000000"/><circle cx="52.39" cy="61.45" r="3.5" fill="#000000"/>' +
         '</svg>';
+      var test3OrbHtml = isTest3Music ? renderTest3MusicDiscHtml() : '';
       var compactHtml = isTest3Music
         ? ('<div class="dot-music1__player" aria-hidden="true">' +
-            '<div class="dot-music1__iconBg">' +
-              '<div class="dot-music1__musicIcon">' + compactIconHtml + '</div>' +
-            '</div>' +
+            '<div class="dot-music1__iconBg">' + test3OrbHtml + '</div>' +
             '<div class="dot-music1__searchText">' +
-              '<span class="dot-music1__searchLine dot-music1__searchLine--1">러닝 bgm을 찾고 있어요</span>' +
+              '<span class="dot-music1__searchLine dot-music1__searchLine--1">' + TEST3_MUSIC_SEARCH_LINE1 + '</span>' +
               '<span class="dot-music1__searchLine dot-music1__searchLine--2">' + TEST3_MUSIC_SEARCH_LINE2 + '</span>' +
             '</div>' +
           '</div>')
         : ('<div class="dot-music1__player" aria-hidden="true">' +
-            '<div class="dot-music1__singer-name">' + String(compactTitle).replace(/\n/g, '<br/>') + '</div>' +
+            '<div class="dot-music1__singer-name">' + compactTitleHtml + '</div>' +
             '<div class="dot-music1__iconBg"></div>' +
             '<div class="dot-music1__musicIcon">' + compactIconHtml + '</div>' +
           '</div>');
@@ -4357,6 +5182,9 @@ window.renderAtomicForRole = function renderAtomicForRole(comp, rect) {
       var test3FillHtml = isTest3Music
         ? ('<div class="test3-music-fill p2-agent-fill" aria-hidden="true">' +
             '<canvas class="test3-music-fill__gl p2-agent-fill__gl"></canvas>' +
+            '<div class="test3-music-ambient" aria-hidden="true">' +
+              '<span class="test3-music-ambient__wash" aria-hidden="true"></span>' +
+            '</div>' +
             '<div class="p2-agent-fill__edge" aria-hidden="true"></div>' +
             '<div class="p2-agent-fill__edge-inner" aria-hidden="true"></div>' +
             '<div class="p2-agent-fill__bloom"></div>' +
@@ -4441,28 +5269,29 @@ window.renderAtomicForRole = function renderAtomicForRole(comp, rect) {
 
     case 'dot-music-1x2-icon': {
       var mv3 = (comp && comp.variant) || {};
-      var isTest3Lyrics =
+      var isTest3Music =
         (window.__mlpTestConfig && window.__mlpTestConfig.id === 'test3') ||
         (document.body && document.body.dataset && document.body.dataset.mlpTest === 'test3');
-      var title3 = mv3.title || (isTest3Lyrics
+      var isTest3Lyrics = isTest3Music;
+      var title3 = mv3.title || (isTest3Music
         ? TEST3_MUSIC_TITLE
         : '오늘 날씨에 딱 맞는\n플레이리스트');
-      var subtitle3 = mv3.subtitle || (isTest3Lyrics ? 'M83 - Midnight City' : 'Jim Hall - Concierto');
-      if (isTest3Lyrics) {
+      var subtitle3 = mv3.subtitle || (isTest3Music ? 'M83 - Midnight City' : 'Jim Hall - Concierto');
+      if (isTest3Music) {
         title3 = TEST3_MUSIC_TITLE;
         subtitle3 = 'M83 - Midnight City';
       }
       var foldTitle3 = mv3.foldTitle;
       if (!foldTitle3) {
-        foldTitle3 = isTest3Lyrics
+        foldTitle3 = isTest3Music
           ? TEST3_MUSIC_FOLD_TITLE
           : (function () {
               var foldDash = subtitle3.indexOf(' - ');
               return foldDash >= 0 ? subtitle3.slice(foldDash + 3).trim() : subtitle3;
             })();
       }
-      var barW3 = mv3.barFull != null ? mv3.barFull : (isTest3Lyrics ? 246 : 292);
-      var barTrack3 = mv3.barTrack != null ? mv3.barTrack : (isTest3Lyrics ? 188 : 77);
+      var barW3 = mv3.barFull != null ? mv3.barFull : (isTest3Music ? TEST3_MUSIC_BAR_W : 292);
+      var barTrack3 = mv3.barTrack != null ? mv3.barTrack : (isTest3Music ? TEST3_MUSIC_BAR_TRACK : 77);
       var safeTitle = String(title3).replace(/\n/g, '<br/>');
       // Placeholder lyrics block — visible only when the user taps the
       // card to enter the `lyrics` state. The LLM endpoint can supply
@@ -4511,17 +5340,18 @@ window.renderAtomicForRole = function renderAtomicForRole(comp, rect) {
             '<path d="M9 6.5 L21 14 L9 21.5 Z" fill="#FFFFFF"/>' +
           '</svg>' +
         '</button>';
-      var compactHeaderHtml = isTest3Lyrics
-        ? ('<span class="dot-music3__spotify" aria-hidden="true"></span>' +
-            '<div class="dot-music3__compactHeader" aria-hidden="true">' +
-              '<span class="dot-music3__mediaPill">미디어 출력</span>' +
-            '</div>')
+      var compactHeaderHtml = isTest3Music
+        ? ('<div class="dot-music3__headerRow dot-music3__compactHeader" aria-hidden="true">' +
+            '<span class="dot-music3__spotify" aria-hidden="true">' + TEST3_SPOTIFY_ICON_HTML + '</span>' +
+            '<span class="dot-music3__mediaPill">미디어 출력</span>' +
+          '</div>')
         : '';
       return '' +
         '<div class="dot-card dot-music dot-music3 dot-music3--icon" data-state="' + (mv3.state || 'idle') + '">' +
           compactHeaderHtml +
           '<div class="dot-music3__top">' +
             '<div class="dot-music3__icon">' +
+              (isTest3Music ? renderTest3MusicDiscHtml() : '') +
               '<span class="dot-music3__iconBg"></span>' +
               playPauseBtnHtml +
               // Original decorative music-note SVG retained but hidden
@@ -4579,14 +5409,21 @@ window.renderAtomicForRole = function renderAtomicForRole(comp, rect) {
           // tap cycle is: normal → lyrics (tap 1) → square (tap 2) →
           // normal (tap 3). Cycle handler lives in surface-layout.js.
           lyricsBlockHtml +
-          '<div class="dot-music3__playlistPill" aria-hidden="true">' +
-            '<span class="dot-music3__playlistThumb" aria-hidden="true"></span>' +
-            '<div class="dot-music3__playlistCopy">' +
-              '<span class="dot-music3__playlistTitle">3,2,1 러닝 시작</span>' +
-              '<span class="dot-music3__playlistMeta">10곡 · 38분 34초</span>' +
-            '</div>' +
-            '<span class="dot-music3__playlistChevron" aria-hidden="true"></span>' +
-          '</div>' +
+          (isTest3Music
+            ? ('<div class="dot-music3__playlistStack">' +
+                _test3MusicPlaylistPillHtml('primary') +
+                _test3MusicPlaylistPillHtml('secondary', '쿨다운 스트레치', '6곡 · 24분 08초', 'cooldown') +
+              '</div>')
+            : ('<div class="dot-music3__playlistPill" aria-hidden="true">' +
+                '<span class="dot-music3__playlistThumb" aria-hidden="true">' +
+                  '<span class="dot-music3__playlistThumbBadge" aria-hidden="true">' + TEST3_SPOTIFY_ICON_HTML + '</span>' +
+                '</span>' +
+                '<div class="dot-music3__playlistCopy">' +
+                  '<span class="dot-music3__playlistTitle">3,2,1 러닝 시작</span>' +
+                  '<span class="dot-music3__playlistMeta">10곡 · 38분 34초</span>' +
+                '</div>' +
+                '<span class="dot-music3__playlistChevron" aria-hidden="true"></span>' +
+              '</div>')) +
           '<div class="dot-music3__foldTitle" aria-hidden="true">' + String(foldTitle3).replace(/\n/g, '<br/>') + '</div>' +
           '<div class="dot-music__bottom dot-music3__bottom">' +
             // Name row pairs the artist/song marquee on the left with
@@ -4608,16 +5445,38 @@ window.renderAtomicForRole = function renderAtomicForRole(comp, rect) {
               // 180s playback animation; current is a placeholder for
               // now and can be ticked live later.
               '<div class="dot-music3__times" aria-hidden="true">' +
-                '<span class="dot-music3__time--current">' + (isTest3Lyrics ? '01:35' : '0:00') + '</span>' +
+                '<span class="dot-music3__time--current">' + (isTest3Music ? '01:35' : '0:00') + '</span>' +
                 '<span class="dot-music3__time--sep"> / </span>' +
-                '<span class="dot-music3__time--total">' + (isTest3Lyrics ? '02:30' : '3:00') + '</span>' +
+                '<span class="dot-music3__time--total">' + (isTest3Music ? '02:30' : '3:00') + '</span>' +
               '</div>' +
             '</div>' +
             '<div class="dot-music__bar dot-music__bar--wide dot-music3__bar" style="--bar-w:' + barW3 + 'px;--bar-track:' + barTrack3 + 'px;">' +
               '<div class="dot-music__barFill" aria-hidden="true"></div>' +
               '<div class="dot-music__barTrack" aria-hidden="true"></div>' +
             '</div>' +
-            '<div class="dot-music3__transport" aria-hidden="true"></div>' +
+            (isTest3Music
+              ? ('<div class="dot-music3__transport dot-music3__transport--interactive" aria-hidden="true">' +
+                  '<span class="dot-music3__transportSide dot-music3__transportSide--prev" aria-hidden="true">' +
+                    '<svg width="11" height="16" viewBox="0 0 10.4248 14.4799" fill="none" aria-hidden="true">' +
+                      '<path d="M0.893555 1.75699C0.400126 1.75699 0 2.15712 0 2.65055V14.5627C0.000232513 15.0559 0.40027 15.4562 0.893555 15.4562C1.38671 15.4561 1.78688 15.0558 1.78711 14.5627V9.99527L8.57227 14.5197C9.36382 15.0474 10.4246 14.4797 10.4248 13.5285V3.68473C10.4246 2.73344 9.36384 2.1658 8.57227 2.69352L1.78711 7.21695V2.65055C1.78711 2.15722 1.38685 1.75715 0.893555 1.75699Z" fill="#4C5B17"/>' +
+                    '</svg>' +
+                  '</span>' +
+                  '<button type="button" class="dot-music3__transportPlay dot-music3__playBtn" data-music-playing="1" aria-label="Pause">' +
+                    '<svg class="dot-music3__transportIcon dot-music3__transportIcon--play" width="14" height="18" viewBox="0 0 13.7123 16.8256" fill="none" aria-hidden="true">' +
+                      '<path d="M0.712891 15.7178V1.10879C0.712891 0.071902 1.85762 -0.556488 2.73242 0.00021L13.4252 6.80471C14.2366 7.32107 14.2366 8.50556 13.4252 9.02192L2.73242 15.8264C1.85762 16.3831 0.712891 15.7547 0.712891 14.7178Z" fill="#4C5B17"/>' +
+                    '</svg>' +
+                    '<svg class="dot-music3__transportIcon dot-music3__transportIcon--pause" width="14" height="16" viewBox="0 0 14 16" fill="none" aria-hidden="true">' +
+                      '<rect x="1" y="0" width="4" height="16" rx="1" fill="#4C5B17"/>' +
+                      '<rect x="9" y="0" width="4" height="16" rx="1" fill="#4C5B17"/>' +
+                    '</svg>' +
+                  '</button>' +
+                  '<span class="dot-music3__transportSide dot-music3__transportSide--next" aria-hidden="true">' +
+                    '<svg width="11" height="16" viewBox="0 0 10.4268 14.4799" fill="none" aria-hidden="true">' +
+                      '<path d="M9.5332 1.75699C10.0266 1.75702 10.4268 2.15714 10.4268 2.65055V14.5627C10.4268 15.0561 10.0266 15.4562 9.5332 15.4562C9.03981 15.4562 8.63965 15.0561 8.63965 14.5627V9.9943L1.85352 14.5197C1.06197 15.0475 0.00109863 14.4799 0.00109863 13.5285V3.6857C0.00109863 2.73427 1.06197 2.16673 1.85352 2.69449L8.63965 7.21793V2.65055C8.63965 2.15712 9.03981 1.75699 9.5332 1.75699Z" fill="#4C5B17"/>' +
+                    '</svg>' +
+                  '</span>' +
+                '</div>')
+              : '<div class="dot-music3__transport" aria-hidden="true"></div>') +
             (isTest3Lyrics
               ? '<div class="dot-music3__albumCredit" aria-hidden="true">Hurry Up, We\'re Dreaming.</div>'
               : '') +
@@ -4890,45 +5749,35 @@ window.renderAtomicForRole = function renderAtomicForRole(comp, rect) {
       var st = (comp && comp.variant) || {};
       if (st.pacePill) {
         var pp = st.pacePill;
-        var ppTitle = pp.title || '러닝 페이스';
-        var ppSub = pp.subtitle || '현재 7\'00"';
-        var ppExpandTitle = pp.expandTitle || ppTitle;
+        var ppTitle = pp.title || '한강 공원';
+        var ppSub = pp.subtitle || '러닝 경로 최적화';
+        var ppExpandBody = pp.expandBody || '실시간 혼잡도를 분석해 러닝 경로를 최적화했어요';
+        var ppLoadSpinHtml =
+          '<div class="dot-steps21__pillLoadSpin" aria-hidden="true"></div>';
         var ppIconHtml =
           '<div class="dot-steps21__pillIcon" aria-hidden="true">' +
-            '<span class="dot-steps21__pillIconBg"></span>' +
-            '<img class="dot-steps21__pillIconMark" src="/assets/test3-running-icon.svg" alt="" aria-hidden="true">' +
+            '<img class="dot-steps21__pillIconImg" src="/assets/test3/test3-pace-route-icon.png" alt="" aria-hidden="true">' +
+          '</div>';
+        var ppCopyHtml =
+          '<div class="dot-steps21__pillCopy">' +
+            '<div class="dot-steps21__pillTitle">' + ppTitle + '</div>' +
+            '<div class="dot-steps21__pillSub">' + ppSub + '</div>' +
           '</div>';
         var ppCompactHtml =
           '<div class="dot-steps21__compact" aria-hidden="false">' +
             '<div class="dot-steps21__pillRow">' +
-              '<div class="dot-steps21__pillCopy">' +
-                '<div class="dot-steps21__pillTitle">' + ppTitle + '</div>' +
-                '<div class="dot-steps21__pillSub">' + ppSub + '</div>' +
-              '</div>' +
+              ppLoadSpinHtml +
               ppIconHtml +
+              ppCopyHtml +
             '</div>' +
           '</div>';
-        var ppWaveHtml =
-          '<svg class="dot-steps21__paceWave" width="92" height="28" viewBox="0 0 92 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
-            '<defs>' +
-              '<linearGradient id="test3PaceWaveGrad" x1="0" y1="14" x2="92" y2="14" gradientUnits="userSpaceOnUse">' +
-                '<stop stop-color="#FF6B4A"/><stop offset="0.35" stop-color="#FF4FA3"/>' +
-                '<stop offset="0.65" stop-color="#8B5CF6"/><stop offset="1" stop-color="#2563EB"/>' +
-              '</linearGradient>' +
-            '</defs>' +
-            '<ellipse cx="12" cy="14" rx="5" ry="11" fill="url(#test3PaceWaveGrad)"/>' +
-            '<ellipse cx="24" cy="14" rx="4" ry="8" fill="url(#test3PaceWaveGrad)"/>' +
-            '<ellipse cx="36" cy="14" rx="6" ry="13" fill="url(#test3PaceWaveGrad)"/>' +
-            '<ellipse cx="50" cy="14" rx="5" ry="10" fill="url(#test3PaceWaveGrad)"/>' +
-            '<ellipse cx="62" cy="14" rx="4" ry="7" fill="url(#test3PaceWaveGrad)"/>' +
-            '<ellipse cx="74" cy="14" rx="6" ry="12" fill="url(#test3PaceWaveGrad)"/>' +
-            '<ellipse cx="86" cy="14" rx="4" ry="9" fill="url(#test3PaceWaveGrad)"/>' +
-          '</svg>';
         var ppExpandedHtml =
           '<div class="dot-steps21__expanded" aria-hidden="true">' +
-            '<div class="dot-steps21__pillTitle dot-steps21__pillTitle--solo">' + ppExpandTitle + '</div>' +
-            ppWaveHtml +
             ppIconHtml +
+            '<div class="dot-steps21__expandedBody">' +
+              '<div class="dot-steps21__pillTitle">' + ppTitle + '</div>' +
+              '<div class="dot-steps21__pillBody">' + ppExpandBody + '</div>' +
+            '</div>' +
           '</div>';
         return '' +
           '<div class="dot-card dot-steps21 dot-steps21--pace-pill dot-steps21--expandable" data-state="' + (st.state || 'idle') + '">' +
@@ -5075,36 +5924,10 @@ window.renderAtomicForRole = function renderAtomicForRole(comp, rect) {
 
     case 'dot-icon-orange-badge-1x1': {
       var iv = (comp && comp.variant) || {};
-      var src = iv.src || '/assets/dot-icons/orange-badge.svg';
+      var src = iv.src || TEST2_ORB_SPARKLE_SRC;
       return '' +
         '<div class="dot-card dot-icon11 dot-icon11--orange" data-state="' + (iv.state || 'idle') + '">' +
-          '<div class="dot-icon11__grad" aria-hidden="true"></div>' +
-          '<img class="dot-icon11__layer dot-icon11__layer--from" src="' + src + '" alt="" />' +
-          '<div class="dot-icon11__layer dot-icon11__layer--to" aria-hidden="true">' +
-            '<svg class="dot-icon11__dotsSvg" width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
-              '<circle class="dot-icon11__waveDot dot-icon11__waveDot--a" cx="7.5" cy="36.5" r="2.5" fill="white"/>' +
-              '<circle class="dot-icon11__waveDot dot-icon11__waveDot--b" cx="14.5" cy="36.5" r="2.5" fill="white"/>' +
-              '<circle class="dot-icon11__waveDot dot-icon11__waveDot--c" cx="21.5" cy="36.5" r="2.5" fill="white"/>' +
-              '<ellipse class="dot-icon11__waveDot dot-icon11__waveDot--d" cx="35.5" cy="36" rx="2.5" ry="5" fill="white"/>' +
-              '<ellipse class="dot-icon11__waveDot dot-icon11__waveDot--b" cx="35.5" cy="27" rx="2.5" ry="3" fill="white"/>' +
-              '<ellipse class="dot-icon11__waveDot dot-icon11__waveDot--a" cx="42.5" cy="28" rx="1.5" ry="2" fill="white"/>' +
-              '<ellipse class="dot-icon11__waveDot dot-icon11__waveDot--c" cx="49.5" cy="31" rx="1.5" ry="2" fill="white"/>' +
-              '<ellipse class="dot-icon11__waveDot dot-icon11__waveDot--d" cx="28.5" cy="28" rx="1.5" ry="2" fill="white"/>' +
-              '<ellipse class="dot-icon11__waveDot dot-icon11__waveDot--b" cx="21.5" cy="31" rx="1.5" ry="2" fill="white"/>' +
-              '<ellipse class="dot-icon11__waveDot dot-icon11__waveDot--a" cx="42.5" cy="43" rx="1.5" ry="2" fill="white"/>' +
-              '<ellipse class="dot-icon11__waveDot dot-icon11__waveDot--c" cx="28.5" cy="43" rx="1.5" ry="2" fill="white"/>' +
-              '<ellipse class="dot-icon11__waveDot dot-icon11__waveDot--d" cx="35.5" cy="45" rx="2.5" ry="3" fill="white"/>' +
-              '<ellipse class="dot-icon11__waveDot dot-icon11__waveDot--b" cx="42.5" cy="36" rx="2.5" ry="4" fill="white"/>' +
-              '<ellipse class="dot-icon11__waveDot dot-icon11__waveDot--c" cx="28.5" cy="36" rx="2.5" ry="4" fill="white"/>' +
-              '<circle class="dot-icon11__waveDot dot-icon11__waveDot--a" cx="35.5" cy="20.5" r="2.5" fill="white"/>' +
-              '<circle class="dot-icon11__waveDot dot-icon11__waveDot--d" cx="35.5" cy="15.5" r="1.5" fill="white"/>' +
-              '<circle class="dot-icon11__waveDot dot-icon11__waveDot--c" cx="35.5" cy="56.5" r="1.5" fill="white"/>' +
-              '<circle class="dot-icon11__waveDot dot-icon11__waveDot--b" cx="35.5" cy="51.5" r="2.5" fill="white"/>' +
-              '<circle class="dot-icon11__waveDot dot-icon11__waveDot--a" cx="49.5" cy="36.5" r="2.5" fill="white"/>' +
-              '<circle class="dot-icon11__waveDot dot-icon11__waveDot--b" cx="56.5" cy="36.5" r="2.5" fill="white"/>' +
-              '<circle class="dot-icon11__waveDot dot-icon11__waveDot--c" cx="63.5" cy="36.5" r="2.5" fill="white"/>' +
-            '</svg>' +
-          '</div>' +
+          renderTest2OrangeOrbInnerHtml(src) +
         '</div>';
     }
 
@@ -5210,32 +6033,54 @@ window.renderAtomicForRole = function renderAtomicForRole(comp, rect) {
       var w2 = (comp && comp.variant) || {};
       if (w2.partyPill) {
         var pl = w2.partyPill;
-        var plTitle = pl.title || '러닝 파티 모드';
-        var plSub = pl.subtitle || '실시간 경로 수정 중';
-        var plExpandTitle = pl.expandTitle || plTitle;
-        var plExpandBody = pl.expandBody || plSub;
+        var plTitle = pl.title || '목표 페이스';
+        var plSub = pl.subtitle || '7\'00"/KM';
+        var plStats = (pl.stats && pl.stats.length) ? pl.stats : [
+          { type: 'run', label: '달리기' },
+          { type: 'level', value: '6', label: '러닝레벨' },
+          { type: 'energy', value: '86', label: '에너지' }
+        ];
+        var plLoadSpinHtml =
+          '<div class="dot-w21__pillLoadSpin" aria-hidden="true"></div>';
         var plIconHtml =
           '<div class="dot-w21__pillIcon" aria-hidden="true">' +
-            '<span class="dot-w21__pillIconBg"></span>' +
-            '<img class="dot-w21__pillIconMark" src="/assets/test3-running-icon.svg" alt="" aria-hidden="true">' +
+            '<img class="dot-w21__pillIconImg" src="/assets/test3/test3-party-pace-icon.png" alt="" aria-hidden="true">' +
           '</div>';
+        var plCopyHtml =
+          '<div class="dot-w21__pillCopy">' +
+            '<div class="dot-w21__pillTitle">' + plTitle + '</div>' +
+            '<div class="dot-w21__pillSub">' + plSub + '</div>' +
+          '</div>';
+        var plStatHtml = '';
+        for (var psi = 0; psi < plStats.length; psi++) {
+          var ps = plStats[psi];
+          var psType = ps.type || 'run';
+          var psLabel = ps.label || '';
+          plStatHtml +=
+            '<div class="dot-w21__statBadge dot-w21__statBadge--' + psType + '">';
+          if (psType === 'run') {
+            plStatHtml +=
+              '<img class="dot-w21__statBadgeIcon" src="/assets/test3-party-stat-run.svg" alt="" aria-hidden="true">';
+          } else {
+            plStatHtml += '<div class="dot-w21__statBadgeValue">' + (ps.value || '') + '</div>';
+          }
+          plStatHtml += '<div class="dot-w21__statBadgeLabel">' + psLabel + '</div></div>';
+        }
         var plCompactHtml =
           '<div class="dot-w21__compact" aria-hidden="false">' +
             '<div class="dot-w21__pillRow">' +
-              '<div class="dot-w21__pillCopy">' +
-                '<div class="dot-w21__pillTitle">' + plTitle + '</div>' +
-                '<div class="dot-w21__pillSub">' + plSub + '</div>' +
-              '</div>' +
+              plLoadSpinHtml +
               plIconHtml +
+              plCopyHtml +
             '</div>' +
           '</div>';
         var plExpandedHtml =
           '<div class="dot-w21__expanded" aria-hidden="true">' +
-            '<div class="dot-w21__pillCopy">' +
-              '<div class="dot-w21__pillTitle">' + plExpandTitle + '</div>' +
-              '<div class="dot-w21__pillBody">' + String(plExpandBody).replace(/\n/g, '<br/>') + '</div>' +
-            '</div>' +
             plIconHtml +
+            '<div class="dot-w21__expandedBody">' +
+              plCopyHtml +
+              '<div class="dot-w21__statRow">' + plStatHtml + '</div>' +
+            '</div>' +
           '</div>';
         return '' +
           '<div class="dot-card dot-w21 dot-w21--party-pill dot-w21--expandable" data-state="' + (w2.state || 'idle') + '">' +
@@ -5733,6 +6578,289 @@ window.renderAtomicForRole = function renderAtomicForRole(comp, rect) {
       '</div>';
     }
 
+    case 'test1-now-bar': {
+      return '<img class="test1-now-bar" src="/test1-now-bar.svg" alt="" draggable="false" />';
+    }
+
+    case 'test1-now-bar-b': {
+      return '<img class="test1-now-bar-b" src="/test1-now-bar-2.svg" alt="" draggable="false" />';
+    }
+
+    case 'test1-assist-pill': {
+      return '<div class="test1-assist-pill-wrap">' +
+        '<div class="test1-assist-pill-stage">' +
+          '<span class="test1-assist-pill-shell" aria-hidden="true"></span>' +
+          '<div class="test1-assist-pill-body">' +
+            '<svg class="test1-assist-pill-svg" viewBox="0 0 98 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+              '<rect class="test1-assist-pill-bg" width="97.5364" height="27.6699" rx="13.835" fill="#155E75"/>' +
+              '<g class="test1-assist-pill-icon test1-assist-pill-icon--1">' +
+                '<path fill-rule="evenodd" clip-rule="evenodd" d="M10.2584 16.3014L11.426 15.4394H11.4298L11.8942 17.8988L10.2584 16.3014ZM15.3574 12.0561C15.7556 12.0561 15.8218 11.1257 15.8328 10.8201C15.835 10.7653 15.8087 10.7045 15.7643 10.6722C15.6417 10.5824 15.6548 10.4712 15.6543 10.2916C15.6543 10.2741 15.6537 10.256 15.6537 10.2369L15.663 10.0096L15.6718 9.81956C15.674 9.57094 15.5929 9.33545 15.456 9.1279V9.12681C15.2983 8.88694 15.0245 8.68377 14.7173 8.5381C14.6148 8.48991 14.5092 8.44829 14.4024 8.41324C14.2485 8.36888 14.0858 8.34424 13.9177 8.34424C12.9517 8.34424 12.1691 9.12735 12.1691 10.0934C12.1691 10.187 12.1768 10.2796 12.191 10.3699C12.2036 10.4302 12.2179 10.491 12.2359 10.5523C12.289 10.733 12.3701 10.8968 12.4588 11.0528H11.9583C11.3942 11.0682 10.8471 11.296 10.4419 11.7023L9.91451 12.2302C9.83784 12.3036 9.61933 12.526 9.37235 12.2439L9.61934 12.526C10.0728 13.0654 10.886 13.0895 11.3696 12.578L12.57 11.2396C12.6297 11.3387 12.6899 11.4373 12.7452 11.5353L12.7688 11.578C12.7912 11.6191 12.8131 11.6607 12.8328 11.7029C12.9654 11.9811 12.9845 12.4082 12.8701 12.7812C12.7507 12.751 12.628 12.7352 12.5054 12.7352C12.4156 12.7352 12.3257 12.7434 12.237 12.7604C12.1582 12.7751 12.0881 12.7943 12.0311 12.8184C11.8066 12.9005 11.6122 13.0309 11.4676 13.1881L8.93479 15.8802C8.57445 16.2285 8.63743 16.8243 9.05582 17.0993L11.1894 18.6512C11.6363 18.9251 12.1587 19.1846 12.6483 19.2799C12.9347 19.3101 13.226 19.3259 13.5223 19.3259C14.1143 19.3259 14.6888 19.2646 15.237 19.1501C15.3246 19.1211 15.4637 19.0664 15.6307 18.9787V18.9815C15.6439 18.9738 15.6586 18.9645 15.6729 18.9563C15.6866 18.9486 15.6992 18.9426 15.7134 18.9349V18.9322C15.8689 18.8391 16.0414 18.7203 16.2194 18.5647L17.9171 16.8134C18.0124 16.7165 18.0814 16.6414 18.1334 16.5746C18.2254 16.4854 18.2823 16.3616 18.2823 16.2241V15.3331C18.2823 15.3123 18.2807 15.2932 18.2791 15.2745C18.278 15.2647 18.2763 15.2548 18.2747 15.245L18.2698 15.2225C18.267 15.2121 18.2643 15.2017 18.2615 15.1913C18.1761 14.9257 17.859 14.9043 17.859 14.9043C17.8541 14.9038 17.8492 14.9038 17.8453 14.9038C17.8004 14.9038 17.7539 14.912 17.7062 14.9257C17.4735 14.9931 17.2287 15.1918 17.2199 15.1984L17.2188 15.199C17.1088 15.2888 17.0381 15.4246 17.0381 15.5768L17.1602 16.2241C17.1602 16.2723 17.1674 16.3178 17.1805 16.3616L15.7134 17.4673V17.1321L15.6548 14.964L15.6526 14.9668C15.5874 14.1639 14.674 13.4389 14.6148 13.3929L14.8744 12.0561H15.3574Z" fill="white"/>' +
+              '</g>' +
+              '<g class="test1-assist-pill-icon test1-assist-pill-icon--2">' +
+                '<path fill-rule="evenodd" clip-rule="evenodd" d="M33.5466 17.6281C32.4098 17.6281 31.3972 17.1006 30.7378 16.278C31.0256 14.9914 32.1734 14.0293 33.5466 14.0293C34.9196 14.0293 36.0676 14.9914 36.3551 16.278C35.6958 17.1006 34.6834 17.6281 33.5466 17.6281ZM33.5371 10.4562C34.2717 10.4562 34.8669 11.0516 34.8669 11.7861C34.8669 12.5205 34.2717 13.1162 33.5371 13.1162C32.8024 13.1162 32.207 12.5205 32.207 11.7861C32.207 11.0516 32.8024 10.4562 33.5371 10.4562ZM33.5468 8.35864C30.5221 8.35864 28.0703 10.8105 28.0703 13.835C28.0703 16.8596 30.5221 19.3113 33.5468 19.3113C36.5712 19.3113 39.023 16.8596 39.023 13.835C39.023 10.8105 36.5712 8.35864 33.5468 8.35864Z" fill="white"/>' +
+              '</g>' +
+              '<g class="test1-assist-pill-icon test1-assist-pill-icon--3">' +
+                '<path d="M58.979 12.7624H58.5378V12.7397H53.6091V14.9302H56.7041C56.2526 16.2054 55.0393 17.1208 53.6091 17.1208C51.7946 17.1208 50.3233 15.6496 50.3233 13.835C50.3233 12.0204 51.7946 10.5492 53.6091 10.5492C54.4468 10.5492 55.2088 10.8652 55.789 11.3813L57.338 9.83232C56.3599 8.92079 55.0516 8.35864 53.6091 8.35864C50.5848 8.35864 48.1328 10.8107 48.1328 13.835C48.1328 16.8593 50.5848 19.3113 53.6091 19.3113C56.6335 19.3113 59.0855 16.8593 59.0855 13.835C59.0855 13.4678 59.0477 13.1094 58.979 12.7624Z" fill="white"/>' +
+                '<path d="M48.7656 11.286L50.5649 12.6055C51.0517 11.4002 52.2308 10.5492 53.6105 10.5492C54.4481 10.5492 55.2102 10.8652 55.7904 11.3813L57.3394 9.83232C56.3613 8.92079 55.053 8.35864 53.6105 8.35864C51.5071 8.35864 49.6829 9.54619 48.7656 11.286Z" fill="white"/>' +
+                '<path d="M53.6097 19.3113C55.0242 19.3113 56.3095 18.77 57.2813 17.8897L55.5864 16.4554C55.0365 16.8719 54.3531 17.1208 53.6097 17.1208C52.1853 17.1208 50.9758 16.2126 50.5202 14.9451L48.7344 16.321C49.6407 18.0945 51.4813 19.3113 53.6097 19.3113Z" fill="white"/>' +
+                '<path d="M58.9792 12.7625H58.5381V12.7397H53.6094V14.9303H56.7043C56.4875 15.5428 56.0934 16.071 55.5852 16.4557L55.5861 16.4552L57.281 17.8894C57.1611 17.9984 59.0857 16.5732 59.0857 13.835C59.0857 13.4678 59.0479 13.1094 58.9792 12.7625Z" fill="white"/>' +
+              '</g>' +
+              '<g class="test1-assist-pill-icon test1-assist-pill-icon--4">' +
+                '<rect x="67.0977" y="5.53394" width="23.5194" height="16.6019" rx="8.30097" fill="white"/>' +
+                '<path d="M71.7193 17L71.7013 16.1727L73.9494 14.0144C74.5969 13.3669 74.9297 12.9892 74.9386 12.4497C74.9297 11.8562 74.462 11.4875 73.8415 11.4785C73.1851 11.4875 72.7624 11.8921 72.7624 12.5396H71.6833C71.6743 11.3346 72.5826 10.5522 73.8595 10.5612C75.1455 10.5522 76.0268 11.3256 76.0358 12.3957C76.0268 13.1151 75.676 13.6997 74.4351 14.8777L73.302 15.9928V16.0468H76.1257V17H71.7193ZM76.8713 15.813V14.8957L79.6231 10.6332H81.0439V14.8777H81.8713V15.813H81.0439V17H79.9468V15.813H76.8713ZM78.0404 14.8777H79.9648V11.9461H79.9108L78.0404 14.8238V14.8777ZM84.6813 15.9748V14.3202H83.0267V13.349H84.6813V11.6763H85.6526V13.349H87.3252V14.3202H85.6526V15.9748H84.6813Z" fill="black"/>' +
+              '</g>' +
+            '</svg>' +
+          '</div>' +
+        '</div>' +
+        '</div>';
+    }
+
+    case 'test1-transit-card': {
+      return '<div class="test1-transit-card">' +
+        '<img class="test1-transit-card__svg" src="/test1-transit-card.svg?v=solid-green-1" alt="" draggable="false" aria-hidden="true" />' +
+      '</div>';
+    }
+
+    case 'test1-gradient-sweep': {
+      var sweepShape = (comp && comp.variant && comp.variant.sweepShape) || 'bar';
+      return '<div class="test1-gradient-sweep test1-gradient-sweep--' + sweepShape + '" aria-hidden="true">' +
+        '<div class="test1-gradient-sweep__glass">' +
+          '<div class="test1-gradient-sweep__track test1-gradient-sweep__track--1"></div>' +
+          '<div class="test1-gradient-sweep__track test1-gradient-sweep__track--2"></div>' +
+          '<div class="test1-gradient-sweep__track test1-gradient-sweep__track--3"></div>' +
+        '</div>' +
+      '</div>';
+    }
+
+    case 'test1-lock-shortcut-l': {
+      return '<div class="test1-lock-shortcut-l">' +
+        '<div class="test1-lock-shortcut-l__disc" aria-hidden="true">' +
+          '<svg class="test1-lock-shortcut-l__glyph" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+            '<path d="M5 4h3l2 5-2.5 1.5a11 11 0 0 0 5 5L14 13l5 2v3a2 2 0 0 1-2 2 17 17 0 0 1-16-16 2 2 0 0 1 2-2z" fill="#FFFFFF"/>' +
+          '</svg>' +
+        '</div>' +
+      '</div>';
+    }
+
+    case 'test1-lock-shortcut-r': {
+      return '<div class="test1-lock-shortcut-r">' +
+        '<div class="test1-lock-shortcut-r__disc" aria-hidden="true">' +
+          '<svg class="test1-lock-shortcut-r__glyph" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+            '<path d="M4 7h3l2-2h6l2 2h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z" stroke="#FFFFFF" stroke-width="1.6" fill="none"/>' +
+            '<circle cx="12" cy="13" r="3.5" stroke="#FFFFFF" stroke-width="1.6" fill="none"/>' +
+          '</svg>' +
+        '</div>' +
+      '</div>';
+    }
+
+    case 'test1-lock-stack': {
+      var tlsWeather = window.renderAtomicForRole(
+        { role: 'weatherDate', variant: { date: 'Sat, May 3', temp: 24, condition: 'moon' } },
+        { w: 173, h: 20 }
+      );
+      var tlsClock = window.renderAtomicForRole(
+        { role: 'clock', variant: { HH: '03', MM: '23', fontSize: 73, lineHeight: 54, gap: 10 } },
+        { w: 173, h: 120 }
+      );
+      var tlsWidgets = window.renderAtomicForRole({ role: 'lock-widgets' }, { w: 236, h: 50 });
+      return '<div class="test1-lock-stack">' +
+        '<div class="test1-lock-stack__clock">' + tlsWeather + tlsClock + '</div>' +
+        '<div class="test1-lock-stack__widgets">' + tlsWidgets + '</div>' +
+      '</div>';
+    }
+
+    case 'test1-bottom-pill': {
+      return '<div class="test1-bottom-pill" aria-hidden="true">' +
+        '<div class="test1-bottom-pill__bg">' +
+          '<div class="test1-bottom-pill__bg-base"></div>' +
+          '<div class="test1-bottom-pill__bg-blue"></div>' +
+          '<div class="test1-bottom-pill__bg-blue-cover"></div>' +
+          '<div class="test1-bottom-pill__grad-sweep test1-bottom-pill__grad-sweep--pre">' +
+            '<div class="test1-bottom-pill__grad-sweep-track test1-bottom-pill__grad-sweep-track--1"></div>' +
+            '<div class="test1-bottom-pill__grad-sweep-track test1-bottom-pill__grad-sweep-track--2"></div>' +
+            '<div class="test1-bottom-pill__grad-sweep-track test1-bottom-pill__grad-sweep-track--3"></div>' +
+          '</div>' +
+          '<div class="test1-bottom-pill__grad-sweep">' +
+            '<div class="test1-bottom-pill__grad-sweep-track test1-bottom-pill__grad-sweep-track--1"></div>' +
+            '<div class="test1-bottom-pill__grad-sweep-track test1-bottom-pill__grad-sweep-track--2"></div>' +
+            '<div class="test1-bottom-pill__grad-sweep-track test1-bottom-pill__grad-sweep-track--3"></div>' +
+          '</div>' +
+        '</div>' +
+        '<svg class="test1-bottom-pill__svg" viewBox="0 0 200 53" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+          '<defs>' +
+            '<style>' +
+              '@font-face{font-family:\'Pretendard B\';src:url(\'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/packages/pretendard/dist/web/static/woff2/Pretendard-Bold.woff2\') format(\'woff2\');font-weight:700;font-style:normal;}' +
+              '.test1-bottom-pill__text--b,.test1-bottom-pill__text--b tspan{font-family:\'Pretendard B\',sans-serif;font-weight:700;font-synthesis:none;}' +
+            '</style>' +
+          '</defs>' +
+          '<g class="test1-bottom-pill__icon-wrap">' +
+            '<circle class="test1-bottom-pill__icon" cx="26.2791" cy="26.2791" r="19.2713" fill="#155E75"/>' +
+            '<foreignObject x="7.0078" y="7.0078" width="38.5426" height="38.5426">' +
+              '<div xmlns="http://www.w3.org/1999/xhtml" class="test1-bottom-pill__ai-logo-slot">' +
+                '<canvas class="test1-bottom-pill__ai-logo"></canvas>' +
+              '</div>' +
+            '</foreignObject>' +
+            '<circle class="test1-bottom-pill__icon-ring" cx="26.2791" cy="26.2791" r="19.2713" fill="none" stroke="#FFFFFF" stroke-width="0.93"/>' +
+          '</g>' +
+          '<g class="test1-bottom-pill__text-stage">' +
+              '<g class="test1-bottom-pill__text-b-slot"></g>' +
+              '<g class="test1-bottom-pill__text-a-stage">' +
+              '<foreignObject x="56" y="10" width="140" height="38" class="test1-bottom-pill__text-a-fo">' +
+                '<div xmlns="http://www.w3.org/1999/xhtml" class="test1-bottom-pill__text-a-shiny">' +
+                  '<span class="test1-bottom-pill__text-a-shiny-line">귀가 후 저녁 준비</span>' +
+                  '<span class="test1-bottom-pill__text-a-shiny-line">화면 구성 중</span>' +
+                '</div>' +
+              '</foreignObject>' +
+            '</g>' +
+          '</g>' +
+        '</svg>' +
+        '<div class="test1-bottom-pill__text-sweep">' +
+          '<div class="test1-bottom-pill__text-sweep-track test1-bottom-pill__text-sweep-track--reveal"></div>' +
+          '<div class="test1-bottom-pill__text-sweep-track test1-bottom-pill__text-sweep-track--1"></div>' +
+          '<div class="test1-bottom-pill__text-sweep-track test1-bottom-pill__text-sweep-track--2"></div>' +
+          '<div class="test1-bottom-pill__text-sweep-track test1-bottom-pill__text-sweep-track--3"></div>' +
+        '</div>' +
+      '</div>';
+    }
+
+    case 'test1-app-dock': {
+      var test1DockIcons = [
+        { src: '/assets/test1/home/dock/messages.png', label: 'Messages' },
+        { src: '/assets/test1/home/dock/camera.png', label: 'Camera' },
+        { src: '/assets/test1/home/dock/notes.png', label: 'Notes' },
+        { src: '/assets/test1/home/dock/maps.png', label: 'Maps' }
+      ];
+      return '<div class="test1-app-dock" aria-hidden="true">' +
+        test1DockIcons.map(function (icon) {
+          return '<img class="test1-app-dock__icon" src="' + icon.src + '" alt="" draggable="false" />';
+        }).join('') +
+      '</div>';
+    }
+
+    case 'test1-home-header': {
+      return '<div class="test1-home-header">' +
+        '<div class="test1-home-header__title">장을 보고 돌아오는 중이에요</div>' +
+        '<div class="test1-home-header__sub">저녁 준비를 돕는 화면을 구성했습니다</div>' +
+      '</div>';
+    }
+
+    case 'test1-home-map': {
+      return '<div class="test1-home-widget test1-home-map">' +
+        '<div class="test1-home-widget__bg" aria-hidden="true"></div>' +
+        '<div class="test1-home-widget__veil" aria-hidden="true">' +
+          '<div class="test1-home-widget__veil-gl p2-agent-fill">' +
+            '<canvas class="test1-home-widget__veil-gl-canvas p2-agent-fill__gl"></canvas>' +
+          '</div>' +
+          '<span class="test1-home-widget__veil-base"></span>' +
+          '<span class="test1-home-widget__veil-edge"></span>' +
+        '</div>' +
+        '<div class="test1-home-widget__inner">' +
+          '<div class="test1-home-map__top">' +
+            '<span class="test1-home-widget__chip test1-home-widget__chip--map"><img class="test1-home-widget__chip-icon" src="/assets/test1/home/naver-map-icon.png" alt="" draggable="false" />네이버지도</span>' +
+            '<img class="test1-home-map__bus" src="/assets/test1/home/naver-map-bus.png" alt="" draggable="false" />' +
+          '</div>' +
+          '<div class="test1-home-map__body">' +
+            '<div class="test1-home-map__copy">' +
+              '<div class="test1-home-map__time"><span class="test1-home-map__time-num">5</span><span class="test1-home-map__time-unit">분 뒤</span></div>' +
+              '<p class="test1-home-map__sub">진천청구타운 앞 하차</p>' +
+            '</div>' +
+            '<div class="test1-home-map__bottom">' +
+              '<div class="test1-home-map__progress">' +
+                '<div class="test1-home-map__track"></div>' +
+                '<div class="test1-home-map__fill"></div>' +
+                '<div class="test1-home-map__thumb"><img src="/assets/test1/home/send-arrow.png" alt="" draggable="false" /></div>' +
+              '</div>' +
+              '<p class="test1-home-widget__action">안내 종료</p>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }
+
+    case 'test1-home-message': {
+      return '<div class="test1-home-widget test1-home-message">' +
+        '<div class="test1-home-widget__bg" aria-hidden="true"></div>' +
+        '<div class="test1-home-widget__veil" aria-hidden="true">' +
+          '<div class="test1-home-widget__veil-gl p2-agent-fill">' +
+            '<canvas class="test1-home-widget__veil-gl-canvas p2-agent-fill__gl"></canvas>' +
+          '</div>' +
+          '<span class="test1-home-widget__veil-base"></span>' +
+          '<span class="test1-home-widget__veil-edge"></span>' +
+        '</div>' +
+        '<div class="test1-home-widget__inner">' +
+          '<div class="test1-home-message__top">' +
+            '<span class="test1-home-widget__chip"><img class="test1-home-widget__chip-icon" src="/assets/test1/home/message-icon.png" alt="" draggable="false" />메시지</span>' +
+            '<img class="test1-home-message__avatar" src="/assets/test1/home/daughter-avatar.png" alt="" draggable="false" />' +
+          '</div>' +
+          '<div class="test1-home-message__copy">' +
+            '<p class="test1-home-message__title">우리 딸에게 답장</p>' +
+            '<p class="test1-home-message__sub">AI 제안 메시지</p>' +
+          '</div>' +
+          '<div class="test1-home-message__bubble">' +
+            '<p>I\'m on my way.</p><p>Dinner in 20 min?</p>' +
+          '</div>' +
+          '<p class="test1-home-widget__action">보내기</p>' +
+        '</div>' +
+      '</div>';
+    }
+
+    case 'test1-home-food': {
+      var foodRow = function (thumbSrc, title, sub) {
+        return '<div class="test1-home-food__row">' +
+          '<span class="test1-home-food__thumb">' +
+            '<img class="test1-home-food__thumb-img" src="' + thumbSrc + '" alt="" draggable="false" />' +
+          '</span>' +
+          '<div class="test1-home-food__copy">' +
+            '<p class="test1-home-food__title">' + title + '</p>' +
+            '<p class="test1-home-food__sub">' + sub + '</p>' +
+          '</div>' +
+          '<span class="test1-home-food__chev" aria-hidden="true"><img src="/assets/test1/home/food-row-chev.png" alt="" draggable="false" /></span>' +
+        '</div>';
+      };
+      return '<div class="test1-home-widget test1-home-food">' +
+        '<div class="test1-home-widget__bg" aria-hidden="true"></div>' +
+        '<div class="test1-home-widget__veil" aria-hidden="true">' +
+          '<div class="test1-home-widget__veil-gl p2-agent-fill">' +
+            '<canvas class="test1-home-widget__veil-gl-canvas p2-agent-fill__gl"></canvas>' +
+          '</div>' +
+          '<span class="test1-home-widget__veil-base"></span>' +
+          '<span class="test1-home-widget__veil-edge"></span>' +
+        '</div>' +
+        '<div class="test1-home-widget__inner">' +
+          '<span class="test1-home-widget__chip test1-home-widget__chip--food"><img class="test1-home-widget__chip-icon" src="/assets/test1/home/smartthings-icon.png" alt="" draggable="false" />SmartThings Food</span>' +
+          '<div class="test1-home-food__head">' +
+            '<p class="test1-home-food__headline">구수한 두부 된장찌개</p>' +
+            '<p class="test1-home-food__desc">냉장고 속 식재료로 저녁 메뉴를 추천합니다</p>' +
+          '</div>' +
+          '<div class="test1-home-food__rows">' +
+            foodRow('/assets/test1/home/food-tofu.png', '두부', '오늘 구매한 식재료') +
+            foodRow('/assets/test1/home/food-zucchini.png', '애호박', '보관 4일째 · 우선 사용') +
+            foodRow('/assets/test1/home/food-onion.png', '대파', '신선칸 보관 중') +
+          '</div>' +
+          '<div class="test1-home-food__actions">' +
+            '<button type="button" class="test1-home-food__btn test1-home-food__btn--alt">다른 메뉴 추천</button>' +
+            '<button type="button" class="test1-home-food__btn">레시피 보기</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }
+
+    case 'test1-page-dots': {
+      return '<div class="test1-page-dots">' +
+        '<span class="test1-page-dots__dot"></span>' +
+        '<span class="test1-page-dots__dot test1-page-dots__dot--active"></span>' +
+        '<span class="test1-page-dots__dot"></span>' +
+        '<span class="test1-page-dots__dot"></span>' +
+      '</div>';
+    }
+
+    case 'test1-lock-shortcut-asset': {
+      var t1Asset = (comp && comp.variant) || {};
+      var t1Src = t1Asset.src || '/Phone.png';
+      var t1Alt = t1Asset.alt || '';
+      return '<img class="test1-lock-shortcut-asset" src="' + t1Src + '" alt="' + t1Alt + '" draggable="false" />';
+    }
+
     case 'unlock-hint': {
       // "Swipe up to unlock" text with optional up-chevron above. Centered
       // at the bottom of the lock screen, just above the shortcut row.
@@ -6042,18 +7170,13 @@ window.renderAtomicForRole = function renderAtomicForRole(comp, rect) {
       if (window.__mlpTestConfig && window.__mlpTestConfig.id === 'test2') {
         return '<div class="p2-widgets p2-widgets--compact" style="position:relative; width:100%; height:240px;">' +
           '<div id="p2-area" class="p2-agent-shell" style="position:absolute; top:0; left:24px; right:24px; height:148px; overflow:hidden;">' +
-            '<div class="p2-agent-fill" aria-hidden="true">' +
-              '<canvas class="p2-agent-fill__gl"></canvas>' +
-              '<div class="p2-agent-fill__edge" aria-hidden="true"></div>' +
-              '<div class="p2-agent-fill__edge-inner" aria-hidden="true"></div>' +
-              '<div class="p2-agent-fill__bloom"></div>' +
-              '<div class="p2-agent-fill__mist"></div>' +
-              '<div class="p2-agent-fill__wave"></div>' +
-            '</div>' +
+            '<div class="p2-agent-shell__edge" aria-hidden="true"></div>' +
+            '<div class="p2-agent-shell__edge-inner" aria-hidden="true"></div>' +
             '<div id="p2-default-widgets" class="p2-agent-main" style="position:relative; width:100%; flex:1; min-height:0; transition:opacity 0.4s ease;">' +
               '<div id="p2-result" class="p2-dark p2-obc-host p2-agent-card" style="position:absolute; inset:0; background:transparent; border-radius:36px; padding:0; box-sizing:border-box; overflow:hidden;">' +
                 '<div class="p2-result-loading" aria-hidden="true">' +
                   '<div class="p2-result-loading__bg"></div>' +
+                  '<div class="p2-result-loading__border-sweep" aria-hidden="true"></div>' +
                   '<div class="p2-result-loading__shimmer"></div>' +
                   '<div class="p2-result-loading__content">' +
                     '<div class="p2-result-loading__head">' +
@@ -6062,11 +7185,9 @@ window.renderAtomicForRole = function renderAtomicForRole(comp, rect) {
                       '<div class="p2-result-loading__sub" aria-hidden="true"></div>' +
                     '</div>' +
                     '<div class="p2-result-loading__footer">' +
-                      '<div class="p2-result-loading__input">업무용 연락 정리해줘</div>' +
+                      '<div class="p2-result-loading__input"><span class="p2-input-text">놓친 보고서 요약해줘</span></div>' +
                       '<div class="p2-result-loading__icon" aria-hidden="true">' +
-                        '<div class="p2-loading-dots">' +
-                          '<span></span><span></span><span></span><span></span><span></span>' +
-                        '</div>' +
+                        '<canvas class="p2-galaxy-star__canvas p2-galaxy-star__canvas--loading" width="112" height="112" aria-hidden="true"></canvas>' +
                       '</div>' +
                     '</div>' +
                   '</div>' +
@@ -6081,9 +7202,20 @@ window.renderAtomicForRole = function renderAtomicForRole(comp, rect) {
             '</div>' +
             '<div id="p2-slot" class="p2-agent-slot" style="opacity:0; pointer-events:none; overflow:hidden;"></div>' +
             '<div class="p2-agent-footer">' +
-              '<div class="p2-agent-input">업무용 연락 정리해줘</div>' +
-              '<button id="p2-star" type="button" aria-label="AI Voice">' +
-                window.renderAtomicForRole({ role: 'dot-icon-orange-badge-1x1' }, { w: 56, h: 56 }) +
+              '<div class="p2-agent-input">' +
+                '<div class="p2-agent-fill" aria-hidden="true">' +
+                  '<canvas class="p2-agent-fill__gl"></canvas>' +
+                  '<div class="p2-agent-fill__edge" aria-hidden="true"></div>' +
+                  '<div class="p2-agent-fill__edge-inner" aria-hidden="true"></div>' +
+                  '<div class="p2-agent-fill__bloom"></div>' +
+                  '<div class="p2-agent-fill__mist"></div>' +
+                  '<div class="p2-agent-fill__wave"></div>' +
+                '</div>' +
+                '<span class="p2-input-text">놓친 보고서 요약해줘</span>' +
+              '</div>' +
+              '<button id="p2-star" type="button" aria-label="AI Voice" class="p2-galaxy-star-btn">' +
+                '<span class="p2-galaxy-star__grad" aria-hidden="true"></span>' +
+                '<canvas class="p2-galaxy-star__canvas" width="112" height="112" aria-hidden="true"></canvas>' +
               '</button>' +
             '</div>' +
           '</div>' +
@@ -6560,88 +7692,272 @@ function _upgradeTest3GoalMapSeed(soft) {
   _pinTest3GoalMapPulseCenter(seedEl);
   return seedEl;
 }
-function _triggerTest3GoalUnifiedEnter(goalEl) {
+function   _triggerTest3GoalUnifiedEnter(goalEl) {
   if (!goalEl || !goalEl.isConnected) return;
   if (goalEl.classList.contains('test3-goal-copy-enter')) return;
   if (!goalEl.classList.contains('test3-goal-enter-ready')) return;
 
-  goalEl.removeAttribute('data-test3-goal-map-hold');
+  goalEl.style.borderRadius = '35px';
+  var goalShell = goalEl.querySelector('.dot-goal');
+  if (goalShell) {
+    goalShell.style.borderRadius = '35px';
+  }
 
-  if (typeof _upgradeTest3GoalMapSeed === 'function') {
-    _upgradeTest3GoalMapSeed(true);
+  goalEl.removeAttribute('data-test3-goal-map-hold');
+  goalEl.removeAttribute('data-test3-goal-copy-reveal');
+  goalEl.removeAttribute('data-test3-goal-content-ready');
+  if (goalEl.__test3GoalContentRevealTimer) {
+    clearTimeout(goalEl.__test3GoalContentRevealTimer);
+    goalEl.__test3GoalContentRevealTimer = null;
+  }
+  var themeOverlay = goalEl.querySelector('.dot-goal__theme-overlay');
+  if (themeOverlay) {
+    themeOverlay.style.removeProperty('opacity');
+    themeOverlay.style.removeProperty('animation');
+    themeOverlay.style.removeProperty('transition');
   }
 
   var mapEl = goalEl.querySelector('.dot-goal__map');
   if (mapEl) {
-    if (typeof _revealTest3GoalMapContentDuringBloom === 'function') {
-      _revealTest3GoalMapContentDuringBloom(goalEl, mapEl);
-    }
     mapEl.style.removeProperty('transform');
     mapEl.style.removeProperty('clip-path');
     mapEl.style.removeProperty('will-change');
+    var leafletEl = mapEl.querySelector('.dot-goal__map-leaflet');
+    if (leafletEl) {
+      leafletEl.style.opacity = '0';
+      leafletEl.style.visibility = 'hidden';
+    }
   }
 
-  var mapSlot = goalEl.querySelector('.dot-goal__map-slot');
-  if (mapSlot) {
-    mapSlot.style.removeProperty('opacity');
-    mapSlot.style.removeProperty('visibility');
-    mapSlot.style.removeProperty('transform');
-    mapSlot.style.removeProperty('animation');
-  }
-
-  var copies = goalEl.querySelectorAll('.dot-goal__title, .dot-goal__time, .dot-goal__distance');
-  copies.forEach(function (el) {
+  var innerEls = goalEl.querySelectorAll(
+    '.dot-goal__title, .dot-goal__time, .dot-goal__distance, .dot-goal__status, .dot-goal__location, .dot-goal__location-icon, .dot-goal__map-photo, .dot-goal__map-pin'
+  );
+  innerEls.forEach(function (el) {
     el.style.removeProperty('opacity');
     el.style.removeProperty('visibility');
     el.style.removeProperty('transform');
     el.style.removeProperty('animation');
   });
 
-  goalEl.classList.add('test3-goal-copy-enter');
+  var mapSlot = goalEl.querySelector('.dot-goal__map-slot');
+  if (mapSlot) {
+    mapSlot.style.removeProperty('opacity');
+    mapSlot.style.removeProperty('visibility');
+    mapSlot.style.removeProperty('transform');
+    mapSlot.style.removeProperty('transition');
+    mapSlot.style.removeProperty('animation');
+  }
+
+  /* Height + ivory shell expand together with map/copy (no empty shell hold). */
+  goalEl.classList.add('test3-goal-copy-enter', 'test3-goal-inner-rise');
+  if (typeof _showTest3GoalExpandedContent === 'function') {
+    _showTest3GoalExpandedContent(goalEl);
+  }
+  var darkMainEarly = goalEl.querySelector('.dot-goal__main--dark');
+  if (darkMainEarly) {
+    darkMainEarly.style.opacity = '0';
+    darkMainEarly.style.visibility = 'hidden';
+    darkMainEarly.style.pointerEvents = 'none';
+  }
   void goalEl.offsetWidth;
-  copies.forEach(function (el) { void el.offsetWidth; });
+  innerEls.forEach(function (el) { void el.offsetWidth; });
   if (mapSlot) void mapSlot.offsetWidth;
+  goalEl.style.height = TEST3_GOAL_H + 'px';
+  void goalEl.offsetWidth;
+  goalEl.__test3GoalContentRevealTimer = setTimeout(function () {
+    goalEl.__test3GoalContentRevealTimer = null;
+    try {
+      if (!goalEl.isConnected) return;
+      if (typeof _snapTest3GoalIvoryShell === 'function') {
+        _snapTest3GoalIvoryShell(goalEl);
+      }
+      requestAnimationFrame(function () {
+        try {
+          if (!goalEl.isConnected) return;
+          if (typeof _finalizeTest3GoalEntrance === 'function') {
+            _finalizeTest3GoalEntrance(goalEl);
+          }
+        } catch (_) {}
+      });
+    } catch (_) {}
+  }, TEST3_GOAL_CONTENT_REVEAL_MS);
+}
+function _snapTest3GoalIvoryShell(goalEl) {
+  if (!goalEl || !goalEl.isConnected) return;
+  var shell = goalEl.querySelector('.dot-goal');
+  var themeOverlay = goalEl.querySelector('.dot-goal__theme-overlay');
+  if (themeOverlay) {
+    themeOverlay.style.setProperty('opacity', '1', 'important');
+    themeOverlay.style.setProperty('visibility', 'visible', 'important');
+    themeOverlay.style.setProperty('animation', 'none', 'important');
+    themeOverlay.style.setProperty('transition', 'none', 'important');
+  }
+  if (shell) {
+    shell.style.setProperty('background-color', '#FFFCF4', 'important');
+    shell.style.setProperty('transition', 'none', 'important');
+    shell.style.setProperty('animation', 'none', 'important');
+  }
+}
+function _showTest3GoalExpandedContent(goalEl) {
+  if (!goalEl || !goalEl.isConnected) return;
+  if (goalEl.getAttribute('data-test3-goal-content-ready') === '1') return;
+  goalEl.setAttribute('data-test3-goal-content-ready', '1');
+  goalEl.setAttribute('data-test3-goal-copy-reveal', '1');
+  var mapEl = goalEl.querySelector('.dot-goal__map');
+  if (mapEl) {
+    var leafletEl = mapEl.querySelector('.dot-goal__map-leaflet');
+    if (leafletEl) {
+      leafletEl.style.opacity = '0';
+      leafletEl.style.visibility = 'hidden';
+    }
+  }
+  goalEl.querySelectorAll(
+    '.dot-goal__map-seed, .dot-goal__map-seed--handoff, .mlp-position-pulse, .mlp-map-compass'
+  ).forEach(function (el) {
+    el.style.opacity = '0';
+    el.style.visibility = 'hidden';
+    el.style.pointerEvents = 'none';
+  });
+  var revealEls = goalEl.querySelectorAll(
+    '.dot-goal__map-photo, .dot-goal__map-pin, .dot-goal__main--light .dot-goal__title, .dot-goal__main--light .dot-goal__status, .dot-goal__main--light .dot-goal__location, .dot-goal__main--light .dot-goal__location-icon, .dot-goal__main--light .dot-goal__location span'
+  );
+  revealEls.forEach(function (el) {
+    el.style.opacity = '1';
+    el.style.visibility = 'visible';
+    el.style.transform = 'none';
+    el.style.animation = 'none';
+    el.style.transition = 'none';
+  });
+}
+function _bindTest3GoalExpandClick() {
+  if (window.__mlpTest3GoalExpandClickBound) return;
+  window.__mlpTest3GoalExpandClickBound = true;
+  document.addEventListener('click', function (e) {
+    try {
+      var canvas = document.getElementById('canvas');
+      if (!canvas || canvas.getAttribute('data-test-scope') !== 'test3') return;
+      var goalEl = e.target && e.target.closest ? e.target.closest('#test3-goal') : null;
+      if (!goalEl) return;
+      if (goalEl.classList.contains('test3-goal-copy-enter') ||
+          goalEl.classList.contains('test3-goal-map-expanded') ||
+          goalEl.getAttribute('data-test3-goal-expanded') === '1') return;
+      if (!goalEl.classList.contains('test3-goal-enter-ready')) return;
+      if (typeof _triggerTest3GoalUnifiedEnter === 'function') {
+        _triggerTest3GoalUnifiedEnter(goalEl);
+      }
+    } catch (_) {}
+  }, true);
+}
+_bindTest3GoalExpandClick();
+function _lockTest3GoalExpandedState(goalEl) {
+  if (!goalEl || !goalEl.isConnected) return;
+  if (goalEl.classList.contains('test3-goal-entrance-settled') &&
+      goalEl.getAttribute('data-test3-goal-expanded') === '1') {
+    return;
+  }
+  if (typeof _snapTest3GoalIvoryShell === 'function') {
+    _snapTest3GoalIvoryShell(goalEl);
+  }
+  goalEl.setAttribute('data-test3-goal-map-ready', '1');
+  goalEl.setAttribute('data-test3-goal-expanded', '1');
+  goalEl.style.height = TEST3_GOAL_H + 'px';
+  /* Drop entrance classes before settled — copy-enter:hidden beats settled:visible at equal !important. */
+  goalEl.classList.remove('test3-goal-enter', 'test3-goal-enter-ready', 'test3-goal-copy-enter', 'test3-goal-inner-rise');
+  goalEl.removeAttribute('data-test3-goal-copy-reveal');
+  var themeOverlayLock = goalEl.querySelector('.dot-goal__theme-overlay');
+  if (themeOverlayLock) {
+    themeOverlayLock.style.removeProperty('opacity');
+    themeOverlayLock.style.removeProperty('animation');
+    themeOverlayLock.style.removeProperty('transition');
+    themeOverlayLock.style.removeProperty('z-index');
+  }
+  goalEl.classList.add('test3-goal-map-ready', 'test3-goal-entrance-settled', 'test3-goal-map-expanded');
+  var canvas = document.getElementById('canvas');
+  if (canvas) {
+    canvas.removeAttribute('data-test3-goal-fresh');
+    canvas.setAttribute('data-test3-goal-expanded', '1');
+  }
+  var mapSlot = goalEl.querySelector('.dot-goal__map-slot');
+  var lightMain = goalEl.querySelector('.dot-goal__main--light');
+  var darkMain = goalEl.querySelector('.dot-goal__main--dark');
+  if (mapSlot) {
+    mapSlot.style.opacity = '1';
+    mapSlot.style.visibility = 'visible';
+    mapSlot.style.transform = 'none';
+    mapSlot.style.removeProperty('animation');
+  }
+  if (lightMain) {
+    lightMain.style.opacity = '1';
+    lightMain.style.visibility = 'visible';
+    lightMain.style.removeProperty('animation');
+  }
+  if (darkMain) {
+    darkMain.style.opacity = '0';
+    darkMain.style.visibility = 'hidden';
+    darkMain.style.display = 'none';
+  }
+  var mapElLock = goalEl.querySelector('.dot-goal__map');
+  if (mapElLock) {
+    mapElLock.style.removeProperty('background');
+    mapElLock.style.removeProperty('background-color');
+  }
+  var mapPhotoLock = goalEl.querySelector('.dot-goal__map-photo');
+  if (mapPhotoLock) {
+    mapPhotoLock.style.opacity = '1';
+    mapPhotoLock.style.visibility = 'visible';
+    mapPhotoLock.style.removeProperty('transform');
+  }
+  var leafletLock = goalEl.querySelector('.dot-goal__map-leaflet');
+  if (leafletLock) {
+    leafletLock.style.opacity = '0';
+    leafletLock.style.visibility = 'hidden';
+  }
+  var mapDarkLock = goalEl.querySelector('.dot-goal__map-dark');
+  if (mapDarkLock) {
+    mapDarkLock.style.opacity = '0';
+    mapDarkLock.style.visibility = 'hidden';
+  }
+  var mapLightLock = goalEl.querySelector('.dot-goal__map-light');
+  if (mapLightLock) {
+    mapLightLock.style.opacity = '1';
+    mapLightLock.style.visibility = 'visible';
+  }
 }
 function _finalizeTest3GoalEntrance(goalEl) {
   if (!goalEl || !goalEl.isConnected) return;
-  var titleEl = goalEl.querySelector('.dot-goal__title');
+  if (typeof _showTest3GoalExpandedContent === 'function') {
+    _showTest3GoalExpandedContent(goalEl);
+  }
+  var darkMain = goalEl.querySelector('.dot-goal__main--dark');
+  var lightMain = goalEl.querySelector('.dot-goal__main--light');
+  var titleEl = (lightMain || darkMain || goalEl).querySelector('.dot-goal__title');
   var timeEl = goalEl.querySelector('.dot-goal__time');
   var distEl = goalEl.querySelector('.dot-goal__distance');
   var mapEl = goalEl.querySelector('.dot-goal__map');
   var mapSlot = goalEl.querySelector('.dot-goal__map-slot');
-  [titleEl, timeEl, distEl].forEach(function (el) {
-    if (!el) return;
-    el.style.opacity = '1';
-    el.style.visibility = 'visible';
-    el.style.transform = 'translateY(0)';
-    el.style.removeProperty('animation');
-  });
-  if (mapSlot) {
-    mapSlot.style.opacity = '1';
-    mapSlot.style.visibility = 'visible';
-    mapSlot.style.transform = 'translateY(0)';
-    mapSlot.style.removeProperty('animation');
+  if (lightMain) {
+    lightMain.style.opacity = '1';
+    lightMain.style.visibility = 'visible';
+    lightMain.style.removeProperty('animation');
+    if (darkMain) {
+      darkMain.style.opacity = '0';
+      darkMain.style.visibility = 'hidden';
+      darkMain.style.removeProperty('animation');
+    }
+  } else if (titleEl) {
+    titleEl.style.removeProperty('opacity');
+    titleEl.style.removeProperty('visibility');
+    titleEl.style.removeProperty('transform');
+    titleEl.style.removeProperty('animation');
   }
   if (mapEl) {
     mapEl.style.transform = 'none';
-    mapEl.style.removeProperty('animation');
     mapEl.style.removeProperty('clip-path');
     mapEl.style.removeProperty('will-change');
   }
   goalEl.removeAttribute('data-test3-goal-map-hold');
   goalEl.removeAttribute('data-test3-goal-map-bloomed');
-  goalEl.setAttribute('data-test3-goal-map-ready', '1');
-  goalEl.classList.add('test3-goal-map-ready');
-  goalEl.classList.remove('test3-goal-enter', 'test3-goal-enter-ready', 'test3-goal-copy-enter');
-  goalEl.classList.add('test3-goal-entrance-settled');
-  var canvas = document.getElementById('canvas');
-  if (canvas) canvas.removeAttribute('data-test3-goal-fresh');
-  if (typeof _upgradeTest3GoalMapSeed === 'function') _upgradeTest3GoalMapSeed(true);
-  try {
-    if (typeof window.generateSurfaceScenario === 'function') {
-      window.generateSurfaceScenario('tab-root');
-    }
-  } catch (_) {}
+  _lockTest3GoalExpandedState(goalEl);
 }
 function _orchestrateTest3GoalEntrance(goalEl) {
   if (!goalEl || goalEl.dataset.test3GoalEntrance === '1') return;
@@ -6657,22 +7973,14 @@ function _orchestrateTest3GoalEntrance(goalEl) {
             if (!goalEl.isConnected) return;
             goalEl.classList.add('test3-goal-enter-ready');
             void goalEl.offsetWidth;
-            try {
-              if (typeof _initTest3GoalMap === 'function') _initTest3GoalMap();
-            } catch (_) {}
             setTimeout(function () {
               try {
                 if (!goalEl.isConnected) return;
                 if (typeof _triggerTest3GoalUnifiedEnter === 'function') {
                   _triggerTest3GoalUnifiedEnter(goalEl);
                 }
-                setTimeout(function () {
-                  if (typeof _finalizeTest3GoalEntrance === 'function') {
-                    _finalizeTest3GoalEntrance(goalEl);
-                  }
-                }, TEST3_GOAL_UNIFIED_RISE_MS + 80);
               } catch (_) {}
-            }, 360);
+            }, TEST3_GOAL_EXPAND_START_MS);
           } catch (_) {}
         });
       } catch (_) {}
@@ -6687,10 +7995,22 @@ function _revealTest3GoalMapContentDuringBloom(goalEl, mapEl) {
     leafletEl.style.removeProperty('visibility');
     leafletEl.style.removeProperty('animation');
   }
-  mapEl.style.background = '#0F1F3D';
+  mapEl.style.removeProperty('background');
+  mapEl.style.removeProperty('background-color');
 }
 function _signalTest3GoalMapReady() {
   /* Unified slide-up entrance handles map reveal in _triggerTest3GoalUnifiedEnter. */
+}
+// Expanded Running Now — flat light tiles (no PNG road strokes).
+function _applyTest3GoalMapExpandedTiles() {
+  var st = window.__mlpTest3MapState;
+  var tiles = window.__mlpTest3GoalMapTiles;
+  if (!st || !st.map || !tiles || !tiles.dark || !tiles.light) return;
+  try {
+    if (st.map.hasLayer(tiles.dark)) st.map.removeLayer(tiles.dark);
+    if (!st.map.hasLayer(tiles.light)) tiles.light.addTo(st.map);
+    st.map.invalidateSize();
+  } catch (_) {}
 }
 function _initTest3GoalMap() {
   if (typeof window.L !== 'function' && typeof window.L !== 'object') return;
@@ -6714,10 +8034,15 @@ function _initTest3GoalMap() {
       keyboard: false,
       tap: false,
     }).setView([37.5219, 126.9248], 16);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
+    var tileOpts = {
       subdomains: 'abcd',
       maxZoom: 19,
-    }).addTo(map);
+      detectRetina: true,
+    };
+    var darkTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', tileOpts);
+    var lightTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png', tileOpts);
+    darkTiles.addTo(map);
+    window.__mlpTest3GoalMapTiles = { dark: darkTiles, light: lightTiles };
     // Per user direction the running ROUTE and START marker are no
     // longer rendered — the map only carries the runner's CURRENT
     // POSITION as a constantly blinking marker. routeCoords is still
@@ -6953,13 +8278,176 @@ function _stopTest3MusicAudioFade() {
   }
 }
 function _ensureTest3MusicAudio() {
-  if (window.__mlpTest3MusicAudio) return window.__mlpTest3MusicAudio;
-  var audio = new Audio(_test3MusicAudioSrc());
-  audio.preload = 'auto';
-  audio.loop = false;
-  audio.volume = 0;
-  window.__mlpTest3MusicAudio = audio;
-  return audio;
+  if (!window.__mlpTest3MusicAudio) {
+    var audio = new Audio(_test3MusicAudioSrc());
+    audio.preload = 'auto';
+    audio.loop = false;
+    audio.volume = 0;
+    window.__mlpTest3MusicAudio = audio;
+  }
+  if (typeof _bindTest3MusicAudioEvents === 'function') {
+    _bindTest3MusicAudioEvents();
+  }
+  return window.__mlpTest3MusicAudio;
+}
+function _fmtTest3MusicTime(sec) {
+  sec = Math.max(0, Math.floor(sec));
+  var m = Math.floor(sec / 60);
+  var s = sec % 60;
+  return (m < 10 ? '0' + m : String(m)) + ':' + (s < 10 ? '0' + s : String(s));
+}
+function _test3MusicTrackDurationSec() {
+  var audio = window.__mlpTest3MusicAudio;
+  if (audio && isFinite(audio.duration) && audio.duration > 0) {
+    return audio.duration;
+  }
+  return TEST3_MUSIC_ELAPSED_S + TEST3_MUSIC_REMAINING_S;
+}
+function _test3MusicBarFullWidth(music) {
+  music = music || document.querySelector('#test3-music');
+  if (!music) return TEST3_MUSIC_BAR_W;
+  var state = music.getAttribute('data-music-state') || 'normal';
+  if (state === 'compact') return TEST3_MUSIC_COMPACT_BAR_W;
+  var bar = music.querySelector('.dot-music1__icon .dot-music3__bar');
+  if (!bar) return TEST3_MUSIC_BAR_W;
+  var inline = parseFloat(bar.style.getPropertyValue('--bar-w'));
+  if (inline > 0) return inline;
+  var computed = parseFloat(getComputedStyle(bar).getPropertyValue('--bar-w'));
+  if (computed > 0) return computed;
+  return TEST3_MUSIC_BAR_W;
+}
+function _test3MusicProgressInteractive(music) {
+  if (!music || !window.__mlpTest3MusicShifted) return false;
+  if (music.getAttribute('data-test3-music-loading') === '1') return false;
+  if (music.getAttribute('data-test3-music-settling') === '1') return false;
+  if (music.getAttribute('data-test3-music-settled') !== '1') return false;
+  if (music.getAttribute('data-music-state') === 'lyrics') return true;
+  var state = music.getAttribute('data-music-state') || 'normal';
+  return state === 'normal' || state === 'compact';
+}
+function _applyTest3MusicProgressUI(music, currentSec, durationSec) {
+  music = music || document.querySelector('#test3-music');
+  if (!music) return;
+  durationSec = durationSec || _test3MusicTrackDurationSec();
+  currentSec = Math.max(0, Math.min(currentSec, durationSec));
+  var barFull = _test3MusicBarFullWidth(music);
+  var trackW = durationSec > 0 ? Math.round(barFull * currentSec / durationSec) : 0;
+  var bar = music.querySelector('.dot-music1__icon .dot-music3__bar');
+  if (bar) {
+    bar.style.setProperty('--bar-w', barFull + 'px');
+    bar.style.setProperty('--bar-track', trackW + 'px');
+    var track = bar.querySelector('.dot-music__barTrack');
+    if (track) {
+      track.style.setProperty('animation', 'none', 'important');
+      track.style.setProperty('width', trackW + 'px', 'important');
+    }
+  }
+  var remaining = Math.max(0, durationSec - currentSec);
+  music.querySelectorAll('.dot-music1__icon .dot-music3__time--current').forEach(function (el) {
+    el.textContent = _fmtTest3MusicTime(currentSec);
+  });
+  music.querySelectorAll('.dot-music1__icon .dot-music3__time--total').forEach(function (el) {
+    el.textContent = _fmtTest3MusicTime(remaining);
+  });
+  window.__mlpTest3MusicElapsed = currentSec;
+}
+function _stopTest3MusicProgressLoop() {
+  if (window.__mlpTest3MusicProgressRaf) {
+    cancelAnimationFrame(window.__mlpTest3MusicProgressRaf);
+    window.__mlpTest3MusicProgressRaf = null;
+  }
+}
+function _startTest3MusicProgressLoop() {
+  _stopTest3MusicProgressLoop();
+  function tick() {
+    window.__mlpTest3MusicProgressRaf = null;
+    var card = document.querySelector('#test3-music');
+    var audio = window.__mlpTest3MusicAudio;
+    if (!card || !audio || audio.paused || window.__mlpTest3MusicScrubbing) return;
+    if (typeof _test3MusicProgressInteractive === 'function' && !_test3MusicProgressInteractive(card)) return;
+    _applyTest3MusicProgressUI(card, audio.currentTime);
+    window.__mlpTest3MusicProgressRaf = requestAnimationFrame(tick);
+  }
+  window.__mlpTest3MusicProgressRaf = requestAnimationFrame(tick);
+}
+function _seekTest3MusicAudioTo(seconds) {
+  var audio = window.__mlpTest3MusicAudio;
+  if (!audio) return;
+  function apply() {
+    try { audio.currentTime = seconds; } catch (_) {}
+  }
+  if (audio.readyState >= 1) apply();
+  else audio.addEventListener('loadedmetadata', apply, { once: true });
+}
+function _setTest3MusicProgress(currentSec, opts) {
+  opts = opts || {};
+  var music = opts.music || document.querySelector('#test3-music');
+  var durationSec = _test3MusicTrackDurationSec();
+  currentSec = Math.max(0, Math.min(currentSec, durationSec));
+  if (opts.syncAudio !== false) {
+    _seekTest3MusicAudioTo(currentSec);
+  }
+  _applyTest3MusicProgressUI(music, currentSec, durationSec);
+}
+function _syncTest3MusicPlayState(card, playing) {
+  if (!card) return;
+  var val = playing ? '1' : '0';
+  card.setAttribute('data-music-playing', val);
+  card.querySelectorAll('.dot-music3__playBtn, .dot-music3__transportPlay').forEach(function (btn) {
+    btn.setAttribute('data-music-playing', val);
+    btn.setAttribute('aria-label', playing ? 'Pause' : 'Play');
+  });
+}
+function _bindTest3MusicAudioEvents() {
+  var audio = window.__mlpTest3MusicAudio;
+  if (!audio) return;
+  if (window.__mlpTest3MusicAudioBound === audio) return;
+  window.__mlpTest3MusicAudioBound = audio;
+  audio.addEventListener('timeupdate', function () {
+    var card = document.querySelector('#test3-music');
+    if (!card || window.__mlpTest3MusicScrubbing) return;
+    if (audio.paused) return;
+    if (!_test3MusicProgressInteractive(card)) return;
+    _applyTest3MusicProgressUI(card, audio.currentTime);
+  });
+  audio.addEventListener('loadedmetadata', function () {
+    var card = document.querySelector('#test3-music');
+    if (!card) return;
+    if (card.getAttribute('data-test3-music-settled') === '1') {
+      var t = audio.currentTime > 0 ? audio.currentTime : TEST3_MUSIC_ELAPSED_S;
+      _applyTest3MusicProgressUI(card, t);
+    }
+    if (!audio.paused) _startTest3MusicProgressLoop();
+  });
+  audio.addEventListener('pause', function () {
+    _stopTest3MusicProgressLoop();
+  });
+  audio.addEventListener('play', function () {
+    _startTest3MusicProgressLoop();
+  });
+}
+function _test3MusicScrubFromEvent(bar, clientX) {
+  var music = bar && bar.closest ? bar.closest('#test3-music') : null;
+  if (!music || !_test3MusicProgressInteractive(music)) return;
+  var rect = bar.getBoundingClientRect();
+  var ratio = rect.width > 0 ? (clientX - rect.left) / rect.width : 0;
+  ratio = Math.max(0, Math.min(1, ratio));
+  _setTest3MusicProgress(ratio * _test3MusicTrackDurationSec(), { music: music });
+}
+/** Play / scrub controls must not advance normal ↔ lyrics ↔ compact. */
+function _test3MusicExpandControlHit(e) {
+  if (!e || !e.target || !e.target.closest) return false;
+  return !!(
+    e.target.closest('.dot-music3__playBtn, .dot-music3__transportPlay') ||
+    e.target.closest('#test3-music .dot-music3__bar')
+  );
+}
+function _test3MusicSuppressExpandClickBriefly() {
+  window.__mlpTest3MusicSuppressExpandClick = true;
+  clearTimeout(window.__mlpTest3MusicSuppressExpandClickT);
+  window.__mlpTest3MusicSuppressExpandClickT = setTimeout(function () {
+    window.__mlpTest3MusicSuppressExpandClick = false;
+  }, 400);
 }
 function _fadeTest3MusicAudioTo(targetVol, durationMs) {
   var audio = window.__mlpTest3MusicAudio;
@@ -6992,11 +8480,13 @@ function _startTest3MusicAudioFadeIn() {
   if (playPromise && typeof playPromise.then === 'function') {
     playPromise.then(function () {
       _fadeTest3MusicAudioTo(TEST3_MUSIC_AUDIO_TARGET_VOL, TEST3_MUSIC_AUDIO_FADE_MS);
+      _startTest3MusicProgressLoop();
     }).catch(function () {
       window.__mlpTest3MusicAudioPending = true;
     });
   } else {
     _fadeTest3MusicAudioTo(TEST3_MUSIC_AUDIO_TARGET_VOL, TEST3_MUSIC_AUDIO_FADE_MS);
+    _startTest3MusicProgressLoop();
   }
 }
 function _setTest3MusicAudioPlaying(playing) {
@@ -7019,10 +8509,14 @@ function _setTest3MusicAudioPlaying(playing) {
     }
     _stopTest3MusicAudioFade();
     var resumePromise = audio.play();
-    if (resumePromise && typeof resumePromise.catch === 'function') {
-      resumePromise.catch(function () {
+    if (resumePromise && typeof resumePromise.then === 'function') {
+      resumePromise.then(function () {
+        _startTest3MusicProgressLoop();
+      }).catch(function () {
         window.__mlpTest3MusicAudioPending = true;
       });
+    } else {
+      _startTest3MusicProgressLoop();
     }
     if (audio.volume < TEST3_MUSIC_AUDIO_TARGET_VOL * 0.5) {
       _fadeTest3MusicAudioTo(TEST3_MUSIC_AUDIO_TARGET_VOL, 400);
@@ -7032,11 +8526,14 @@ function _setTest3MusicAudioPlaying(playing) {
   } else {
     _stopTest3MusicAudioFade();
     audio.pause();
+    _stopTest3MusicProgressLoop();
   }
 }
 function _stopTest3MusicAudio() {
   _stopTest3MusicAudioFade();
+  _stopTest3MusicProgressLoop();
   window.__mlpTest3MusicAudioPending = false;
+  window.__mlpTest3MusicAudioBound = null;
   var audio = window.__mlpTest3MusicAudio;
   if (!audio) return;
   try {
@@ -7046,15 +8543,8 @@ function _stopTest3MusicAudio() {
   } catch (_) {}
   window.__mlpTest3MusicAudio = null;
 }
-// full width over 180s (= 3:00) via the CSS animation
-// `dotMusicBarProgress`; this ticker tracks the same 180s window and
-// updates the .dot-music3__time--current text once per second so the
-// "0:00 / 3:00" readout stays in sync with the bar's visible fill.
-// Pauses + resumes with the play/pause button: each tick checks the
-// `data-music-playing` attribute on #test3-music and skips the
-// increment when it's "0" (paused). Caps at 180s so the readout never
-// exceeds the total. Stored elapsed time on window so the value
-// persists across renders.
+// During entrance only — caps at Figma settled elapsed (01:35). Settled
+// layout freezes bar + times via _freezeTest3MusicSettledProgress.
 function _startTest3MusicTimeTicker() {
   if (window.__mlpTest3MusicTimeId) {
     clearInterval(window.__mlpTest3MusicTimeId);
@@ -7067,21 +8557,31 @@ function _startTest3MusicTimeTicker() {
     return (m < 10 ? '0' + m : String(m)) + ':' + (ss < 10 ? '0' + ss : String(ss));
   }
   function paint() {
+    var card = document.querySelector('#test3-music');
+    if (card && card.getAttribute('data-test3-music-settled') === '1') return;
     var el = document.querySelector('#test3-music .dot-music3__time--current');
-    if (el) el.textContent = fmt(Math.min(180, window.__mlpTest3MusicElapsed));
+    if (el) el.textContent = fmt(Math.min(TEST3_MUSIC_ELAPSED_S, window.__mlpTest3MusicElapsed));
   }
   paint();
   window.__mlpTest3MusicTimeId = setInterval(function () {
     var card = document.querySelector('#test3-music');
-    // No card / paused → freeze the readout. The CSS rule below sets
-    // animation-play-state: paused on the bar when the same attribute
-    // flips to "0", so the bar and the time advance/pause together.
     if (!card) return;
+    if (card.getAttribute('data-test3-music-settled') === '1') return;
     if (card.getAttribute('data-music-playing') === '0') return;
-    if (window.__mlpTest3MusicElapsed >= 180) return;
+    if (window.__mlpTest3MusicElapsed >= TEST3_MUSIC_ELAPSED_S) return;
     window.__mlpTest3MusicElapsed += 1;
     paint();
   }, 1000);
+}
+function _freezeTest3MusicSettledProgress(music) {
+  music = music || document.querySelector('#test3-music');
+  if (!music) return;
+  _applyTest3MusicProgressUI(music, TEST3_MUSIC_ELAPSED_S);
+  _seekTest3MusicAudioTo(TEST3_MUSIC_ELAPSED_S);
+  var audio = window.__mlpTest3MusicAudio;
+  if (audio && !audio.paused) {
+    _startTest3MusicProgressLoop();
+  }
 }
 function _stopTest3MusicTimeTicker() {
   if (window.__mlpTest3MusicTimeId) {
@@ -7164,6 +8664,17 @@ function _stopTest3MapDotMotion() {
 //   (1) which state the music card is in (normal / lyrics / compact)
 //   (2) whether either of them is in the tap-expanded state
 // Called whenever any card's state changes. Uses inline style on the
+// Live music shell height for pill drop / layout (wrapper can overshoot content).
+function _test3MusicMeasuredH(music) {
+  music = music || document.querySelector('#test3-music');
+  if (!music) return TEST3_MUSIC_EXPAND_H;
+  var wh = music.getBoundingClientRect().height;
+  var shell = music.querySelector('.dot-music1');
+  var sh = shell ? shell.getBoundingClientRect().height : 0;
+  var h = Math.max(wh, sh);
+  if (h >= 1) return Math.round(h);
+  return TEST3_MUSIC_EXPAND_H;
+}
 // canvas-item wrappers; CSS transitions on .test3-card-flow handle
 // the smooth animation between states. Returns silently if any card
 // is missing or the music shift hasn't fired yet.
@@ -7185,13 +8696,19 @@ function _layoutTest3Cards() {
   // During entrance: 82 px capsule until vertical expand; 168 px once
   // phase-2 starts so weather/steps glide below the growing player.
   var musicH = inMusicEntrance
-    ? (inExpand ? 168 : 82)
-    : ((musicState === 'lyrics') ? 280 : 168);
+    ? (inExpand ? _test3MusicMeasuredH(music) : TEST3_MUSIC_SPAWN_H)
+    : ((musicState === 'lyrics')
+        ? (music && music.getAttribute('data-test3-playlist-open') === '1'
+            ? TEST3_MUSIC_LYRICS_OPEN_H
+            : TEST3_MUSIC_LYRICS_H)
+        : TEST3_MUSIC_EXPAND_H);
   var weatherExp = weather.classList.contains('is-expanded');
   var stepsExp   = steps.classList.contains('is-expanded');
   var musicCompact = (musicState === 'compact');
   var musicBottom  = TEST3_ROW2_TOP + musicH;
-  var FULL = 340, HALF = 168, ROW_H = 82, GAP = TEST3_CARD_GAP;
+  var FULL = 340, HALF = TEST3_HALF_COL_W, ROW_H = TEST3_PILL_SLOT_H, GAP_V = TEST3_CARD_GAP_V;
+  var HALF_X = TEST3_HALF_COL_X;
+  var pillH = TEST3_PILL_SLOT_H;
   var wX, wY, wW, sX, sY, sW;
   if (musicCompact) {
     // Music is 168×168 in the LEFT column at row2 (y=214). Right column
@@ -7202,24 +8719,24 @@ function _layoutTest3Cards() {
     // the right column. Without this override the user got the weird
     // "cards drop to the bottom even though there's empty space next
     // to the square music card" behaviour.
-    wX = 196; wY = TEST3_ROW2_TOP;              wW = HALF;
-    sX = 196; sY = TEST3_ROW2_TOP + ROW_H + GAP; sW = HALF;
+    wX = HALF_X; wY = TEST3_ROW2_TOP;              wW = HALF;
+    sX = HALF_X; sY = TEST3_ROW2_TOP + pillH + GAP_V; sW = HALF;
   } else {
     // Music is 340 wide (normal or lyrics). Below-music row starts
     // right after the music card's bottom edge.
-    var baseY = musicBottom + GAP;
+    var baseY = musicBottom + TEST3_CARD_GAP_V;
     if (!weatherExp && !stepsExp) {
       wX = 24;  wY = baseY;                 wW = HALF;
-      sX = 196; sY = baseY;                 sW = HALF;
+      sX = HALF_X; sY = baseY;              sW = HALF;
     } else if (weatherExp && !stepsExp) {
       wX = 24;  wY = baseY;                 wW = FULL;
-      sX = 24;  sY = baseY + ROW_H + GAP;   sW = HALF;
+      sX = 24;  sY = baseY + ROW_H + GAP_V;   sW = HALF;
     } else if (!weatherExp && stepsExp) {
       sX = 24;  sY = baseY;                 sW = FULL;
-      wX = 24;  wY = baseY + ROW_H + GAP;   wW = HALF;
+      wX = 24;  wY = baseY + ROW_H + GAP_V;   wW = HALF;
     } else {
       wX = 24; wY = baseY;                  wW = FULL;
-      sX = 24; sY = baseY + ROW_H + GAP;    sW = FULL;
+      sX = 24; sY = baseY + ROW_H + GAP_V;    sW = FULL;
     }
   }
   function apply(el, x, y, w, h) {
@@ -7240,8 +8757,8 @@ function _layoutTest3Cards() {
     if (h != null) el.style.setProperty('height', h + 'px', 'important');
     el.style.setProperty('animation', 'none', 'important');
   }
-  apply(weather, wX, wY, wW);
-  apply(steps,   sX, sY, sW);
+  apply(weather, wX, wY, wW, pillH);
+  apply(steps,   sX, sY, sW, pillH);
   // Resize the music wrapper to match the inner card's current state —
   // otherwise the canvas-item box stays 340×168 while the inner card
   // can be 168×168 (compact) or 340×280 (lyrics), causing clicks on
@@ -7250,9 +8767,7 @@ function _layoutTest3Cards() {
   if (music && !inMusicEntrance) {
     var mW = musicCompact ? TEST3_MUSIC_COMPACT : 340;
     apply(music, 24, TEST3_ROW2_TOP, mW, musicH);
-    if (musicCompact) {
-      music.style.setProperty('animation', 'none', 'important');
-    }
+    music.style.setProperty('animation', 'none', 'important');
     var shell = music.querySelector('.dot-music1');
     if (shell) {
       shell.style.setProperty('width', mW + 'px', 'important');
@@ -7263,7 +8778,7 @@ function _layoutTest3Cards() {
     if (iconWrap) {
       if (musicState === 'lyrics') {
         iconWrap.style.setProperty('width', '340px', 'important');
-        iconWrap.style.setProperty('height', '280px', 'important');
+        iconWrap.style.setProperty('height', TEST3_MUSIC_LYRICS_H + 'px', 'important');
       } else if (musicCompact) {
         iconWrap.style.setProperty('width', TEST3_MUSIC_COMPACT + 'px', 'important');
         iconWrap.style.setProperty('height', TEST3_MUSIC_COMPACT + 'px', 'important');
@@ -7271,7 +8786,13 @@ function _layoutTest3Cards() {
         iconWrap.style.setProperty('right', 'auto', 'important');
       } else {
         iconWrap.style.setProperty('width', '340px', 'important');
-        iconWrap.style.removeProperty('height');
+        iconWrap.style.setProperty('height', musicH + 'px', 'important');
+        var playerEl = music.querySelector('.dot-music1__icon .dot-music3');
+        if (playerEl) {
+          playerEl.style.removeProperty('height');
+          playerEl.style.removeProperty('min-height');
+          playerEl.style.removeProperty('max-height');
+        }
       }
       iconWrap.style.setProperty('animation', 'none', 'important');
     }
@@ -7290,11 +8811,50 @@ function _freezeTest3WeatherDropState() {
     var computed = getComputedStyle(el);
     var ty = computed.transform;
     if (!ty || ty === 'none') {
-      ty = 'translateY(86px)';
+      ty = 'translateY(' + TEST3_WEATHER_DROP + 'px)';
     }
+    /* No !important on transform — test3WeatherShift must run 57%→68%. */
+    el.style.setProperty('transform', ty);
+    el.style.setProperty('opacity', '1', 'important');
+  });
+}
+function _stopTest3PillExpandSync() {
+  if (window.__mlpTest3PillExpandSyncRaf) {
+    cancelAnimationFrame(window.__mlpTest3PillExpandSyncRaf);
+    window.__mlpTest3PillExpandSyncRaf = null;
+  }
+}
+function _applyTest3PillDropForMusicH(musicH) {
+  var weather = document.querySelector('#test3-weather');
+  var steps   = document.querySelector('#test3-steps');
+  if (!weather || !steps) return;
+  var drop = Math.max(TEST3_WEATHER_DROP, Math.round(musicH) + TEST3_CARD_GAP_V);
+  var ty = 'translateY(' + drop + 'px)';
+  [weather, steps].forEach(function (el) {
+    el.style.setProperty('animation', 'none', 'important');
     el.style.setProperty('transform', ty, 'important');
     el.style.setProperty('opacity', '1', 'important');
   });
+}
+function _runTest3PillExpandSync(deadlineMs) {
+  _stopTest3PillExpandSync();
+  var music = document.querySelector('#test3-music');
+  if (!music) return;
+  function tick() {
+    if (!window.__mlpTest3MusicShifted) {
+      _stopTest3PillExpandSync();
+      return;
+    }
+    var h = _test3MusicMeasuredH(music);
+    if (h < TEST3_MUSIC_SPAWN_H) h = TEST3_MUSIC_SPAWN_H;
+    _applyTest3PillDropForMusicH(h);
+    if (performance.now() >= deadlineMs || h >= TEST3_MUSIC_EXPAND_H - 1) {
+      _stopTest3PillExpandSync();
+      return;
+    }
+    window.__mlpTest3PillExpandSyncRaf = requestAnimationFrame(tick);
+  }
+  window.__mlpTest3PillExpandSyncRaf = requestAnimationFrame(tick);
 }
 // Reset test3 music card copy to the curated Figma strings so stale
 // LLM patches (Holocene etc.) never surface in normal/lyrics/compact.
@@ -7323,26 +8883,52 @@ function _resetTest3MusicCopy(music) {
   if (albumEl) {
     albumEl.textContent = "Hurry Up, We're Dreaming.";
   }
-  window.__mlpTest3MusicElapsed = 95;
+  window.__mlpTest3MusicElapsed = TEST3_MUSIC_ELAPSED_S;
   var bar = music.querySelector('.dot-music1__icon .dot-music3__bar');
   if (bar) {
     if (state === 'compact') {
-      bar.style.setProperty('--bar-w', '140px');
-      bar.style.setProperty('--bar-track', '107px');
+      bar.style.setProperty('--bar-w', TEST3_MUSIC_COMPACT_BAR_W + 'px');
+      bar.style.setProperty('--bar-track', TEST3_MUSIC_COMPACT_BAR_TRACK + 'px');
     } else if (state === 'lyrics') {
-      bar.style.setProperty('--bar-w', '300px');
-      bar.style.setProperty('--bar-track', '228px');
+      bar.style.setProperty('--bar-w', TEST3_MUSIC_BAR_W + 'px');
+      bar.style.setProperty('--bar-track', TEST3_MUSIC_BAR_TRACK + 'px');
     } else {
-      bar.style.setProperty('--bar-w', '246px');
-      bar.style.setProperty('--bar-track', '188px');
+      bar.style.setProperty('--bar-w', TEST3_MUSIC_BAR_W + 'px');
+      bar.style.setProperty('--bar-track', TEST3_MUSIC_BAR_TRACK + 'px');
+    }
+  }
+  if (state === 'normal' || music.getAttribute('data-test3-music-settled') === '1') {
+    if (typeof _freezeTest3MusicSettledProgress === 'function') {
+      _freezeTest3MusicSettledProgress(music);
     }
   }
 }
 // Post-entrance settled chrome — dark-photo normal player (4423:17126).
 // Applied at vertical expand end (~68 % / expand-ready), not at 14 s.
+function _clearTest3MusicLayoutOverrides(music) {
+  music = music || document.querySelector('#test3-music');
+  if (!music) return;
+  var shell = music.querySelector('.dot-music1');
+  var icon = music.querySelector('.dot-music1__icon');
+  var player = music.querySelector('.dot-music1__icon .dot-music3');
+  var layoutProps = [
+    'width', 'height', 'min-height', 'max-height', 'left', 'right', 'top', 'bottom',
+    'display', 'flex-direction', 'background', 'background-color', 'padding', 'gap',
+    'justify-content', 'align-items', 'overflow', 'border-radius', 'animation'
+  ];
+  [music, shell, icon, player].forEach(function (el) {
+    if (!el) return;
+    layoutProps.forEach(function (prop) {
+      el.style.removeProperty(prop);
+    });
+  });
+}
 function _applyTest3MusicCompactLayout(music) {
   music = music || document.querySelector('#test3-music');
   if (!music) return;
+  if (typeof _clearTest3MusicLayoutOverrides === 'function') {
+    _clearTest3MusicLayoutOverrides(music);
+  }
   var c = TEST3_MUSIC_COMPACT + 'px';
   music.style.setProperty('width', c, 'important');
   music.style.setProperty('height', c, 'important');
@@ -7386,19 +8972,36 @@ function _applyTest3MusicCompactLayout(music) {
 function _applyTest3MusicNormalLayout(music) {
   music = music || document.querySelector('#test3-music');
   if (!music) return;
+  if (typeof _clearTest3MusicLayoutOverrides === 'function') {
+    _clearTest3MusicLayoutOverrides(music);
+  }
+  var expandH = TEST3_MUSIC_EXPAND_H + 'px';
   music.style.setProperty('width', '340px', 'important');
-  music.style.setProperty('height', '168px', 'important');
+  music.style.setProperty('height', expandH, 'important');
+  music.style.setProperty('animation', 'none', 'important');
   var shell = music.querySelector('.dot-music1');
   if (shell) {
     shell.style.setProperty('width', '340px', 'important');
-    shell.style.setProperty('height', '168px', 'important');
+    shell.style.setProperty('height', expandH, 'important');
+    shell.style.setProperty('animation', 'none', 'important');
   }
   var icon = music.querySelector('.dot-music1__icon');
   if (icon) {
     icon.style.setProperty('width', '340px', 'important');
-    icon.style.setProperty('height', '168px', 'important');
+    icon.style.setProperty('height', expandH, 'important');
+    icon.style.setProperty('animation', 'none', 'important');
     icon.style.removeProperty('left');
     icon.style.removeProperty('right');
+  }
+  var player = music.querySelector('.dot-music1__icon .dot-music3');
+  if (player) {
+    player.style.setProperty('width', '100%', 'important');
+    player.style.setProperty('height', '100%', 'important');
+    player.style.setProperty('min-height', '0', 'important');
+    player.style.removeProperty('max-height');
+    player.style.removeProperty('display');
+    player.style.removeProperty('flex-direction');
+    player.style.setProperty('animation', 'none', 'important');
   }
   var titleEl = music.querySelector('.dot-music1__icon .dot-music3__title');
   var topEl = music.querySelector('.dot-music1__icon .dot-music3__top');
@@ -7406,6 +9009,15 @@ function _applyTest3MusicNormalLayout(music) {
   if (topEl) topEl.style.removeProperty('display');
   var foldEl = music.querySelector('.dot-music1__icon .dot-music3__foldTitle');
   if (foldEl) foldEl.style.removeProperty('display');
+  music.querySelectorAll(
+    '.dot-music3__compactHeader, .dot-music3__playlistPill, .dot-music3__playlistThumb, .dot-music3__playlistChevron, .dot-music3__albumCredit'
+  ).forEach(function (el) {
+    el.style.removeProperty('opacity');
+    el.style.removeProperty('visibility');
+    el.style.removeProperty('display');
+    el.style.removeProperty('height');
+    el.style.removeProperty('animation');
+  });
   music.querySelectorAll('.dot-music3__bottom, .dot-music3__transport').forEach(function (el) {
     el.style.removeProperty('opacity');
     el.style.removeProperty('visibility');
@@ -7417,32 +9029,37 @@ function _applyTest3MusicNormalLayout(music) {
 function _applyTest3MusicLyricsLayout(music) {
   music = music || document.querySelector('#test3-music');
   if (!music) return;
+  if (typeof _clearTest3MusicLayoutOverrides === 'function') {
+    _clearTest3MusicLayoutOverrides(music);
+  }
+  var lyricsH = _test3MusicLyricsHeight(music) + 'px';
+  music.style.setProperty('animation', 'none', 'important');
   music.style.setProperty('width', '340px', 'important');
-  music.style.setProperty('height', '280px', 'important');
+  music.style.setProperty('height', lyricsH, 'important');
   var shell = music.querySelector('.dot-music1');
   if (shell) {
     shell.style.setProperty('width', '340px', 'important');
-    shell.style.setProperty('height', '280px', 'important');
+    shell.style.setProperty('height', lyricsH, 'important');
     shell.style.setProperty('background-color', 'transparent', 'important');
     shell.style.setProperty('animation', 'none', 'important');
   }
   var icon = music.querySelector('.dot-music1__icon');
   if (icon) {
-    icon.style.setProperty('height', '280px', 'important');
+    icon.style.setProperty('height', lyricsH, 'important');
     icon.style.setProperty('opacity', '1', 'important');
     icon.style.setProperty('visibility', 'visible', 'important');
     icon.style.setProperty('animation', 'none', 'important');
   }
   var player = music.querySelector('.dot-music1__icon .dot-music3');
   if (player) {
-    player.style.setProperty('height', '280px', 'important');
-    player.style.setProperty('min-height', '280px', 'important');
+    player.style.setProperty('height', lyricsH, 'important');
+    player.style.setProperty('min-height', lyricsH, 'important');
     player.style.setProperty('background', 'transparent', 'important');
     player.style.setProperty('animation', 'none', 'important');
     player.style.setProperty('display', 'flex', 'important');
     player.style.setProperty('flex-direction', 'column', 'important');
   }
-  music.querySelectorAll('.dot-music3__compactHeader, .dot-music3__playlistPill, .dot-music3__playlistThumb, .dot-music3__playlistChevron, .dot-music3__bottom, .dot-music3__transport').forEach(function (el) {
+  music.querySelectorAll('.dot-music3__compactHeader, .dot-music3__playlistPill, .dot-music3__playlistThumb, .dot-music3__playlistChevron, .dot-music3__name, .dot-music3__bottom, .dot-music3__transport').forEach(function (el) {
     el.style.removeProperty('opacity');
     el.style.removeProperty('visibility');
     el.style.removeProperty('display');
@@ -7458,8 +9075,8 @@ function _applyTest3MusicLyricsLayout(music) {
   if (albumEl) albumEl.style.setProperty('display', 'none', 'important');
   var bar = music.querySelector('.dot-music1__icon .dot-music3__bar');
   if (bar) {
-    bar.style.setProperty('--bar-w', '300px');
-    bar.style.setProperty('--bar-track', '228px');
+    bar.style.setProperty('--bar-w', TEST3_MUSIC_BAR_W + 'px');
+    bar.style.setProperty('--bar-track', TEST3_MUSIC_BAR_TRACK + 'px');
   }
   if (typeof _resetTest3MusicCopy === 'function') {
     _resetTest3MusicCopy(music);
@@ -7489,6 +9106,12 @@ function _applyTest3MusicSettledLayout(music) {
   if (typeof _resetTest3MusicCopy === 'function') {
     _resetTest3MusicCopy(music);
   }
+  if (typeof _freezeTest3MusicSettledProgress === 'function') {
+    _freezeTest3MusicSettledProgress(music);
+  }
+  if (typeof _stopTest3MusicTimeTicker === 'function') {
+    _stopTest3MusicTimeTicker();
+  }
   var icon = music.querySelector('.dot-music1__icon');
   if (icon) {
     icon.style.setProperty('animation', 'none', 'important');
@@ -7496,7 +9119,7 @@ function _applyTest3MusicSettledLayout(music) {
     icon.style.visibility = 'visible';
     icon.style.pointerEvents = 'auto';
   }
-  music.querySelectorAll('.dot-music1__icon .dot-music3__icon, .dot-music1__icon .dot-music3__iconBg, .dot-music1__icon .dot-music3__playBtn').forEach(function (el) {
+  music.querySelectorAll('.dot-music1__icon .dot-music3__icon, .dot-music1__icon .dot-music3__iconBg, .dot-music1__icon .dot-music3__playBtn:not(.dot-music3__transportPlay)').forEach(function (el) {
     el.style.setProperty('animation', 'none', 'important');
     el.style.display = 'none';
     el.style.opacity = '0';
@@ -7530,7 +9153,7 @@ function _clearTest3MusicEntranceInlineStyles(music) {
     });
   }
   var clearSel = settled
-    ? '.dot-music1__icon .dot-music3__title, .dot-music1__icon .dot-music3__bottom, .dot-music1__compact--layout'
+    ? '.dot-music1__icon .dot-music3__title, .dot-music1__icon .dot-music3__bottom, .dot-music1__icon .dot-music3__headerRow, .dot-music1__icon .dot-music3__headerRow .dot-music3__spotify, .dot-music1__compact--layout'
     : '.dot-music1__icon .dot-music3__title, .dot-music1__icon .dot-music3__bottom, .dot-music1__icon .dot-music3__iconBg, .dot-music1__icon .dot-music3__playBtn, .dot-music1__icon .dot-music3__icon, .dot-music1__compact--layout';
   music.querySelectorAll(clearSel).forEach(function (el) {
     ['opacity', 'visibility', 'pointer-events', 'animation', 'display', 'transform', 'width', 'height', 'left', 'top', 'margin', 'border-radius'].forEach(function (prop) {
@@ -7549,15 +9172,16 @@ function _settleTest3MusicPlayerImmediately(music) {
   music.removeAttribute('data-test3-music-loading');
   music.removeAttribute('data-test3-music-pre-expand');
   music.removeAttribute('data-test3-music-expand-ready');
+  music.removeAttribute('data-test3-music-resolved');
   music.classList.remove('is-motion-phase2');
   music.style.setProperty('animation', 'none', 'important');
-  music.style.height = '168px';
+  music.style.height = TEST3_MUSIC_EXPAND_H + 'px';
   music.style.opacity = '1';
   music.style.visibility = 'visible';
   var shell = music.querySelector('.dot-music1');
   if (shell) {
     shell.style.width = '340px';
-    shell.style.height = '168px';
+    shell.style.height = TEST3_MUSIC_EXPAND_H + 'px';
     shell.style.borderRadius = '32px';
     shell.style.clipPath = 'inset(0 0 0 0 round 32px)';
     shell.style.setProperty('animation', 'none', 'important');
@@ -7567,7 +9191,233 @@ function _settleTest3MusicPlayerImmediately(music) {
   }
   if (typeof _layoutTest3Cards === 'function') _layoutTest3Cards();
 }
-// Mount the music card AFTER weather/steps have cleared row 2.
+// Party/pace pills: icon pop → widen → text emerge → 2 s hold → row drop.
+function _restoreTest3PillPlainTextLines() {
+  var sels = [
+    '#test3-weather .dot-w21--party-pill .dot-w21__compact .dot-w21__pillTitle',
+    '#test3-weather .dot-w21--party-pill .dot-w21__compact .dot-w21__pillSub',
+    '#test3-steps .dot-steps21--pace-pill .dot-steps21__compact .dot-steps21__pillTitle',
+    '#test3-steps .dot-steps21--pace-pill .dot-steps21__compact .dot-steps21__pillSub',
+  ];
+  sels.forEach(function (sel) {
+    document.querySelectorAll(sel).forEach(function (el) {
+      if (el.getAttribute('data-test3-shiny-mounted') === '1') return;
+      if (el.querySelector('.test3-pill-gradient-text')) return;
+      var t = (el.getAttribute('data-test3-pill-plain') || el.textContent || '').trim();
+      if (!t) return;
+      el.textContent = t;
+      el.style.color = '';
+      el.style.webkitTextFillColor = '';
+      el.setAttribute('data-test3-shiny-ready', '1');
+    });
+  });
+}
+function _snapTest3PillsPostShine(canvas) {
+  if (!canvas) return;
+  window.__mlpTest3PillsRevealed = true;
+  canvas.setAttribute('data-test3-pills-revealed', '1');
+  canvas.removeAttribute('data-test3-pills-reveal');
+  canvas.removeAttribute('data-test3-pills-text-live');
+  if (typeof window.snapTest3PillShinyTextSettled === 'function') {
+    window.snapTest3PillShinyTextSettled();
+  }
+  _restoreTest3PillPlainTextLines();
+}
+function _armTest3PillsReveal(canvas) {
+  if (!canvas) return;
+  if (window.__mlpTest3PillsRevealed) {
+    _snapTest3PillsPostShine(canvas);
+    return;
+  }
+  if (canvas.getAttribute('data-test3-pills-reveal') === '1') {
+    return;
+  }
+  canvas.style.setProperty('--test3-pill-reveal-ms', TEST3_PILL_REVEAL_TOTAL_MS + 'ms');
+  canvas.style.setProperty('--test3-pill-icon-ms', TEST3_PILL_REVEAL_ICON_MS + 'ms');
+  canvas.style.setProperty('--test3-pill-icon-hold-ms', TEST3_PILL_REVEAL_ICON_HOLD_MS + 'ms');
+  canvas.style.setProperty('--test3-pill-text-ms', TEST3_PILL_REVEAL_TEXT_MS + 'ms');
+  canvas.style.setProperty('--test3-pill-text-hold-ms', TEST3_PILL_TEXT_HOLD_BEFORE_DROP_MS + 'ms');
+  canvas.style.setProperty('--test3-pill-text-emerge-ms', TEST3_PILL_TEXT_EMERGE_MS + 'ms');
+  canvas.style.setProperty('--test3-pill-text-settle-ms', TEST3_PILL_TEXT_SETTLE_MS + 'ms');
+  canvas.style.setProperty('--test3-pill-black-hold-ms', TEST3_PILL_TEXT_HOLD_BEFORE_DROP_MS + 'ms');
+  canvas.style.setProperty('--test3-pill-text-start-ms', TEST3_PILL_TEXT_START_MS + 'ms');
+  canvas.style.setProperty('--test3-pill-shine-ms', TEST3_PILL_SHINE_PASS_MS + 'ms');
+  window.__mlpTest3PillTiming = {
+    textStart: TEST3_PILL_TEXT_START_MS,
+    emerge: TEST3_PILL_TEXT_EMERGE_MS,
+    gradientSpeed: 2.0,
+    gradientTitleCycles: TEST3_PILL_SHINE_TITLE_PASSES,
+    gradientSubCycles: TEST3_PILL_SHINE_SUB_PASSES,
+    shinePassMs: TEST3_PILL_SHINE_PASS_MS,
+    shineTitlePasses: TEST3_PILL_SHINE_TITLE_PASSES,
+    shineSubPasses: TEST3_PILL_SHINE_SUB_PASSES,
+    shinyActive: TEST3_PILL_SHINY_ACTIVE_MS,
+    settle: TEST3_PILL_TEXT_SETTLE_MS,
+    blackHold: TEST3_PILL_TEXT_HOLD_BEFORE_DROP_MS,
+    blackAt: TEST3_PILL_BLACK_AT_MS,
+    dropAt: TEST3_PILL_DROP_AT_MS,
+  };
+  window.__mlpTest3PillRevealStartedAt = Date.now();
+  window.__mlpTest3PillRevealCycle = (window.__mlpTest3PillRevealCycle || 0) + 1;
+  try {
+    var pillPlainSels = [
+      '#test3-weather .dot-w21--party-pill .dot-w21__compact .dot-w21__pillTitle',
+      '#test3-weather .dot-w21--party-pill .dot-w21__compact .dot-w21__pillSub',
+      '#test3-steps .dot-steps21--pace-pill .dot-steps21__compact .dot-steps21__pillTitle',
+      '#test3-steps .dot-steps21--pace-pill .dot-steps21__compact .dot-steps21__pillSub',
+    ];
+    pillPlainSels.forEach(function (sel) {
+      document.querySelectorAll(sel).forEach(function (el) {
+        var t = (el.textContent || '').trim();
+        if (t) el.setAttribute('data-test3-pill-plain', t);
+      });
+    });
+  } catch (_) {}
+  canvas.setAttribute('data-test3-pills-reveal', '1');
+  canvas.removeAttribute('data-test3-pills-revealed');
+  canvas.removeAttribute('data-test3-pills-black-hold');
+  canvas.removeAttribute('data-test3-pills-text-live');
+  if (window.__mlpTest3PillsTextLiveTimer) {
+    clearTimeout(window.__mlpTest3PillsTextLiveTimer);
+    window.__mlpTest3PillsTextLiveTimer = null;
+  }
+  window.__mlpTest3PillsTextLiveTimer = setTimeout(function () {
+    window.__mlpTest3PillsTextLiveTimer = null;
+    try {
+      var c = document.getElementById('canvas');
+      if (!c || c.getAttribute('data-test-scope') !== 'test3') return;
+      if (c.getAttribute('data-test3-pills-reveal') !== '1') return;
+      c.setAttribute('data-test3-pills-text-live', '1');
+      _restoreTest3PillPlainTextLines();
+    } catch (_) {}
+  }, TEST3_PILL_TEXT_START_MS);
+  if (window.__mlpTest3MusicShiftTimer) {
+    clearTimeout(window.__mlpTest3MusicShiftTimer);
+    window.__mlpTest3MusicShiftTimer = null;
+  }
+  if (window.__mlpTest3PillsBlackTimer) {
+    clearTimeout(window.__mlpTest3PillsBlackTimer);
+    window.__mlpTest3PillsBlackTimer = null;
+  }
+  if (window.__mlpTest3PillsDropTimer) {
+    clearTimeout(window.__mlpTest3PillsDropTimer);
+    window.__mlpTest3PillsDropTimer = null;
+  }
+  if (window.__mlpTest3PillsRevealEndTimer) {
+    clearTimeout(window.__mlpTest3PillsRevealEndTimer);
+    window.__mlpTest3PillsRevealEndTimer = null;
+  }
+  /* Dark pill copy after gradient wave (~text emerge end). */
+  window.__mlpTest3PillsBlackTimer = setTimeout(function () {
+    window.__mlpTest3PillsBlackTimer = null;
+    try {
+      var c = document.getElementById('canvas');
+      if (!c || c.getAttribute('data-test-scope') !== 'test3') return;
+      if (c.getAttribute('data-test3-pills-reveal') !== '1') return;
+      c.setAttribute('data-test3-pills-black-hold', '1');
+    } catch (_) {}
+  }, TEST3_PILL_BLACK_AT_MS);
+  /* Row drop + music handoff after shine settles (~3.9s). */
+  window.__mlpTest3PillsDropTimer = setTimeout(function () {
+    window.__mlpTest3PillsDropTimer = null;
+    try {
+      var stillTest3 =
+        (window.__mlpTestConfig && window.__mlpTestConfig.id === 'test3') ||
+        (document.body && document.body.dataset && document.body.dataset.mlpTest === 'test3');
+      if (!stillTest3) return;
+      if (!window.__mlpTestConfig || window.__mlpTestConfig.homeStage !== 'home') return;
+      var c = document.getElementById('canvas');
+      if (!c || c.getAttribute('data-test-scope') !== 'test3') return;
+      c.removeAttribute('data-test3-pills-black-hold');
+      if (typeof _snapTest3PillsPostShine === 'function') {
+        _snapTest3PillsPostShine(c);
+      }
+      if (window.__mlpTest3WeatherPrepPending ||
+          (!window.__mlpTest3MusicShiftPrep && !window.__mlpTest3MusicShifted)) {
+        window.__mlpTest3WeatherPrepPending = false;
+        window.__mlpTest3PillsDropArmed = true;
+        _beginTest3WeatherPrep(window.__mlpTest3MusicShiftRunId || 0);
+      }
+    } catch (_) {}
+  }, TEST3_PILL_DROP_AT_MS);
+}
+function _beginTest3WeatherPrep(runId) {
+  try {
+    var stillTest3 =
+      (window.__mlpTestConfig && window.__mlpTestConfig.id === 'test3') ||
+      (document.body && document.body.dataset && document.body.dataset.mlpTest === 'test3');
+    if (!stillTest3) return;
+    if ((window.__mlpTest3MusicShiftRunId || 0) !== runId) return;
+    if (!window.__mlpTestConfig || window.__mlpTestConfig.homeStage !== 'home') return;
+    if (window.__mlpTest3MusicShifted || window.__mlpTest3MusicShiftPrep) return;
+    if (!window.__mlpTest3PillsRevealed && !window.__mlpTest3PillsDropArmed) {
+      window.__mlpTest3WeatherPrepPending = true;
+      return;
+    }
+    window.__mlpTest3PillsDropArmed = false;
+    var c = document.getElementById('canvas');
+    if (!c || c.getAttribute('data-test-scope') !== 'test3') return;
+    window.__mlpTest3MusicShiftPrep = true;
+    window.__mlpTest3WeatherPrepPending = false;
+    var weatherEl = c.querySelector('#test3-weather');
+    var stepsEl   = c.querySelector('#test3-steps');
+    if (weatherEl) weatherEl.classList.remove('test3-intro-prefade');
+    if (stepsEl)   stepsEl.classList.remove('test3-intro-prefade');
+    [weatherEl, stepsEl].forEach(function (el) {
+      if (!el) return;
+      el.classList.remove('test3-card-flow', 'is-motion-phase2');
+      el.style.removeProperty('transform');
+      el.style.removeProperty('animation');
+    });
+    c.setAttribute('data-test3-weather-prep', '1');
+    c.style.setProperty('--test3-weather-prep-drop-ms', TEST3_WEATHER_PREP_DROP_MS + 'ms');
+    c.style.setProperty('--test3-music-spawn-delay-ms', TEST3_MUSIC_MOUNT_DELAY_MS + 'ms');
+    if (typeof window.__mountTest3WeatherRainMotion === 'function') {
+      window.__mountTest3WeatherRainMotion(1020);
+    }
+    if (window.__mlpTest3MusicMountTimer) {
+      clearTimeout(window.__mlpTest3MusicMountTimer);
+      window.__mlpTest3MusicMountTimer = null;
+    }
+    if (window.__mlpTest3WeatherDropCompleteTimer) {
+      clearTimeout(window.__mlpTest3WeatherDropCompleteTimer);
+      window.__mlpTest3WeatherDropCompleteTimer = null;
+    }
+    if (typeof _stopTest3PillExpandSync === 'function') _stopTest3PillExpandSync();
+    if (window.__mlpTest3MusicIvoryFadeTimer) {
+      clearTimeout(window.__mlpTest3MusicIvoryFadeTimer);
+      window.__mlpTest3MusicIvoryFadeTimer = null;
+    }
+    /* Music spawns shortly after pills begin dropping (staggered handoff). */
+    window.__mlpTest3MusicMountTimer = setTimeout(function () {
+      window.__mlpTest3MusicMountTimer = null;
+      _mountTest3MusicAfterWeatherPrep(runId);
+    }, TEST3_MUSIC_MOUNT_DELAY_MS);
+    window.__mlpTest3WeatherDropCompleteTimer = setTimeout(function () {
+      window.__mlpTest3WeatherDropCompleteTimer = null;
+      _completeTest3WeatherPrepDrop(runId);
+    }, TEST3_WEATHER_PREP_DROP_MS);
+  } catch (_) {}
+}
+function _completeTest3WeatherPrepDrop(runId) {
+  try {
+    var stillTest3 =
+      (window.__mlpTestConfig && window.__mlpTestConfig.id === 'test3') ||
+      (document.body && document.body.dataset && document.body.dataset.mlpTest === 'test3');
+    if (!stillTest3) return;
+    if ((window.__mlpTest3MusicShiftRunId || 0) !== runId) return;
+    if (!window.__mlpTestConfig || window.__mlpTestConfig.homeStage !== 'home') return;
+    var c = document.getElementById('canvas');
+    if (!c || c.getAttribute('data-test-scope') !== 'test3') return;
+    if (!window.__mlpTest3MusicShifted) return;
+    _freezeTest3WeatherDropState();
+    window.__mlpTest3WeatherDropped = true;
+    c.setAttribute('data-test3-weather-dropped', '1');
+    c.removeAttribute('data-test3-weather-prep');
+    _freezeTest3WeatherDropState();
+  } catch (_) {}
+}
+// Mount music while weather/steps are still animating down (prep gate stays on).
 function _mountTest3MusicAfterWeatherPrep(runId) {
   try {
     var stillTest3 =
@@ -7579,29 +9429,41 @@ function _mountTest3MusicAfterWeatherPrep(runId) {
     var c = document.getElementById('canvas');
     if (!c || c.getAttribute('data-test-scope') !== 'test3') return;
     window.__mlpTest3MusicShiftPrep = false;
-    window.__mlpTest3WeatherDropped = true;
     window.__mlpTest3MusicShifted = true;
-    _freezeTest3WeatherDropState();
-    c.setAttribute('data-test3-weather-dropped', '1');
     c.setAttribute('data-test3-music-shift', '1');
     if (typeof window.generateSurfaceScenario === 'function') {
       window.generateSurfaceScenario('tab-root');
     }
-    c.removeAttribute('data-test3-weather-prep');
-    _freezeTest3WeatherDropState();
+    /* Diff render must not strip the prep gate — re-arm if something cleared it mid-mount. */
+    if (!window.__mlpTest3WeatherDropped && window.__mlpTest3WeatherDropCompleteTimer) {
+      c.setAttribute('data-test3-weather-prep', '1');
+    }
     window.__mlpTest3MusicElapsed = 0;
     if (typeof _stopTest3MusicAudio === 'function') _stopTest3MusicAudio();
     var test3MusicEl = document.querySelector('#test3-music');
     if (test3MusicEl) {
+      test3MusicEl.style.removeProperty('height');
+      if (typeof _clearTest3MusicGlowRing === 'function') {
+        _clearTest3MusicGlowRing(test3MusicEl);
+      }
       test3MusicEl.setAttribute('data-music-playing', '1');
       test3MusicEl.setAttribute('data-test3-music-loading', '1');
+      test3MusicEl.setAttribute('data-test3-music-capsule-phase', 'star');
+      test3MusicEl.style.setProperty('--test3-music-search-line1-ms', TEST3_MUSIC_SEARCH_LINE1_IN_MS + 'ms');
+      test3MusicEl.style.setProperty('--test3-music-search-line1-delay-ms', TEST3_MUSIC_DISC_STAR_ONLY_MS + 'ms');
+      test3MusicEl.style.setProperty('--test3-music-search-line2-ms', TEST3_MUSIC_SEARCH_LINE2_MS + 'ms');
       test3MusicEl.setAttribute('data-test3-music-phase', 'spawn');
       test3MusicEl.removeAttribute('data-test3-music-pre-expand');
       test3MusicEl.removeAttribute('data-test3-music-expand-ready');
+      test3MusicEl.removeAttribute('data-test3-music-chrome-reveal');
+      test3MusicEl.removeAttribute('data-test3-music-shell-white');
       test3MusicEl.removeAttribute('data-music-state');
       test3MusicEl.removeAttribute('data-test3-music-orb-handoff');
       test3MusicEl.removeAttribute('data-test3-music-settled');
       test3MusicEl.removeAttribute('data-test3-music-settling');
+      test3MusicEl.removeAttribute('data-test3-music-resolved');
+      test3MusicEl.removeAttribute('data-test3-music-stroke-ready');
+      test3MusicEl.setAttribute('data-test3-music-capsule-phase', 'star');
       if (typeof _clearTest3MusicEntranceInlineStyles === 'function') {
         _clearTest3MusicEntranceInlineStyles(test3MusicEl);
       }
@@ -7617,6 +9479,9 @@ function _mountTest3MusicAfterWeatherPrep(runId) {
           }
           if (window.Test3MusicFillGL && typeof window.Test3MusicFillGL.ensureBound === 'function') {
             window.Test3MusicFillGL.ensureBound();
+          }
+          if (typeof _syncTest3MusicDiscLayersAfterRender === 'function') {
+            _syncTest3MusicDiscLayersAfterRender();
           }
         });
       });
@@ -7634,17 +9499,24 @@ function _mountTest3MusicAfterWeatherPrep(runId) {
       }
     }, TEST3_MUSIC_FILL_START_MS);
     setTimeout(function () {
+      if ((window.__mlpTest3MusicShiftRunId || 0) !== runId) return;
+      if (typeof _beginTest3MusicResolve === 'function') {
+        _beginTest3MusicResolve();
+      }
+    }, TEST3_MUSIC_RESOLVE_MS);
+    setTimeout(function () {
       if (typeof _syncTest3CardsExpandDown === 'function') {
         _syncTest3CardsExpandDown();
       }
     }, TEST3_MUSIC_EXPAND_START_MS);
     setTimeout(function () {
       if ((window.__mlpTest3MusicShiftRunId || 0) !== runId) return;
+      if (typeof _lockTest3CardsAfterMusicExpand === 'function') {
+        _lockTest3CardsAfterMusicExpand();
+      }
       if (typeof _endTest3MusicFill === 'function') {
         _endTest3MusicFill();
       }
-    }, TEST3_MUSIC_EXPAND_END_MS);
-    setTimeout(function () {
       if (typeof _signalTest3MusicExpandReady === 'function') {
         _signalTest3MusicExpandReady();
       }
@@ -7667,22 +9539,91 @@ function _beginTest3MusicFill(music) {
   music = music || document.querySelector('#test3-music');
   if (!music) return;
   var shell = music.querySelector('.dot-music1');
-  if (shell) {
-    shell.classList.add('test3-music-shell--fill-active');
-  }
   var fill = music.querySelector('.test3-music-fill');
   if (fill) {
-    fill.classList.remove('test3-music-fill--fading');
-    fill.classList.add('test3-music-fill--active');
+    fill.classList.remove('test3-music-fill--fading', 'p2-agent-fill--gl-active');
   }
   if (window.Test3MusicFillGL) {
     window.Test3MusicFillGL.ensureBound();
-    window.Test3MusicFillGL.setPhase('generating');
   }
+  void (fill && fill.offsetWidth);
+  if (fill) {
+    fill.classList.add('test3-music-fill--active');
+  }
+  void (shell && shell.offsetWidth);
+  if (shell) {
+    shell.classList.add('test3-music-shell--fill-active');
+  }
+  requestAnimationFrame(function () {
+    requestAnimationFrame(function () {
+      if (!music.isConnected) return;
+      if (window.Test3MusicFillGL) {
+        window.Test3MusicFillGL.setPhase('generating');
+      }
+      if (typeof _applyTest3MusicDiscPhase === 'function') {
+        _applyTest3MusicDiscPhase(music, 'dots');
+      }
+    });
+  });
+}
+function _armTest3MusicWhiteShell(music) {
+  music = music || document.querySelector('#test3-music');
+  if (!music) return;
+  var shell = music.querySelector('.dot-music1');
+  if (!shell) return;
+  music.setAttribute('data-test3-music-shell-white', '0');
+  shell.style.removeProperty('background-color');
+  shell.style.removeProperty('transition');
+  void shell.offsetWidth;
+  requestAnimationFrame(function () {
+    requestAnimationFrame(function () {
+      if (!music.isConnected || !shell.isConnected) return;
+      music.setAttribute('data-test3-music-shell-white', '1');
+      var line2 = music.querySelector('.dot-music1__searchLine--2');
+      if (line2) {
+        line2.style.animation = 'none';
+        void line2.offsetWidth;
+        line2.style.removeProperty('animation');
+      }
+      void shell.offsetWidth;
+    });
+  });
+}
+function _beginTest3MusicResolve(music) {
+  music = music || document.querySelector('#test3-music');
+  if (!music) return;
+  if (music.getAttribute('data-test3-music-resolved') === '1') return;
+  music.setAttribute('data-test3-music-resolved', '1');
+  music.setAttribute('data-test3-music-ivory-handoff', '1');
+  music.style.removeProperty('height');
+  if (typeof _armTest3MusicWhiteShell === 'function') {
+    _armTest3MusicWhiteShell(music);
+  }
+  if (window.Test3MusicFillGL) {
+    window.Test3MusicFillGL.setPhase('idle');
+  }
+  if (window.__mlpTest3MusicIvoryFadeTimer) {
+    clearTimeout(window.__mlpTest3MusicIvoryFadeTimer);
+  }
+  window.__mlpTest3MusicIvoryFadeTimer = setTimeout(function () {
+    window.__mlpTest3MusicIvoryFadeTimer = null;
+    var fill = music.querySelector('.test3-music-fill');
+    if (!fill || !music.isConnected) return;
+    if (fill.classList.contains('test3-music-fill--active')) {
+      fill.classList.remove('test3-music-fill--active');
+      fill.classList.add('test3-music-fill--fading');
+    }
+    music.removeAttribute('data-test3-music-ivory-handoff');
+  }, TEST3_MUSIC_IVORY_HANDOFF_MS);
 }
 function _endTest3MusicFill(music) {
   music = music || document.querySelector('#test3-music');
   if (!music) return;
+  music.removeAttribute('data-test3-music-loading');
+  music.removeAttribute('data-test3-music-pre-expand');
+  if (typeof _primeTest3MusicGlowRing === 'function') {
+    _primeTest3MusicGlowRing(music);
+  }
   var shell = music.querySelector('.dot-music1');
   if (shell) {
     shell.classList.remove('test3-music-shell--fill-active');
@@ -7690,81 +9631,164 @@ function _endTest3MusicFill(music) {
   var fill = music.querySelector('.test3-music-fill');
   if (fill) {
     fill.classList.remove('test3-music-fill--active');
-    fill.classList.add('test3-music-fill--fading');
+    if (!fill.classList.contains('test3-music-fill--fading')) {
+      fill.classList.add('test3-music-fill--fading');
+    }
   }
   if (window.Test3MusicFillGL) {
-    window.Test3MusicFillGL.setPhase('fadeOut');
+    window.__mlpTest3MusicFillFadeTimer = setTimeout(function () {
+      window.__mlpTest3MusicFillFadeTimer = null;
+      if (window.Test3MusicFillGL) {
+        window.Test3MusicFillGL.setPhase('idle');
+      }
+    }, TEST3_MUSIC_FILL_FADE_MS);
   }
 }
-// Phase-2: weather/steps glide to row below the expanding music card.
-// Music shell + orb motion stay on the 14 s CSS timeline (no JS cut).
+function _primeTest3MusicGlowRing(music) {
+  music = music || document.querySelector('#test3-music');
+  if (!music) return;
+  var shell = music.querySelector('.dot-music1');
+  if (!shell) return;
+  shell.classList.remove('is-glow-in', 'is-glow-out');
+  shell.classList.add('test3-music-glow-ring', 'is-glow-prime');
+}
+// Phase-2 start (57%): music pre-expand — pills glide via test3WeatherShift (do not touch).
 function _syncTest3CardsExpandDown() {
   var canvas = document.getElementById('canvas');
   if (!canvas || canvas.getAttribute('data-test-scope') !== 'test3') return;
   if (!window.__mlpTest3MusicShifted) return;
-  var weather = document.querySelector('#test3-weather');
-  var steps   = document.querySelector('#test3-steps');
-  if (!weather || !steps) return;
   var music = document.querySelector('#test3-music');
   if (music) {
     music.setAttribute('data-test3-music-pre-expand', '1');
   }
-  [weather, steps].forEach(function (el) {
-    var computed = getComputedStyle(el).transform;
-    el.classList.add('test3-card-flow', 'is-motion-phase2');
-    el.style.setProperty('animation', 'none', 'important');
-    if (computed && computed !== 'none') {
-      el.style.setProperty('transform', computed, 'important');
-    }
-  });
-  requestAnimationFrame(function () {
-    requestAnimationFrame(function () {
-      if (typeof _layoutTest3Cards === 'function') _layoutTest3Cards();
-    });
-  });
+  if (typeof _stopTest3PillExpandSync === 'function') {
+    _stopTest3PillExpandSync();
+  }
+}
+// After music vertical expand (~68%) — CSS fill holds pill row; layout runs at entrance end.
+function _lockTest3CardsAfterMusicExpand() {
+  if (typeof _stopTest3PillExpandSync === 'function') {
+    _stopTest3PillExpandSync();
+  }
+}
+function _clearTest3MusicGlowRing(music) {
+  if (window.__mlpTest3MusicGlowHoldTimer) {
+    clearTimeout(window.__mlpTest3MusicGlowHoldTimer);
+    window.__mlpTest3MusicGlowHoldTimer = null;
+  }
+  if (window.__mlpTest3MusicGlowFadeTimer) {
+    clearTimeout(window.__mlpTest3MusicGlowFadeTimer);
+    window.__mlpTest3MusicGlowFadeTimer = null;
+  }
+  if (window.__mlpTest3MusicFillFadeTimer) {
+    clearTimeout(window.__mlpTest3MusicFillFadeTimer);
+    window.__mlpTest3MusicFillFadeTimer = null;
+  }
+  music = music || document.querySelector('#test3-music');
+  if (!music) return;
+  var shell = music.querySelector('.dot-music1');
+  if (shell) {
+    shell.classList.remove(
+      'test3-music-glow-ring',
+      'is-glow-prime',
+      'is-glow-in',
+      'is-glow-out'
+    );
+  }
+  music.removeAttribute('data-test3-music-glow');
+}
+function _armTest3MusicGlowRing(music) {
+  music = music || document.querySelector('#test3-music');
+  if (!music) return;
+  var runId = window.__mlpTest3MusicShiftRunId || 0;
+  var shell = music.querySelector('.dot-music1');
+  if (!shell) return;
+  if (window.__mlpTest3MusicGlowHoldTimer) {
+    clearTimeout(window.__mlpTest3MusicGlowHoldTimer);
+    window.__mlpTest3MusicGlowHoldTimer = null;
+  }
+  if (window.__mlpTest3MusicGlowFadeTimer) {
+    clearTimeout(window.__mlpTest3MusicGlowFadeTimer);
+    window.__mlpTest3MusicGlowFadeTimer = null;
+  }
+  shell.classList.add('test3-music-glow-ring');
+  shell.classList.remove('is-glow-out');
+  shell.classList.remove('is-glow-prime');
+  shell.classList.add('is-glow-in');
+  music.setAttribute('data-test3-music-glow', 'peak');
+  window.__mlpTest3MusicGlowHoldTimer = setTimeout(function () {
+    window.__mlpTest3MusicGlowHoldTimer = null;
+    if ((window.__mlpTest3MusicShiftRunId || 0) !== runId) return;
+    if (!music.isConnected || !shell.isConnected) return;
+    shell.classList.remove('is-glow-in');
+    shell.classList.add('is-glow-out');
+    music.setAttribute('data-test3-music-glow', 'fade');
+    window.__mlpTest3MusicGlowFadeTimer = setTimeout(function () {
+      window.__mlpTest3MusicGlowFadeTimer = null;
+      if (!shell.isConnected) return;
+      shell.classList.remove('is-glow-out', 'test3-music-glow-ring');
+      music.removeAttribute('data-test3-music-glow');
+    }, TEST3_MUSIC_GLOW_FADE_MS);
+  }, TEST3_MUSIC_GLOW_HOLD_MS);
 }
 // Expand end (~68 %) — crossfade orange orb player → dark photo normal (4423:17126).
 function _finishTest3MusicSettle(music) {
   music = music || document.querySelector('#test3-music');
   if (!music) return;
-  music.removeAttribute('data-test3-music-settling');
   music.classList.remove('test3-music-settle-active', 'test3-music-content-enter');
-  if (typeof _applyTest3MusicSettledLayout === 'function') {
-    _applyTest3MusicSettledLayout(music);
-  }
-  if (typeof _clearTest3MusicEntranceInlineStyles === 'function') {
-    _clearTest3MusicEntranceInlineStyles(music);
-  }
+  requestAnimationFrame(function () {
+    requestAnimationFrame(function () {
+      if (!music.isConnected) return;
+      if (typeof _applyTest3MusicSettledLayout === 'function') {
+        _applyTest3MusicSettledLayout(music);
+      }
+      music.removeAttribute('data-test3-music-settling');
+      music.removeAttribute('data-test3-music-resolved');
+      music.removeAttribute('data-test3-music-chrome-reveal');
+      music.removeAttribute('data-test3-music-shell-white');
+      music.removeAttribute('data-test3-music-stroke-ready');
+      music.removeAttribute('data-test3-music-capsule-phase');
+      if (typeof _clearTest3MusicEntranceInlineStyles === 'function') {
+        _clearTest3MusicEntranceInlineStyles(music);
+      }
+    });
+  });
 }
+// Vertical expand end (~68 %) — ivory shell, then 1 s player copy fade-in via _beginTest3MusicSettle.
 function _signalTest3MusicExpandReady(music) {
   music = music || document.querySelector('#test3-music');
   if (!music) return;
-  if (music.getAttribute('data-test3-music-expand-ready') === '1') return;
+  if (music.getAttribute('data-test3-music-settled') === '1') return;
   music.setAttribute('data-test3-music-expand-ready', '1');
+  music.removeAttribute('data-test3-music-shell-white');
+  music.removeAttribute('data-test3-music-chrome-reveal');
+  music.removeAttribute('data-test3-music-resolved');
+  music.removeAttribute('data-test3-music-pre-expand');
   if (!music.getAttribute('data-music-state')) {
     music.setAttribute('data-music-state', 'normal');
   }
-  setTimeout(function () {
-    if (!music.isConnected) return;
-    if (typeof _beginTest3MusicSettle === 'function') {
-      _beginTest3MusicSettle(music);
-    }
-  }, TEST3_MUSIC_IMAGE1_HOLD_MS);
+  if (typeof _beginTest3MusicSettle === 'function') {
+    _beginTest3MusicSettle(music);
+  } else if (typeof _applyTest3MusicSettledLayout === 'function') {
+    _applyTest3MusicSettledLayout(music);
+  }
+  void music.offsetWidth;
 }
 function _beginTest3MusicSettle(music) {
   music = music || document.querySelector('#test3-music');
   if (!music) return;
   if (music.getAttribute('data-test3-music-settling') === '1') return;
   music.setAttribute('data-test3-music-settling', '1');
+  if (typeof _clearTest3MusicGlowRing === 'function') {
+    _clearTest3MusicGlowRing(music);
+  }
   if (typeof _resetTest3MusicCopy === 'function') {
     _resetTest3MusicCopy(music);
   }
-  requestAnimationFrame(function () {
-    requestAnimationFrame(function () {
-      if (!music.isConnected) return;
-      music.classList.add('test3-music-settle-active', 'test3-music-content-enter');
-    });
-  });
+  music.classList.add('test3-music-settle-active', 'test3-music-content-enter');
+  music.style.setProperty('--test3-music-settle-text-ms', TEST3_MUSIC_SETTLE_TEXT_DUR_MS + 'ms');
+  music.style.setProperty('--test3-music-chrome-fade-ms', Math.round(TEST3_MUSIC_SETTLE_TEXT_DUR_MS * 0.92) + 'ms');
+  void music.offsetWidth;
   setTimeout(function () {
     if (typeof _finishTest3MusicSettle === 'function') {
       _finishTest3MusicSettle(music);
@@ -7790,8 +9814,18 @@ function _revealTest3MusicPlayBtn(music) {
   playBtn.style.visibility = 'visible';
   playBtn.style.setProperty('animation', 'none', 'important');
 }
+function _forceTest3CssAnimationRestart(el) {
+  if (!el || !el.style) return;
+  el.style.animation = 'none';
+  void el.offsetWidth;
+  el.style.removeProperty('animation');
+  void el.offsetWidth;
+}
 function _restartTest3MusicEntranceAnimations(music) {
   if (!music) return;
+  if (typeof _clearTest3MusicGlowRing === 'function') {
+    _clearTest3MusicGlowRing(music);
+  }
   var fill = music.querySelector('.test3-music-fill');
   if (fill) {
     fill.classList.remove('test3-music-fill--active', 'test3-music-fill--fading', 'p2-agent-fill--gl-active', 'p2-agent-fill--gl-fading');
@@ -7799,25 +9833,22 @@ function _restartTest3MusicEntranceAnimations(music) {
   var shell = music.querySelector('.dot-music1');
   if (shell) {
     shell.classList.remove('test3-music-shell--fill-active');
+    ['width', 'height', 'border-radius', 'clip-path', 'background-color', 'opacity', 'transform'].forEach(function (prop) {
+      shell.style.removeProperty(prop);
+    });
   }
   if (window.Test3MusicFillGL) {
     window.Test3MusicFillGL.destroy();
   }
-  var targets = [music].concat(Array.prototype.slice.call(music.querySelectorAll('*')));
-  targets.forEach(function (el) {
-    el.style.animation = 'none';
-  });
-  void music.offsetWidth;
-  targets.forEach(function (el) {
-    el.style.removeProperty('animation');
-  });
   music.style.removeProperty('height');
-  var shell = music.querySelector('.dot-music1');
-  if (shell) {
-    ['width', 'height', 'border-radius', 'clip-path', 'background-color'].forEach(function (prop) {
-      shell.style.removeProperty(prop);
-    });
-  }
+  music.style.removeProperty('opacity');
+  music.style.removeProperty('visibility');
+  music.style.removeProperty('transform');
+  _forceTest3CssAnimationRestart(music);
+  _forceTest3CssAnimationRestart(shell);
+  music.querySelectorAll('.dot-music1__searchLine').forEach(function (line) {
+    _forceTest3CssAnimationRestart(line);
+  });
 }
 // Lock the music shell geometry after the 14 s entrance timeline finishes.
 function _lockTest3MusicShell(music) {
@@ -7871,7 +9902,17 @@ function _finalizeTest3MusicEntrance() {
   requestAnimationFrame(function () {
     requestAnimationFrame(function () {
       if (music) music.style.removeProperty('height');
+      [weather, steps].forEach(function (el) {
+        if (!el) return;
+        el.style.setProperty('transition', 'none', 'important');
+      });
       if (typeof _layoutTest3Cards === 'function') _layoutTest3Cards();
+      requestAnimationFrame(function () {
+        [weather, steps].forEach(function (el) {
+          if (!el) return;
+          el.style.removeProperty('transition');
+        });
+      });
     });
   });
 }
@@ -7906,48 +9947,90 @@ function _initTest3HoverPause() {
   // playing] selector. aria-label flips to match so screen readers
   // announce the right action.
   phone.addEventListener('click', function (e) {
-    var btn = e.target && e.target.closest && e.target.closest('.dot-music3__playBtn');
+    var btn = e.target && e.target.closest && e.target.closest('.dot-music3__playBtn, .dot-music3__transportPlay');
     if (!btn) return;
     e.stopPropagation();
-    var playing = btn.getAttribute('data-music-playing') === '1';
-    var next = playing ? '0' : '1';
-    btn.setAttribute('data-music-playing', next);
-    btn.setAttribute('aria-label', next === '1' ? 'Pause' : 'Play');
-    // Mirror the state on #test3-music so the CSS rule on the bar's
-    // ::track animation-play-state can pause/resume in sync, and the
-    // current-time ticker (which checks the same attribute) freezes
-    // / resumes together with the bar's visible fill.
+    if (e.stopImmediatePropagation) e.stopImmediatePropagation();
     var card = btn.closest('#test3-music');
-    if (card) card.setAttribute('data-music-playing', next);
-    if (typeof _setTest3MusicAudioPlaying === 'function') {
-      _setTest3MusicAudioPlaying(next === '1');
+    if (!card || !window.__mlpTest3MusicShifted) return;
+    if (card.getAttribute('data-test3-music-loading') === '1') return;
+    var playing = btn.getAttribute('data-music-playing') === '1';
+    var nextPlaying = !playing;
+    if (typeof _syncTest3MusicPlayState === 'function') {
+      _syncTest3MusicPlayState(card, nextPlaying);
     }
-    // Quick white-50% flash on the disc background to give the play/
-    // pause toggle a visible "click" beat. The .is-blinking class
-    // runs a 320ms one-shot keyframe (in theme-page.css); strip it
-    // a touch after the animation finishes so the next click can
-    // re-trigger.
-    var iconEl = btn.closest('.dot-music3__icon');
-    if (iconEl) {
-      iconEl.classList.remove('is-blinking');
-      // Force reflow so the re-added class restarts the animation
-      // when the user clicks twice in quick succession.
-      void iconEl.offsetWidth;
-      iconEl.classList.add('is-blinking');
-      setTimeout(function () { iconEl.classList.remove('is-blinking'); }, 360);
+    if (typeof _setTest3MusicAudioPlaying === 'function') {
+      _setTest3MusicAudioPlaying(nextPlaying);
+    }
+    if (!btn.classList.contains('dot-music3__transportPlay')) {
+      var iconEl = btn.closest('.dot-music3__icon');
+      if (iconEl) {
+        iconEl.classList.remove('is-blinking');
+        void iconEl.offsetWidth;
+        iconEl.classList.add('is-blinking');
+        setTimeout(function () { iconEl.classList.remove('is-blinking'); }, 360);
+      }
     }
   });
-  // Card-body tap cycle: tapping anywhere on the music card OUTSIDE
-  // the play button advances the state machine:
+  phone.addEventListener('click', function (e) {
+    if (!e.target || !e.target.closest) return;
+    if (!e.target.closest('#test3-music .dot-music3__bar')) return;
+    if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+    e.stopPropagation();
+  }, true);
+  phone.addEventListener('pointerdown', function (e) {
+    var bar = e.target && e.target.closest && e.target.closest('#test3-music .dot-music3__bar');
+    if (!bar) return;
+    var music = bar.closest('#test3-music');
+    if (!music || !window.__mlpTest3MusicShifted) return;
+    if (!music || typeof _test3MusicProgressInteractive !== 'function' || !_test3MusicProgressInteractive(music)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+    _test3MusicSuppressExpandClickBriefly();
+    window.__mlpTest3MusicScrubbing = true;
+    if (bar.setPointerCapture) bar.setPointerCapture(e.pointerId);
+    _test3MusicScrubFromEvent(bar, e.clientX);
+    function onMove(ev) {
+      if (ev.pointerId !== e.pointerId) return;
+      _test3MusicScrubFromEvent(bar, ev.clientX);
+    }
+    function onUp(ev) {
+      if (ev.pointerId !== e.pointerId) return;
+      window.__mlpTest3MusicScrubbing = false;
+      if (bar.releasePointerCapture) {
+        try { bar.releasePointerCapture(ev.pointerId); } catch (_) {}
+      }
+      bar.removeEventListener('pointermove', onMove);
+      bar.removeEventListener('pointerup', onUp);
+      bar.removeEventListener('pointercancel', onUp);
+    }
+    bar.addEventListener('pointermove', onMove);
+    bar.addEventListener('pointerup', onUp);
+    bar.addEventListener('pointercancel', onUp);
+  });
+  phone.addEventListener('click', function (e) {
+    if (window.__mlpTest3MusicSuppressExpandClick) return;
+    var pill = e.target && e.target.closest && e.target.closest('#test3-music .dot-music3__playlistPill');
+    if (!pill) return;
+    var card = pill.closest('#test3-music');
+    if (!card || !window.__mlpTest3MusicShifted) return;
+    if (card.getAttribute('data-test3-music-loading') === '1') return;
+    if ((card.getAttribute('data-music-state') || 'normal') !== 'lyrics') return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+    _toggleTest3PlaylistOpen(card);
+  }, true);
+  // Card-body tap cycle: tapping the card body (not play / progress bar)
+  // advances the state machine:
   //   normal  → lyrics (tap 1: show lyric block, card grows taller)
   //   lyrics  → compact (tap 2: shrink to 168×168 square)
   //   compact → normal (tap 3: back to the post-shift default)
-  // The play button's own handler above stops propagation so the
-  // card-body listener never fires when the user is hitting play.
   phone.addEventListener('click', function (e) {
-    // Skip when the click is on the play button — that handler ran
-    // already (and stopped propagation, but be defensive).
-    if (e.target && e.target.closest && e.target.closest('.dot-music3__playBtn')) return;
+    if (window.__mlpTest3MusicSuppressExpandClick) return;
+    if (_test3MusicExpandControlHit(e)) return;
+    if (e.target && e.target.closest && e.target.closest('#test3-music .dot-music3__playlistPill')) return;
     var card = e.target && e.target.closest && e.target.closest('#test3-music');
     if (!card) return;
     // Block the cycle during the initial mount animations (first ~4s
@@ -7966,6 +10049,7 @@ function _initTest3HoverPause() {
     var next = cur === 'normal' ? 'lyrics'
              : cur === 'lyrics' ? 'compact'
              : 'normal';
+    if (next !== 'lyrics') card.removeAttribute('data-test3-playlist-open');
     card.setAttribute('data-music-state', next);
     if (typeof _resetTest3MusicCopy === 'function') {
       _resetTest3MusicCopy(card);
@@ -7981,7 +10065,7 @@ function _initTest3HoverPause() {
   // so the OTHER card drops to a new row when one expands (and vice
   // versa).
   phone.addEventListener('click', function (e) {
-    if (e.target && e.target.closest && e.target.closest('.dot-music3__playBtn')) return;
+    if (_test3MusicExpandControlHit(e)) return;
     if (e.target && e.target.closest && e.target.closest('#test3-music')) return;
     var card = e.target && e.target.closest && (
       e.target.closest('#test3-weather') || e.target.closest('#test3-steps')
@@ -8028,9 +10112,32 @@ window.__mlpTest3GoHome = function __mlpTest3GoHome() {
     window.__mlpTest3WeatherDropped = false;
     window.__mlpTest3MusicShiftRunId = (window.__mlpTest3MusicShiftRunId || 0) + 1;
     window.__mlpTest3WeatherRainArmed = false;
+    window.__mlpTest3PillsRevealed = false;
+    window.__mlpTest3PillsDropArmed = false;
+    window.__mlpTest3WeatherPrepPending = false;
     if (window.__mlpTest3WeatherRainTimer) {
       clearTimeout(window.__mlpTest3WeatherRainTimer);
       window.__mlpTest3WeatherRainTimer = null;
+    }
+    if (window.__mlpTest3WeatherDropCompleteTimer) {
+      clearTimeout(window.__mlpTest3WeatherDropCompleteTimer);
+      window.__mlpTest3WeatherDropCompleteTimer = null;
+    }
+    if (window.__mlpTest3PillsRevealTimer) {
+      clearTimeout(window.__mlpTest3PillsRevealTimer);
+      window.__mlpTest3PillsRevealTimer = null;
+    }
+    if (window.__mlpTest3PillsBlackTimer) {
+      clearTimeout(window.__mlpTest3PillsBlackTimer);
+      window.__mlpTest3PillsBlackTimer = null;
+    }
+    if (window.__mlpTest3PillsDropTimer) {
+      clearTimeout(window.__mlpTest3PillsDropTimer);
+      window.__mlpTest3PillsDropTimer = null;
+    }
+    if (window.__mlpTest3PillsRevealEndTimer) {
+      clearTimeout(window.__mlpTest3PillsRevealEndTimer);
+      window.__mlpTest3PillsRevealEndTimer = null;
     }
     // No more home-enter slide-in/fade-in. Weather + Steps were
     // pre-rendered + faded in during the morph (see prefade code in
@@ -8107,6 +10214,7 @@ window.__mlpTest3GoHome = function __mlpTest3GoHome() {
             'test3-goal-enter',
             'test3-goal-enter-ready',
             'test3-goal-copy-enter',
+            'test3-goal-inner-rise',
             'test3-goal-map-ready',
             'test3-goal-entrance-settled'
           );
@@ -8146,6 +10254,12 @@ window.__mlpTest3GoHome = function __mlpTest3GoHome() {
           introRunEl.style.height = goalRect.h + 'px';
           introRunEl.style.opacity = '1';
           introRunEl.style.overflow = '';
+          introRunEl.style.borderRadius = '35px';
+          introRunEl.style.animation = 'none';
+          var goalCardShell = introRunEl.querySelector('.dot-goal');
+          if (goalCardShell) {
+            goalCardShell.style.borderRadius = '35px';
+          }
           goalEnterRebuildScheduled = true;
           if (typeof _orchestrateTest3GoalEntrance === 'function') {
             _orchestrateTest3GoalEntrance(introRunEl);
@@ -8177,7 +10291,13 @@ window.__mlpTest3GoHome = function __mlpTest3GoHome() {
     // pseudo-element animation ends + the ::after content disappears.
     try {
       var cEl = document.getElementById('canvas');
-      if (cEl) cEl.removeAttribute('data-test3-intro-exiting');
+      if (cEl) {
+        cEl.removeAttribute('data-test3-intro-exiting');
+        cEl.setAttribute('data-test3-home', '1');
+        if (typeof _armTest3PillsReveal === 'function') {
+          _armTest3PillsReveal(cEl);
+        }
+      }
     } catch (_) {}
   }
 
@@ -8401,7 +10521,19 @@ function _buildCanvasItemWrapper(comp, layout, plan, existing) {
   wrapper.style.left = rect.x + 'px';
   wrapper.style.top = rect.y + 'px';
   wrapper.style.width = rect.w + 'px';
-  wrapper.style.height = rect.h + 'px';
+  /* Entrance capsule: CSS test3MusicWrapperHeight owns #test3-music height (not 218px _rect). */
+  if (isTest3Scope && comp.id === 'test3-music') {
+    var musicKeepCssHeight = !existing ||
+      existing.getAttribute('data-test3-music-loading') === '1' ||
+      existing.getAttribute('data-test3-music-settled') !== '1';
+    if (musicKeepCssHeight) {
+      wrapper.style.removeProperty('height');
+    } else {
+      wrapper.style.height = rect.h + 'px';
+    }
+  } else {
+    wrapper.style.height = rect.h + 'px';
+  }
 
   if (comp.role === 'background' || comp.role === 'scrim') {
     wrapper.style.pointerEvents = 'none';
@@ -8936,56 +11068,85 @@ window.activateTest2ContactListLayout = activateTest2ContactListLayout;
 window.syncTest2LoadingPresentation = syncTest2LoadingPresentation;
 window.setTest2AgentInputGlow = setTest2AgentInputGlow;
 
+function isTest2P2RevealStarted() {
+  if (!_isTest2Scope()) return false;
+  var result = document.getElementById('p2-result');
+  var slot = document.getElementById('p2-slot');
+  var shell = document.getElementById('p2-area');
+
+  if (result) {
+    if (result.classList.contains('p2-result-expanded')) return true;
+    if (result.classList.contains('p2-crossfade-out')) return true;
+    if (result.classList.contains('p2-loading-ui-exiting')) return true;
+    if (result.classList.contains('has-swap')) return true;
+  }
+  if (slot) {
+    if (slot.classList.contains('p2-reveal-swap')) return true;
+    if (slot.classList.contains('p2-seq-color-active')) return true;
+    if (slot.classList.contains('p2-contact-reveal-active')) return true;
+    if (slot.classList.contains('p2-seq-done')) return true;
+    if (slot.classList.contains('p2-reveal-visible')) return true;
+  }
+  if (shell) {
+    if (shell.classList.contains('p2-loading-chrome-exiting')) return true;
+    if (shell.classList.contains('p2-contact-layout-active')) return true;
+  }
+  return false;
+}
+
+window.isTest2P2RevealStarted = isTest2P2RevealStarted;
+
 function syncTest2VoiceStarState(canvas) {
   if (!canvas || !_isTest2Scope()) return;
   var star = document.getElementById('p2-star');
   if (!star) return;
+  var result = document.getElementById('p2-result');
+  var isLoading = !!(result && result.classList.contains('is-loading'));
+  var revealStarted = isTest2P2RevealStarted();
   var active =
     canvas.classList.contains('p2-listening') ||
-    canvas.classList.contains('p2-generating');
-  var icon = star.querySelector('.dot-icon11');
-  var grad = star.querySelector('.dot-icon11__grad');
-  var from = star.querySelector('.dot-icon11__layer--from');
-  var to = star.querySelector('.dot-icon11__layer--to');
-  var chord = star.querySelector('.p2-breathing-chord');
+    canvas.classList.contains('p2-generating') ||
+    (isLoading && !revealStarted);
 
   if (active) {
     star.classList.add('p2-star-voice-live');
     star.classList.remove('p2-star-voice-settled');
-    star.style.background = '#FF7F24';
-    star.style.borderRadius = '28px';
-    star.style.overflow = 'hidden';
-    if (chord) chord.style.display = 'none';
-    if (icon) {
-      icon.style.display = 'flex';
-      icon.style.background = '#FF7F24';
-      icon.style.opacity = '1';
-    }
-    if (grad) grad.style.opacity = '1';
-    if (from) from.style.opacity = '0';
-    if (to) {
-      to.style.opacity = '1';
-      to.style.filter = 'blur(0px)';
-    }
   } else {
     star.classList.remove('p2-star-voice-live');
     star.classList.add('p2-star-voice-settled');
-    star.style.removeProperty('background');
-    star.style.removeProperty('border-radius');
-    star.style.removeProperty('overflow');
-    if (chord) chord.style.removeProperty('display');
-    if (icon) {
-      icon.style.removeProperty('display');
-      icon.style.removeProperty('background');
-      icon.style.removeProperty('opacity');
-    }
-    if (grad) grad.style.removeProperty('opacity');
-    if (from) from.style.removeProperty('opacity');
-    if (to) {
-      to.style.removeProperty('opacity');
-      to.style.removeProperty('filter');
-    }
   }
+
+  if (window.P2GalaxyStar && typeof window.P2GalaxyStar.syncFromCanvas === 'function') {
+    window.P2GalaxyStar.syncFromCanvas(canvas);
+  }
+}
+
+function installTest2GalaxyStar(canvas) {
+  if (!canvas || !_isTest2Scope()) return;
+
+  function boot() {
+    var star = document.getElementById('p2-star');
+    if (!star || !window.P2GalaxyStar) return;
+    window.P2GalaxyStar.mount(star);
+    syncTest2VoiceStarState(canvas);
+  }
+
+  if (window.P2GalaxyStar) {
+    boot();
+    return;
+  }
+
+  var existing = document.querySelector('script[data-p2-galaxy-star]');
+  if (existing) {
+    existing.addEventListener('load', boot, { once: true });
+    return;
+  }
+
+  var script = document.createElement('script');
+  script.src = '/app/p2-galaxy-star.js?v=11';
+  script.dataset.p2GalaxyStar = '1';
+  script.onload = boot;
+  document.head.appendChild(script);
 }
 
 function installTest2P2TransitionBridge(canvas) {
@@ -9011,6 +11172,8 @@ function installTest2P2TransitionBridge(canvas) {
 
     if (opts.mount) {
       slot.dataset.p2LayoutReady = '';
+      delete slot.dataset.test2ContactStagger;
+      delete slot.dataset.test2ContactRevealLock;
       prepareTest2ContactListSequence(slot);
     }
 
@@ -9039,6 +11202,7 @@ function installTest2P2TransitionBridge(canvas) {
         }
         if (m.type === 'attributes' && m.attributeName === 'class' && m.target === slot) {
           shouldSync = true;
+          syncTest2VoiceStarState(document.getElementById('canvas'));
         }
       }
       if (shouldSync) syncContactListLayout(slot, { mount: isMount });
@@ -9049,6 +11213,7 @@ function installTest2P2TransitionBridge(canvas) {
     if (!result || result.dataset.test2P2ResultBound === '1') return;
     result.dataset.test2P2ResultBound = '1';
     new MutationObserver(function () {
+      syncTest2VoiceStarState(document.getElementById('canvas'));
       if (!result.classList.contains('is-loading')) return;
       syncTest2LoadingPresentation(result);
     }).observe(result, { attributes: true, attributeFilter: ['class'] });
@@ -9070,6 +11235,937 @@ function installTest2P2TransitionBridge(canvas) {
   }).observe(canvas, { attributes: true, attributeFilter: ['class'] });
 }
 
+var TEST1_INTRO_DELAY_MS = 3000;
+var TEST1_LOTTE_INTRO_MS = 720;
+var TEST1_GREEN_AFTER_LOTTE_MS = 1800;
+var TEST1_STACK_AFTER_GREEN_MS = 1200;
+var TEST1_STACK_INTRO_MS = 720;
+var TEST1_AFTER_STACK_MS = 1500;
+var TEST1_PILL_BG_DELAY_MS = 350;
+var TEST1_PILL_BG_IN_MS = 950;
+var TEST1_PILL_TEXT_A_IN_MS = 1520;
+var TEST1_PILL_TEXT_HOLD_MS = 3000;
+var TEST1_TOP_GRADIENT_VER3_ENABLED = true;
+var TEST1_PASS_DUR_MS = 1667;
+var TEST1_PASS_OVERLAP_MS = 240;
+var TEST1_PASS_STEP_MS = TEST1_PASS_DUR_MS - TEST1_PASS_OVERLAP_MS;
+var TEST1_GRADIENT_PASS_DUR_MS = 2350;
+var TEST1_GRADIENT_PASS_OVERLAP_MS = 520;
+var TEST1_GRADIENT_PASS_STEP_MS = TEST1_GRADIENT_PASS_DUR_MS - TEST1_GRADIENT_PASS_OVERLAP_MS;
+var TEST1_GRADIENT_COMP_STAGGER_MS = 140;
+var TEST1_GRADIENT_HOLD_MS = 320;
+var TEST1_GRADIENT_COMP_FADE_DUR_MS = 880;
+var TEST1_GRADIENT_COMP_FADE_GAP_MS = 220;
+var TEST1_GRADIENT_COMP_FADE_TOTAL_MS = TEST1_GRADIENT_COMP_FADE_GAP_MS * 2 + TEST1_GRADIENT_COMP_FADE_DUR_MS;
+var TEST1_GRADIENT_OUT_FADE_MS = TEST1_GRADIENT_COMP_FADE_TOTAL_MS + 120;
+var TEST1_GRADIENT_THIRD_PASS_START_MS = TEST1_GRADIENT_PASS_STEP_MS * 2 + TEST1_GRADIENT_COMP_STAGGER_MS * 2;
+/* 3 fill passes (track 1+2+3), fade out starts after slow sweep completes */
+var TEST1_GRADIENT_FLOW_MS = TEST1_GRADIENT_COMP_STAGGER_MS * 2 + TEST1_GRADIENT_PASS_STEP_MS * 2 + TEST1_GRADIENT_PASS_DUR_MS;
+var TEST1_PILL_GRAD_PASS_OVERLAP_MS = 620;
+var TEST1_PILL_GRAD_PASS_STEP_MS = TEST1_PASS_DUR_MS - TEST1_PILL_GRAD_PASS_OVERLAP_MS;
+var TEST1_PILL_TEXT_SWEEP_MS = TEST1_PASS_DUR_MS + TEST1_PASS_STEP_MS * 2;
+var TEST1_PILL_TEXT_A_OUT_MS = 1150;
+var TEST1_PILL_PINK_FLOW_MS = TEST1_PASS_DUR_MS + TEST1_PILL_GRAD_PASS_STEP_MS * 2;
+var TEST1_PILL_TEXT_B_DUR_MS = 1400;
+var TEST1_PILL_TEXT_B_GAP_AFTER_PINK_MS = 80;
+var TEST1_PILL_TEXT_A_SHIMMER_DELAY_MS = 1000;
+var TEST1_PILL_ICON_AFTER_SHELL_MS = 220;
+var TEST1_PILL_PRE_PINK_AFTER_ICON_MS = 280;
+var TEST1_PILL_AI_LOGO_AFTER_ICON_GAP_MS = 120;
+var TEST1_PILL_ICON_TEXT_DELAY_MS = TEST1_PILL_BG_DELAY_MS + TEST1_PILL_BG_IN_MS + TEST1_PILL_ICON_AFTER_SHELL_MS;
+var TEST1_PILL_AI_LOGO_START_MS = TEST1_PILL_BG_DELAY_MS + TEST1_PILL_BG_IN_MS + TEST1_PILL_AI_LOGO_AFTER_ICON_GAP_MS;
+var TEST1_PILL_AI_LOGO_FADE_MS = 480;
+var TEST1_TOP_GRADIENT_TOTAL_MS = TEST1_GRADIENT_THIRD_PASS_START_MS + TEST1_GRADIENT_OUT_FADE_MS;
+var TEST1_PILL_PRE_PINK_START_MS = TEST1_PILL_ICON_TEXT_DELAY_MS + TEST1_PILL_BG_IN_MS + TEST1_PILL_PRE_PINK_AFTER_ICON_MS;
+var TEST1_PILL_TEXT_A_REVEAL_START_MS = TEST1_PILL_PRE_PINK_START_MS;
+var TEST1_PILL_TEXT_A_SHIMMER_START_MS = TEST1_PILL_TEXT_A_REVEAL_START_MS;
+var TEST1_PILL_TEXT_A_HIGHLIGHT_PASS_MS = 2850;
+var TEST1_PILL_TEXT_A_HIGHLIGHT_STEP_MS = 500;
+var TEST1_PILL_TEXT_A_HIGHLIGHT_OVERLAP_MS = TEST1_PILL_TEXT_A_HIGHLIGHT_PASS_MS - TEST1_PILL_TEXT_A_HIGHLIGHT_STEP_MS;
+var TEST1_PILL_TEXT_A_SHIMMER_DUR_MS = TEST1_PILL_TEXT_A_HIGHLIGHT_PASS_MS + TEST1_PILL_TEXT_A_HIGHLIGHT_STEP_MS * 2;
+var TEST1_PILL_PINK_FLOW_DELAY_MS = TEST1_PILL_TEXT_A_SHIMMER_START_MS + TEST1_PILL_TEXT_A_SHIMMER_DUR_MS;
+var TEST1_PILL_PINK_SWEEP_START_MS = TEST1_PILL_PINK_FLOW_DELAY_MS;
+var TEST1_PILL_TEXT_B_DELAY_MS = TEST1_PILL_PINK_FLOW_DELAY_MS + TEST1_PILL_PINK_FLOW_MS + TEST1_PILL_TEXT_B_GAP_AFTER_PINK_MS;
+var TEST1_PILL_TEXT_A_OUT_START_MS = TEST1_PILL_PINK_SWEEP_START_MS - TEST1_PILL_TEXT_A_OUT_MS;
+/* ver3 — start with text-a out, finish lift-fade when text-b mounts */
+var TEST1_VER3_GRADIENT_START_MS = TEST1_PILL_TEXT_A_OUT_START_MS;
+var TEST1_VER3_OUT_TRIGGER_MS = Math.max(
+  TEST1_PILL_TEXT_B_DELAY_MS - TEST1_PILL_TEXT_A_OUT_START_MS - TEST1_GRADIENT_OUT_FADE_MS,
+  TEST1_GRADIENT_FLOW_MS + TEST1_GRADIENT_HOLD_MS - TEST1_GRADIENT_OUT_FADE_MS
+);
+var TEST1_PILL_AI_LOGO_PAUSE_MS = TEST1_PILL_TEXT_B_DELAY_MS;
+var TEST1_CODA_FADE_IN_MS = TEST1_PILL_TEXT_B_DELAY_MS + TEST1_PILL_TEXT_B_DUR_MS + 500;
+var TEST1_STACK_ITEM_GAP_PX = 16;
+var TEST1_STACK_SHIFT_PX = 72 + TEST1_STACK_ITEM_GAP_PX;
+var TEST1_HOME_EXIT_MS = 560;
+var TEST1_HOME_GLOW_HOLD_MS = 2000;
+var TEST1_HOME_CROSSFADE_MS = 2000;
+var TEST1_HOME_EXPAND_MS = 3200;
+var TEST1_HOME_FOOD_PULSE_MS = TEST1_HOME_EXPAND_MS + TEST1_HOME_CROSSFADE_MS;
+var TEST1_HOME_FOOD_CONTRACT_RATIO = TEST1_HOME_EXPAND_MS / TEST1_HOME_FOOD_PULSE_MS;
+var TEST1_HOME_GLOW_FADE_MS = 850;
+var TEST1_HOME_FOOD_RISE_MS = TEST1_HOME_EXPAND_MS;
+var TEST1_HOME_FOOD_GLOW_FADE_MS = TEST1_HOME_CROSSFADE_MS;
+var TEST1_HOME_BG_SETTLE_MS = TEST1_HOME_FOOD_RISE_MS + TEST1_HOME_CROSSFADE_MS + 480;
+
+function _runTest1HomeGleamReveal(done) {
+  try {
+    var canvas = document.getElementById('canvas');
+    if (!canvas || canvas.getAttribute('data-test-scope') !== 'test1') return;
+    var dur = TEST1_HOME_CROSSFADE_MS;
+    var widgets = canvas.querySelectorAll('.test1-home-widget');
+
+    widgets.forEach(function (widget) {
+      var veil = widget.querySelector('.test1-home-widget__veil');
+      var inner = widget.querySelector('.test1-home-widget__inner');
+      var bg = widget.querySelector('.test1-home-widget__bg');
+
+      widget.classList.add('test1-home-widget--gleam-out');
+
+      if (inner) {
+        inner.getAnimations().forEach(function (anim) { try { anim.cancel(); } catch (_) {} });
+        inner.style.transition = 'none';
+        inner.style.zIndex = '1';
+        inner.style.visibility = 'visible';
+        inner.style.opacity = '1';
+      }
+      if (bg) {
+        bg.getAnimations().forEach(function (anim) { try { anim.cancel(); } catch (_) {} });
+        bg.style.transition = 'none';
+        bg.style.opacity = '1';
+      }
+      if (veil) {
+        veil.getAnimations().forEach(function (anim) { try { anim.cancel(); } catch (_) {} });
+        veil.style.animation = 'none';
+        veil.style.transition = 'none';
+        veil.style.visibility = 'visible';
+        veil.style.opacity = '1';
+      }
+    });
+
+    void canvas.offsetWidth;
+
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        widgets.forEach(function (widget) {
+          var veil = widget.querySelector('.test1-home-widget__veil');
+          if (!veil) return;
+          veil.style.transition = 'opacity ' + dur + 'ms linear';
+          veil.style.opacity = '0';
+        });
+        if (window.Test1HomeWidgetFillGL) {
+          try { window.Test1HomeWidgetFillGL.crossfadeAll(dur); } catch (_) {}
+        }
+        if (typeof done === 'function') done();
+      });
+    });
+  } catch (_) {}
+}
+
+function _clearTest1IntroTimer() {
+  if (window.__mlpTest1IntroTimer) {
+    clearTimeout(window.__mlpTest1IntroTimer);
+    window.__mlpTest1IntroTimer = null;
+  }
+  if (window.__mlpTest1PillTimer) {
+    clearTimeout(window.__mlpTest1PillTimer);
+    window.__mlpTest1PillTimer = null;
+  }
+  if (window.__mlpTest1GreenTimer) {
+    clearTimeout(window.__mlpTest1GreenTimer);
+    window.__mlpTest1GreenTimer = null;
+  }
+  if (window.__mlpTest1StackTimer) {
+    clearTimeout(window.__mlpTest1StackTimer);
+    window.__mlpTest1StackTimer = null;
+  }
+  if (window.__mlpTest1ShortcutFadeTimer) {
+    clearTimeout(window.__mlpTest1ShortcutFadeTimer);
+    window.__mlpTest1ShortcutFadeTimer = null;
+  }
+  if (window.__mlpTest1PillOutDelayTimer) {
+    clearTimeout(window.__mlpTest1PillOutDelayTimer);
+    window.__mlpTest1PillOutDelayTimer = null;
+  }
+  if (window.__mlpTest1PillOutEndTimer) {
+    clearTimeout(window.__mlpTest1PillOutEndTimer);
+    window.__mlpTest1PillOutEndTimer = null;
+  }
+  if (window.__mlpTest1GradientStartTimer) {
+    clearTimeout(window.__mlpTest1GradientStartTimer);
+    window.__mlpTest1GradientStartTimer = null;
+  }
+  if (window.__mlpTest1GradientEndTimer) {
+    clearTimeout(window.__mlpTest1GradientEndTimer);
+    window.__mlpTest1GradientEndTimer = null;
+  }
+  if (window.__mlpTest1GradientOutTimer) {
+    clearTimeout(window.__mlpTest1GradientOutTimer);
+    window.__mlpTest1GradientOutTimer = null;
+  }
+  if (window.__mlpTest1GradientCompAnims && window.__mlpTest1GradientCompAnims.length) {
+    window.__mlpTest1GradientCompAnims.forEach(function (anim) {
+      try { if (anim) anim.cancel(); } catch (_) {}
+    });
+    window.__mlpTest1GradientCompAnims = null;
+  }
+  if (window.__mlpTest1CodaTimer) {
+    clearTimeout(window.__mlpTest1CodaTimer);
+    window.__mlpTest1CodaTimer = null;
+  }
+  if (window.__mlpTest1CodaAfterStackTimer) {
+    clearTimeout(window.__mlpTest1CodaAfterStackTimer);
+    window.__mlpTest1CodaAfterStackTimer = null;
+  }
+  if (window.__mlpTest1GradientSyncTimer) {
+    clearTimeout(window.__mlpTest1GradientSyncTimer);
+    window.__mlpTest1GradientSyncTimer = null;
+  }
+  if (window.__mlpTest1CodaEndTimer) {
+    clearTimeout(window.__mlpTest1CodaEndTimer);
+    window.__mlpTest1CodaEndTimer = null;
+  }
+  if (window.__mlpTest1PinkFlowTimer) {
+    clearTimeout(window.__mlpTest1PinkFlowTimer);
+    window.__mlpTest1PinkFlowTimer = null;
+  }
+  if (window.__mlpTest1TextLoopTimer) {
+    clearTimeout(window.__mlpTest1TextLoopTimer);
+    window.__mlpTest1TextLoopTimer = null;
+  }
+  if (window.__mlpTest1TextLoopEndTimer) {
+    clearTimeout(window.__mlpTest1TextLoopEndTimer);
+    window.__mlpTest1TextLoopEndTimer = null;
+  }
+  if (window.__mlpTest1PinkFlowLoopTimer) {
+    clearTimeout(window.__mlpTest1PinkFlowLoopTimer);
+    window.__mlpTest1PinkFlowLoopTimer = null;
+  }
+  if (window.__mlpTest1PinkFlowStopTimer) {
+    clearTimeout(window.__mlpTest1PinkFlowStopTimer);
+    window.__mlpTest1PinkFlowStopTimer = null;
+  }
+  if (window.__mlpTest1TextBMountTimer) {
+    clearTimeout(window.__mlpTest1TextBMountTimer);
+    window.__mlpTest1TextBMountTimer = null;
+  }
+  _unmountTest1BottomPillTextB();
+  _unmountTest1BottomPillAiLogo();
+  if (window.__mlpTest1AiLogoMountTimer) {
+    clearTimeout(window.__mlpTest1AiLogoMountTimer);
+    window.__mlpTest1AiLogoMountTimer = null;
+  }
+  if (window.__mlpTest1AiLogoPauseTimer) {
+    clearTimeout(window.__mlpTest1AiLogoPauseTimer);
+    window.__mlpTest1AiLogoPauseTimer = null;
+  }
+  if (window.__mlpTest1HomeExitTimer) {
+    clearTimeout(window.__mlpTest1HomeExitTimer);
+    window.__mlpTest1HomeExitTimer = null;
+  }
+  if (window.__mlpTest1HomeBgSettleTimer) {
+    clearTimeout(window.__mlpTest1HomeBgSettleTimer);
+    window.__mlpTest1HomeBgSettleTimer = null;
+  }
+  if (window.__mlpTest1HomeInnerRiseTimer) {
+    clearTimeout(window.__mlpTest1HomeInnerRiseTimer);
+    window.__mlpTest1HomeInnerRiseTimer = null;
+  }
+  if (window.__mlpTest1HomeFoodRiseTimer) {
+    clearTimeout(window.__mlpTest1HomeFoodRiseTimer);
+    window.__mlpTest1HomeFoodRiseTimer = null;
+  }
+  if (window.__mlpTest1HomeFoodPulseEndTimer) {
+    clearTimeout(window.__mlpTest1HomeFoodPulseEndTimer);
+    window.__mlpTest1HomeFoodPulseEndTimer = null;
+  }
+  if (window.Test1HomeWidgetFillGL) {
+    try { window.Test1HomeWidgetFillGL.destroyAll(); } catch (_) {}
+  }
+  window.__mlpTest1Transitioning = false;
+}
+
+function _unmountTest1BottomPillAiLogo() {
+  try {
+    var pill = document.querySelector('#test1-bottom-pill');
+    if (pill && window.__test1GalaxyAiLogo && typeof window.__test1GalaxyAiLogo.unmount === 'function') {
+      window.__test1GalaxyAiLogo.unmount(pill);
+    }
+  } catch (_) {}
+}
+
+function _isMlpLocalDevHost() {
+  try {
+    var h = typeof window !== 'undefined' && window.location && window.location.hostname;
+    return h === 'localhost' || h === '127.0.0.1';
+  } catch (_) {
+    return false;
+  }
+}
+
+function _ensureTest1GalaxyAiLogoScript(done) {
+  var dev = _isMlpLocalDevHost();
+  if (!dev && window.__test1GalaxyAiLogo && typeof window.__test1GalaxyAiLogo.mount === 'function') {
+    done();
+    return;
+  }
+  if (window.__mlpTest1GalaxyAiLogoLoading) {
+    window.__mlpTest1GalaxyAiLogoLoading.push(done);
+    return;
+  }
+  if (dev) {
+    _unmountTest1BottomPillAiLogo();
+    delete window.__test1GalaxyAiLogo;
+    var oldScript = document.querySelector('script[data-mlp-test1-galaxy-ai-logo]');
+    if (oldScript) oldScript.remove();
+  } else if (window.__test1GalaxyAiLogo && typeof window.__test1GalaxyAiLogo.mount === 'function') {
+    done();
+    return;
+  }
+  window.__mlpTest1GalaxyAiLogoLoading = [done];
+  var script = document.createElement('script');
+  script.src = '/app/test1-galaxy-ai-logo.js' + (dev ? ('?t=' + Date.now()) : '?v=27');
+  script.setAttribute('data-mlp-test1-galaxy-ai-logo', '1');
+  script.onload = function () {
+    var queue = window.__mlpTest1GalaxyAiLogoLoading || [];
+    window.__mlpTest1GalaxyAiLogoLoading = null;
+    queue.forEach(function (fn) { try { fn(); } catch (_) {} });
+  };
+  script.onerror = function () {
+    window.__mlpTest1GalaxyAiLogoLoading = null;
+  };
+  document.head.appendChild(script);
+}
+
+function _getTest1BottomPillSvg() {
+  var wrap = document.querySelector('#test1-bottom-pill');
+  if (!wrap) return null;
+  return wrap.querySelector('.test1-bottom-pill__svg');
+}
+
+function _unmountTest1BottomPillTextB() {
+  try {
+    var svg = _getTest1BottomPillSvg();
+    if (svg) {
+      var stage = svg.querySelector('.test1-bottom-pill__text-b-stage');
+      if (stage && stage.parentNode) {
+        var slot = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        slot.setAttribute('class', 'test1-bottom-pill__text-b-slot');
+        stage.parentNode.replaceChild(slot, stage);
+      }
+      var textAStage = svg.querySelector('.test1-bottom-pill__text-a-stage');
+      if (textAStage) {
+        textAStage.style.display = '';
+        textAStage.style.visibility = '';
+        textAStage.style.opacity = '';
+      }
+    }
+    var canvas = document.getElementById('canvas');
+    if (canvas) canvas.removeAttribute('data-test1-pill-text-b');
+  } catch (_) {}
+}
+
+function _ensureTest1BottomPillTextBDone(canvas) {
+  try {
+    if (!canvas || canvas.getAttribute('data-test-scope') !== 'test1') return;
+    canvas.setAttribute('data-test1-pill-text-b', 'done');
+    var svg = _getTest1BottomPillSvg();
+    if (!svg) return;
+    if (!svg.querySelector('.test1-bottom-pill__text-b-stage')) {
+      _mountTest1BottomPillTextB(true);
+    }
+  } catch (_) {}
+}
+
+function _mountTest1BottomPillTextB(showFinal) {
+  try {
+    var canvas = document.getElementById('canvas');
+    if (!canvas || canvas.getAttribute('data-test-scope') !== 'test1') return;
+    if (!showFinal && !canvas.getAttribute('data-test1-coda-animate')) return;
+    var svg = _getTest1BottomPillSvg();
+    if (!svg) return;
+    if (svg.querySelector('.test1-bottom-pill__text-b-stage')) {
+      if (showFinal) canvas.setAttribute('data-test1-pill-text-b', 'done');
+      return;
+    }
+    var slot = svg.querySelector('.test1-bottom-pill__text-b-slot');
+    if (!slot || !slot.parentNode) return;
+
+    var stage = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    stage.setAttribute('class', 'test1-bottom-pill__text-b-stage');
+    var fo = document.createElementNS('http://www.w3.org/2000/svg', 'foreignObject');
+    fo.setAttribute('x', '56');
+    fo.setAttribute('y', '10');
+    fo.setAttribute('width', '140');
+    fo.setAttribute('height', '38');
+    fo.setAttribute('class', 'test1-bottom-pill__text-b-fo');
+    fo.innerHTML =
+      '<div xmlns="http://www.w3.org/1999/xhtml" class="test1-bottom-pill__text-b-shiny">' +
+        '<span class="test1-bottom-pill__text-b-shiny-line">저녁 식사 준비를 돕는</span>' +
+        '<span class="test1-bottom-pill__text-b-shiny-line">화면을 구성했어요.</span>' +
+      '</div>';
+    stage.appendChild(fo);
+    slot.parentNode.replaceChild(stage, slot);
+    var textAStage = svg.querySelector('.test1-bottom-pill__text-a-stage');
+    if (textAStage) {
+      textAStage.style.display = 'none';
+      textAStage.style.visibility = 'hidden';
+      textAStage.style.opacity = '0';
+    }
+    canvas.setAttribute('data-test1-pill-text-b', showFinal ? 'done' : '1');
+  } catch (_) {}
+}
+
+function _armTest1BottomPillTextBMount() {
+  if (window.__mlpTest1TextBMountTimer) {
+    clearTimeout(window.__mlpTest1TextBMountTimer);
+    window.__mlpTest1TextBMountTimer = null;
+  }
+  window.__mlpTest1TextBMountTimer = setTimeout(function () {
+    window.__mlpTest1TextBMountTimer = null;
+    _mountTest1BottomPillTextB(false);
+  }, TEST1_PILL_TEXT_B_DELAY_MS);
+}
+
+function _armTest1BottomPillAiLogoMount() {
+  if (window.__mlpTest1AiLogoMountTimer) {
+    clearTimeout(window.__mlpTest1AiLogoMountTimer);
+    window.__mlpTest1AiLogoMountTimer = null;
+  }
+  if (window.__mlpTest1AiLogoPauseTimer) {
+    clearTimeout(window.__mlpTest1AiLogoPauseTimer);
+    window.__mlpTest1AiLogoPauseTimer = null;
+  }
+  window.__mlpTest1AiLogoMountTimer = setTimeout(function () {
+    window.__mlpTest1AiLogoMountTimer = null;
+    _mountTest1BottomPillAiLogo();
+  }, TEST1_PILL_AI_LOGO_START_MS);
+  window.__mlpTest1AiLogoPauseTimer = setTimeout(function () {
+    window.__mlpTest1AiLogoPauseTimer = null;
+    _pauseTest1BottomPillAiLogo();
+  }, TEST1_PILL_AI_LOGO_PAUSE_MS);
+}
+
+function _pauseTest1BottomPillAiLogo() {
+  try {
+    var pill = document.querySelector('#test1-bottom-pill');
+    if (!pill) return;
+    if (window.__test1GalaxyAiLogo && typeof window.__test1GalaxyAiLogo.pause === 'function') {
+      window.__test1GalaxyAiLogo.pause(pill);
+      return;
+    }
+    _ensureTest1GalaxyAiLogoScript(function () {
+      if (window.__test1GalaxyAiLogo && typeof window.__test1GalaxyAiLogo.pause === 'function') {
+        window.__test1GalaxyAiLogo.pause(pill);
+      }
+    });
+  } catch (_) {}
+}
+
+function _mountTest1BottomPillAiLogo() {
+  try {
+    var pill = document.querySelector('#test1-bottom-pill');
+    if (!pill) return;
+    _ensureTest1GalaxyAiLogoScript(function () {
+      if (window.__test1GalaxyAiLogo && typeof window.__test1GalaxyAiLogo.mount === 'function') {
+        window.__test1GalaxyAiLogo.mount(pill);
+      }
+    });
+  } catch (_) {}
+}
+
+function _runTest1ShortcutsFade() {
+  /* shortcuts stay visible for full test1 flow — no mid-sequence fade-out */
+}
+
+function _runTest1GreenIntro() {
+  try {
+    var c = document.getElementById('canvas');
+    if (!c || c.getAttribute('data-test-scope') !== 'test1') return;
+    if (window.__mlpTestConfig && window.__mlpTestConfig.test1RevealAll) return;
+    c.setAttribute('data-test1-green-run', '1');
+    if (window.__mlpTestConfig) window.__mlpTestConfig.test1GreenRun = true;
+    _armTest1StackDelay(c);
+  } catch (_) {}
+}
+
+function _runTest1StackIntro() {
+  try {
+    var c = document.getElementById('canvas');
+    if (!c || c.getAttribute('data-test-scope') !== 'test1') return;
+    if (window.__mlpTestConfig && window.__mlpTestConfig.test1RevealAll) return;
+    c.setAttribute('data-test1-stack-run', '1');
+    c.setAttribute('data-test1-stack-animate', '1');
+    if (window.__mlpTestConfig) window.__mlpTestConfig.test1StackRun = true;
+    _armTest1CodaAfterStack(c);
+  } catch (_) {}
+}
+
+function _armTest1CodaAfterStack(canvas) {
+  if (!canvas || canvas.getAttribute('data-test-scope') !== 'test1') return;
+  if (window.__mlpTestConfig && window.__mlpTestConfig.test1RevealAll) return;
+  if (canvas.getAttribute('data-test1-coda-run')) return;
+  if (!canvas.getAttribute('data-test1-stack-run')) return;
+  if (window.__mlpTest1CodaAfterStackTimer) {
+    clearTimeout(window.__mlpTest1CodaAfterStackTimer);
+  }
+  window.__mlpTest1CodaAfterStackTimer = setTimeout(function () {
+    window.__mlpTest1CodaAfterStackTimer = null;
+    _runTest1CodaIntro();
+  }, TEST1_AFTER_STACK_MS);
+}
+
+function _finishTest1GradientOut(canvas) {
+  if (!canvas || canvas.getAttribute('data-test-scope') !== 'test1') return;
+  if (window.__mlpTest1GradientCompAnims && window.__mlpTest1GradientCompAnims.length) {
+    window.__mlpTest1GradientCompAnims.forEach(function (anim) {
+      try { if (anim) anim.cancel(); } catch (_) {}
+    });
+    window.__mlpTest1GradientCompAnims = null;
+  }
+  canvas.setAttribute('data-test1-gradient-out', '1');
+  if (window.__mlpTestConfig) window.__mlpTestConfig.test1GradientOut = true;
+  canvas.removeAttribute('data-test1-gradient-animate');
+  canvas.removeAttribute('data-test1-gradient-out-animate');
+  if (window.__mlpTestConfig) window.__mlpTestConfig.test1GradientDone = true;
+}
+
+function _test1GradientFadeVisual(canvas, itemId) {
+  if (!canvas || !itemId) return null;
+  var item = canvas.querySelector('#' + itemId);
+  if (!item) return null;
+  return item.querySelector('.test1-home-widget') || item;
+}
+
+function _runTest1GradientCompLiftFade(el, delayMs) {
+  if (!el || typeof el.animate !== 'function') return null;
+  el.style.opacity = '1';
+  return el.animate(
+    [
+      { opacity: 1, transform: 'translate3d(0, 0, 0)' },
+      { opacity: 0, transform: 'translate3d(0, -10px, 0)' }
+    ],
+    {
+      duration: TEST1_GRADIENT_COMP_FADE_DUR_MS,
+      delay: delayMs,
+      easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+      fill: 'forwards'
+    }
+  );
+}
+
+function _beginTest1GradientOutAnimate(canvas) {
+  if (!canvas || canvas.getAttribute('data-test-scope') !== 'test1') return;
+  if (window.__mlpTestConfig && window.__mlpTestConfig.test1RevealAll) return;
+  if (canvas.getAttribute('data-test1-gradient-out-animate')) return;
+  canvas.setAttribute('data-test1-gradient-out-animate', '1');
+  if (window.__mlpTest1GradientCompAnims && window.__mlpTest1GradientCompAnims.length) {
+    window.__mlpTest1GradientCompAnims.forEach(function (anim) {
+      try { if (anim) anim.cancel(); } catch (_) {}
+    });
+  }
+  window.__mlpTest1GradientCompAnims = [];
+  var fadeOrder = [
+    { compId: 'test1-home-map', sweepId: 'test1-gradient-sweep-a', delay: 0 },
+    { compId: 'test1-home-message', sweepId: 'test1-gradient-sweep-b', delay: TEST1_GRADIENT_COMP_FADE_GAP_MS },
+    { compId: 'test1-home-food', sweepId: 'test1-gradient-sweep-c', delay: TEST1_GRADIENT_COMP_FADE_GAP_MS * 2 }
+  ];
+  fadeOrder.forEach(function (entry) {
+    var sweepItem = canvas.querySelector('#' + entry.sweepId);
+    var sweepAnim = _runTest1GradientCompLiftFade(sweepItem, entry.delay);
+    if (sweepAnim) window.__mlpTest1GradientCompAnims.push(sweepAnim);
+  });
+  if (window.__mlpTest1GradientOutTimer) return;
+  window.__mlpTest1GradientOutTimer = setTimeout(function () {
+    window.__mlpTest1GradientOutTimer = null;
+    try {
+      var finishCanvas = document.getElementById('canvas');
+      if (!finishCanvas || finishCanvas.getAttribute('data-test-scope') !== 'test1') return;
+      _finishTest1GradientOut(finishCanvas);
+    } catch (_) {}
+  }, TEST1_GRADIENT_OUT_FADE_MS);
+}
+
+function _armTest1TopGradientSync(canvas) {
+  if (!TEST1_TOP_GRADIENT_VER3_ENABLED) return;
+  if (!canvas || canvas.getAttribute('data-test-scope') !== 'test1') return;
+  if (window.__mlpTestConfig && window.__mlpTestConfig.test1RevealAll) return;
+  if (window.__mlpTest1GradientSyncTimer) {
+    clearTimeout(window.__mlpTest1GradientSyncTimer);
+  }
+  window.__mlpTest1GradientSyncTimer = setTimeout(function () {
+    window.__mlpTest1GradientSyncTimer = null;
+    _runTest1GradientSweep();
+  }, TEST1_VER3_GRADIENT_START_MS);
+}
+
+function _runTest1GradientSweep() {
+  if (!TEST1_TOP_GRADIENT_VER3_ENABLED) return;
+  try {
+    var c = document.getElementById('canvas');
+    if (!c || c.getAttribute('data-test-scope') !== 'test1') return;
+    if (window.__mlpTestConfig && window.__mlpTestConfig.test1RevealAll) return;
+    if (c.getAttribute('data-test1-gradient-run')) return;
+    c.setAttribute('data-test1-gradient-run', '1');
+    if (window.__mlpTestConfig) window.__mlpTestConfig.test1GradientRun = true;
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        try {
+          var canvas = document.getElementById('canvas');
+          if (!canvas || canvas.getAttribute('data-test-scope') !== 'test1') return;
+          if (window.__mlpTestConfig && window.__mlpTestConfig.test1RevealAll) return;
+          canvas.setAttribute('data-test1-gradient-animate', '1');
+          if (window.__mlpTest1GradientEndTimer) return;
+          window.__mlpTest1GradientEndTimer = setTimeout(function () {
+            window.__mlpTest1GradientEndTimer = null;
+            _beginTest1GradientOutAnimate(canvas);
+          }, TEST1_VER3_OUT_TRIGGER_MS);
+        } catch (_) {}
+      });
+    });
+  } catch (_) {}
+}
+
+function _beginTest1CodaChromeRise() {
+  requestAnimationFrame(function () {
+    requestAnimationFrame(function () {
+      try {
+        var cRise = document.getElementById('canvas');
+        if (!cRise || cRise.getAttribute('data-test-scope') !== 'test1') return;
+        if (window.__mlpTestConfig && window.__mlpTestConfig.test1RevealAll) return;
+        if (!cRise.getAttribute('data-test1-coda-run')) return;
+        cRise.setAttribute('data-test1-coda-animate', '1');
+        cRise.setAttribute('data-test1-coda-inner-rise', '1');
+        void cRise.offsetWidth;
+        _armTest1BottomPillAiLogoMount();
+        _armTest1BottomPillTextBMount();
+      } catch (_) {}
+    });
+  });
+}
+
+function _runTest1CodaIntro() {
+  try {
+    var c = document.getElementById('canvas');
+    if (!c || c.getAttribute('data-test-scope') !== 'test1') return;
+    if (window.__mlpTestConfig && window.__mlpTestConfig.test1RevealAll) return;
+    if (c.getAttribute('data-test1-coda-run')) return;
+    _unmountTest1BottomPillTextB();
+    c.removeAttribute('data-test1-coda-inner-rise');
+    c.removeAttribute('data-test1-coda-animate');
+    c.setAttribute('data-test1-coda-run', '1');
+    void c.offsetWidth;
+    if (window.__mlpTestConfig) {
+      window.__mlpTestConfig.test1CodaRun = true;
+    }
+    _beginTest1CodaChromeRise();
+    if (window.__mlpTest1CodaEndTimer) clearTimeout(window.__mlpTest1CodaEndTimer);
+    window.__mlpTest1CodaEndTimer = setTimeout(function () {
+      window.__mlpTest1CodaEndTimer = null;
+        try {
+          var c2 = document.getElementById('canvas');
+          if (!c2 || c2.getAttribute('data-test-scope') !== 'test1') return;
+          c2.setAttribute('data-test1-coda-done', '1');
+          _ensureTest1BottomPillTextBDone(c2);
+          c2.removeAttribute('data-test1-coda-animate');
+          c2.removeAttribute('data-test1-coda-inner-rise');
+          if (window.__mlpTestConfig) window.__mlpTestConfig.test1CodaDone = true;
+          _installTest1BottomPillSwipe(c2);
+        } catch (_) {}
+    }, TEST1_CODA_FADE_IN_MS);
+  } catch (_) {}
+}
+
+
+function _applyTest1HomeStatusBar() {
+  try {
+    var canvas = document.getElementById('canvas');
+    if (!canvas || canvas.getAttribute('data-test-scope') !== 'test1') return;
+    if (!canvas.getAttribute('data-test1-home-run')) return;
+    var sb = document.getElementById('status-bar');
+    if (!sb) return;
+    var time = sb.querySelector('.test1-status-bar__time');
+    if (time) time.textContent = '12:45';
+    var live = sb.querySelector('.test1-status-bar__live');
+    if (live) live.style.display = 'none';
+  } catch (_) {}
+}
+
+function _runTest1HomeIntro() {
+  try {
+    var c = document.getElementById('canvas');
+    if (!c || c.getAttribute('data-test-scope') !== 'test1') return;
+    if (window.__mlpTestConfig && window.__mlpTestConfig.test1RevealAll) return;
+    if (c.getAttribute('data-test1-home-run')) return;
+    c.removeAttribute('data-test1-pill-swipe-armed');
+    c.removeAttribute('data-test1-pill-swipe-out');
+    c.setAttribute('data-test1-home-prep', '1');
+    c.setAttribute('data-test1-home-exit', '1');
+    c.removeAttribute('data-test1-coda-run');
+    if (window.__mlpTestConfig) {
+      window.__mlpTestConfig.test1HomePrep = true;
+      window.__mlpTestConfig.test1CodaRun = false;
+    }
+    if (window.__mlpTest1HomeExitTimer) clearTimeout(window.__mlpTest1HomeExitTimer);
+    window.__mlpTest1HomeExitTimer = setTimeout(function () {
+      window.__mlpTest1HomeExitTimer = null;
+      try {
+        var c2 = document.getElementById('canvas');
+        if (!c2 || c2.getAttribute('data-test-scope') !== 'test1') return;
+        if (window.__mlpTestConfig && window.__mlpTestConfig.test1RevealAll) return;
+        c2.removeAttribute('data-test1-home-exit');
+        c2.removeAttribute('data-test1-home-inner-rise');
+        c2.removeAttribute('data-test1-home-food-rise');
+        c2.removeAttribute('data-test1-home-bg-settled');
+        c2.setAttribute('data-test1-home-run', '1');
+        c2.setAttribute('data-test1-home-animate', '1');
+        void c2.offsetWidth;
+        if (window.Test1HomeWidgetFillGL) {
+          try { window.Test1HomeWidgetFillGL.startAll(); } catch (_) {}
+        }
+        if (window.__mlpTestConfig) {
+          window.__mlpTestConfig.test1HomeRun = true;
+          window.__mlpTestConfig.test1HomeBgSettled = false;
+          window.__mlpTestConfig.test1HomeInnerRise = false;
+          window.__mlpTestConfig.test1HomeFoodRise = false;
+        }
+        window.__mlpTest1Transitioning = false;
+        _applyTest1HomeStatusBar();
+        if (window.__mlpTest1HomeBgSettleTimer) clearTimeout(window.__mlpTest1HomeBgSettleTimer);
+        window.__mlpTest1HomeBgSettleTimer = setTimeout(function () {
+          window.__mlpTest1HomeBgSettleTimer = null;
+          try {
+            var cBg = document.getElementById('canvas');
+            if (!cBg || cBg.getAttribute('data-test-scope') !== 'test1') return;
+            if (window.__mlpTestConfig && window.__mlpTestConfig.test1RevealAll) return;
+            if (!cBg.getAttribute('data-test1-home-animate')) return;
+            cBg.setAttribute('data-test1-home-bg-settled', '1');
+            if (window.__mlpTestConfig) window.__mlpTestConfig.test1HomeBgSettled = true;
+            if (window.Test1HomeWidgetFillGL) {
+              try { window.Test1HomeWidgetFillGL.destroyAll(); } catch (_) {}
+            }
+          } catch (_) {}
+        }, TEST1_HOME_BG_SETTLE_MS);
+        if (window.__mlpTest1HomeFoodRiseTimer) clearTimeout(window.__mlpTest1HomeFoodRiseTimer);
+        window.__mlpTest1HomeFoodRiseTimer = setTimeout(function () {
+          window.__mlpTest1HomeFoodRiseTimer = null;
+          requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+              try {
+                var cFood = document.getElementById('canvas');
+                if (!cFood || cFood.getAttribute('data-test-scope') !== 'test1') return;
+                if (window.__mlpTestConfig && window.__mlpTestConfig.test1RevealAll) return;
+                if (!cFood.getAttribute('data-test1-home-animate')) return;
+                _runTest1HomeGleamReveal(function () {
+                  cFood.setAttribute('data-test1-home-food-rise', '1');
+                  if (window.__mlpTestConfig) {
+                    window.__mlpTestConfig.test1HomeFoodRise = true;
+                    window.__mlpTestConfig.test1HomeInnerRise = true;
+                  }
+                });
+              } catch (_) {}
+            });
+          });
+        }, TEST1_HOME_FOOD_RISE_MS);
+      } catch (_) {}
+    }, TEST1_HOME_EXIT_MS);
+  } catch (_) {}
+}
+
+window.__mlpTest1GoHome = function __mlpTest1GoHome() {
+  if (!window.__mlpTestConfig || window.__mlpTestConfig.id !== 'test1') return false;
+  if (window.__mlpTestConfig.test1HomeRun) return true;
+  if (window.__mlpTest1Transitioning) return true;
+  window.__mlpTest1Transitioning = true;
+  _runTest1HomeIntro();
+  return true;
+};
+
+function _installTest1BottomPillSwipe(canvas) {
+  if (!canvas || canvas.getAttribute('data-test-scope') !== 'test1') return;
+  if (canvas.getAttribute('data-test1-pill-swipe-armed')) return;
+  if (window.__mlpTestConfig && window.__mlpTestConfig.test1HomeRun) return;
+  if (!canvas.getAttribute('data-test1-coda-done')) return;
+  canvas.setAttribute('data-test1-pill-swipe-armed', '1');
+
+  var pillEl = document.getElementById('test1-bottom-pill');
+  if (!pillEl) return;
+  var pillItem = pillEl.closest('.canvas-item') || pillEl;
+  var SWIPE_THRESHOLD = 56;
+  var dragging = false;
+  var swipeFinishing = false;
+  var startX = 0;
+  var lastDx = 0;
+
+  function getSlideOffTx(fromDx) {
+    var canvasEl = document.getElementById('canvas');
+    if (!canvasEl) return fromDx - 420;
+    var canvasRect = canvasEl.getBoundingClientRect();
+    var itemRect = pillItem.getBoundingClientRect();
+    var offBy = itemRect.left - canvasRect.left + itemRect.width + 24;
+    return fromDx - offBy;
+  }
+
+  function applyDrag(dx) {
+    lastDx = Math.min(0, dx);
+    pillItem.style.transition = 'none';
+    pillItem.style.opacity = '1';
+    pillItem.style.transform = 'translate3d(' + lastDx + 'px, 0, 0)';
+  }
+
+  function resetDrag() {
+    lastDx = 0;
+    pillItem.style.transition = 'transform 260ms cubic-bezier(0.22, 0.82, 0.24, 1)';
+    pillItem.style.opacity = '1';
+    pillItem.style.transform = 'translate3d(0, 0, 0)';
+  }
+
+  function finishSwipe() {
+    if (swipeFinishing || window.__mlpTest1Transitioning) return;
+    swipeFinishing = true;
+    dragging = false;
+    var targetTx = getSlideOffTx(lastDx);
+    pillItem.style.transition = 'transform 340ms cubic-bezier(0.22, 0.82, 0.24, 1)';
+    pillItem.style.opacity = '1';
+    pillItem.style.transform = 'translate3d(' + targetTx + 'px, 0, 0)';
+    var done = false;
+    function complete() {
+      if (done) return;
+      done = true;
+      pillItem.style.visibility = 'hidden';
+      pillItem.style.pointerEvents = 'none';
+      canvas.setAttribute('data-test1-pill-swipe-out', '1');
+      if (window.__mlpTest1Transitioning) return;
+      window.__mlpTest1Transitioning = true;
+      _runTest1HomeIntro();
+    }
+    pillItem.addEventListener('transitionend', function onEnd(e) {
+      if (e.target !== pillItem || e.propertyName !== 'transform') return;
+      pillItem.removeEventListener('transitionend', onEnd);
+      complete();
+    });
+    setTimeout(complete, 400);
+  }
+
+  function onDown(e) {
+    if (swipeFinishing || window.__mlpTest1Transitioning || window.__mlpTestConfig.test1HomeRun) return;
+    dragging = true;
+    startX = e.clientX;
+    if (pillItem.setPointerCapture) {
+      try { pillItem.setPointerCapture(e.pointerId); } catch (_) {}
+    }
+  }
+
+  function onMove(e) {
+    if (!dragging || swipeFinishing) return;
+    applyDrag(e.clientX - startX);
+  }
+
+  function onUp(e) {
+    if (!dragging || swipeFinishing) return;
+    dragging = false;
+    if (pillItem.releasePointerCapture) {
+      try { pillItem.releasePointerCapture(e.pointerId); } catch (_) {}
+    }
+    var dx = e.clientX - startX;
+    if (dx < -SWIPE_THRESHOLD) {
+      finishSwipe();
+    } else {
+      resetDrag();
+    }
+  }
+
+  pillItem.style.setProperty('pointer-events', 'auto', 'important');
+  pillItem.style.touchAction = 'pan-y';
+  pillItem.style.cursor = 'grab';
+  pillItem.addEventListener('pointerdown', onDown);
+  pillItem.addEventListener('pointermove', onMove);
+  pillItem.addEventListener('pointerup', onUp);
+  pillItem.addEventListener('pointercancel', onUp);
+}
+
+function _armTest1StackDelay(canvas) {
+  if (!canvas || canvas.getAttribute('data-test-scope') !== 'test1') return;
+  if (window.__mlpTestConfig && window.__mlpTestConfig.test1RevealAll) return;
+  if (canvas.getAttribute('data-test1-stack-run')) return;
+  if (!canvas.getAttribute('data-test1-green-run')) return;
+  if (window.__mlpTest1StackTimer) return;
+  window.__mlpTest1StackTimer = setTimeout(function () {
+    window.__mlpTest1StackTimer = null;
+    _runTest1StackIntro();
+  }, TEST1_STACK_AFTER_GREEN_MS);
+}
+
+function _armTest1GreenAfterLotte(canvas) {
+  if (!canvas || canvas.getAttribute('data-test-scope') !== 'test1') return;
+  if (window.__mlpTestConfig && window.__mlpTestConfig.test1RevealAll) return;
+  if (!canvas.getAttribute('data-test1-intro-run')) return;
+  if (canvas.getAttribute('data-test1-green-run')) return;
+  if (window.__mlpTest1GreenTimer) return;
+  window.__mlpTest1GreenTimer = setTimeout(function () {
+    window.__mlpTest1GreenTimer = null;
+    _runTest1GreenIntro();
+  }, TEST1_GREEN_AFTER_LOTTE_MS);
+}
+
+function _armTest1IntroDelay(canvas) {
+  if (!canvas || canvas.getAttribute('data-test-scope') !== 'test1') return;
+  if (window.__mlpTestConfig && window.__mlpTestConfig.test1RevealAll) return;
+  if (window.__mlpTest1IntroTimer) return;
+  window.__mlpTest1IntroTimer = setTimeout(function () {
+    window.__mlpTest1IntroTimer = null;
+    try {
+      var c = document.getElementById('canvas');
+      if (!c || c.getAttribute('data-test-scope') !== 'test1') return;
+      if (window.__mlpTestConfig && window.__mlpTestConfig.test1RevealAll) return;
+      c.setAttribute('data-test1-intro-run', '1');
+      _armTest1GreenAfterLotte(c);
+    } catch (_) {}
+  }, TEST1_INTRO_DELAY_MS);
+}
+
+/** First-mount lock/intro entry — down+blur stagger; skips re-render replays. */
+function _armTestScopeEntry(canvas) {
+  if (!canvas) return;
+  var cfg = window.__mlpTestConfig;
+  var testScope = cfg && cfg.id;
+  if (!testScope || (testScope !== 'test1' && testScope !== 'test2' && testScope !== 'test3')) return;
+  if (testScope === 'test1' && cfg.test1RevealAll) return;
+  if (testScope === 'test3' && cfg.homeStage === 'home') return;
+  var doneKey = testScope === 'test1' ? '__mlpTest1EntryDone'
+    : testScope === 'test2' ? '__mlpTest2EntryDone'
+    : '__mlpTest3IntroEntryDone';
+  if (window[doneKey]) return;
+  canvas.setAttribute('data-test-entry', '1');
+  canvas.removeAttribute('data-test-entry-done');
+  if (window.__mlpTestEntryTimer) {
+    clearTimeout(window.__mlpTestEntryTimer);
+    window.__mlpTestEntryTimer = null;
+  }
+  window.__mlpTestEntryTimer = setTimeout(function () {
+    window.__mlpTestEntryTimer = null;
+    try {
+      var c = document.getElementById('canvas');
+      if (!c) return;
+      c.setAttribute('data-test-entry-done', '1');
+      c.removeAttribute('data-test-entry');
+      window[doneKey] = true;
+    } catch (_) {}
+  }, 900);
+}
+
+window.__armTest1IntroDelay = _armTest1IntroDelay;
+window.__clearTest1IntroTimer = _clearTest1IntroTimer;
+
+window.test1RevealAllComponents = function test1RevealAllComponents() {
+  if (!window.__mlpTestConfig || window.__mlpTestConfig.id !== 'test1') return;
+  _clearTest1IntroTimer();
+  window.__mlpTestConfig.test1RevealAll = true;
+  if (typeof window.generateSurfaceScenario === 'function') {
+    window.generateSurfaceScenario(window.currentSurfaceType || 'tab-root');
+  }
+};
+
 window.generateSurfaceScenario = function generateSurfaceScenario(surfaceType) {
   const canvas = document.getElementById('canvas');
   if (!canvas) return;
@@ -9089,7 +12185,151 @@ window.generateSurfaceScenario = function generateSurfaceScenario(surfaceType) {
   window.expandContainerComponents(plan, layout);
   if (testScope) {
     canvas.setAttribute('data-test-scope', testScope);
+    if (testScope === 'test1') {
+      if (window.__mlpTestConfig && window.__mlpTestConfig.test1RevealAll == null) {
+        window.__mlpTestConfig.test1RevealAll = false;
+      }
+      if (window.__mlpTestConfig && window.__mlpTestConfig.test1HomeRun == null) {
+        window.__mlpTestConfig.test1HomeRun = false;
+        window.__mlpTestConfig.test1HomePrep = false;
+      }
+      if (window.__mlpTestConfig && window.__mlpTestConfig.test1RevealAll) {
+        _clearTest1IntroTimer();
+        canvas.setAttribute('data-test1-reveal-all', '1');
+        canvas.setAttribute('data-test1-home-run', '1');
+        canvas.setAttribute('data-test1-home-prep', '1');
+        canvas.setAttribute('data-test1-home-food-rise', '1');
+        canvas.setAttribute('data-test1-home-bg-settled', '1');
+        canvas.removeAttribute('data-test1-intro');
+        canvas.removeAttribute('data-test1-intro-run');
+        canvas.removeAttribute('data-test1-pill-prep');
+        canvas.removeAttribute('data-test1-pill-run');
+        canvas.removeAttribute('data-test1-green-run');
+        canvas.removeAttribute('data-test1-stack-run');
+        canvas.removeAttribute('data-test1-stack-animate');
+        canvas.removeAttribute('data-test1-shortcuts-out');
+        canvas.removeAttribute('data-test1-shortcuts-animate');
+        canvas.removeAttribute('data-test1-pill-out');
+        canvas.removeAttribute('data-test1-pill-out-animate');
+        canvas.removeAttribute('data-test1-pill-out-done');
+        canvas.removeAttribute('data-test1-gradient-run');
+        canvas.removeAttribute('data-test1-gradient-animate');
+        canvas.removeAttribute('data-test1-gradient-out');
+        canvas.removeAttribute('data-test1-home-widgets-ready');
+        canvas.removeAttribute('data-test1-coda-run');
+        canvas.removeAttribute('data-test1-coda-animate');
+        canvas.removeAttribute('data-test1-coda-done');
+        canvas.removeAttribute('data-test1-home-animate');
+        canvas.removeAttribute('data-test1-home-inner-rise');
+        canvas.removeAttribute('data-test1-home-food-rise');
+        canvas.removeAttribute('data-test1-home-bg-settled');
+        if (window.__mlpTestConfig) {
+          window.__mlpTestConfig.test1GreenRun = false;
+          window.__mlpTestConfig.test1StackRun = false;
+          window.__mlpTestConfig.test1ShortcutsOut = false;
+          window.__mlpTestConfig.test1PillOut = false;
+          window.__mlpTestConfig.test1GradientRun = false;
+          window.__mlpTestConfig.test1GradientOut = false;
+          window.__mlpTestConfig.test1GradientDone = false;
+          window.__mlpTestConfig.test1CodaRun = false;
+          window.__mlpTestConfig.test1CodaDone = false;
+          window.__mlpTestConfig.test1HomePrep = true;
+          window.__mlpTestConfig.test1HomeRun = true;
+          window.__mlpTestConfig.test1HomeBgSettled = true;
+        }
+      } else {
+        canvas.removeAttribute('data-test1-reveal-all');
+        canvas.removeAttribute('data-test1-home-run');
+        canvas.removeAttribute('data-test1-home-prep');
+        canvas.removeAttribute('data-test1-home-exit');
+        canvas.removeAttribute('data-test1-home-animate');
+        canvas.removeAttribute('data-test1-home-inner-rise');
+        canvas.removeAttribute('data-test1-home-food-rise');
+        canvas.removeAttribute('data-test1-home-bg-settled');
+        canvas.removeAttribute('data-test1-pill-swipe-armed');
+        canvas.removeAttribute('data-test1-pill-swipe-out');
+        if (window.__mlpTestConfig && window.__mlpTestConfig.test1HomeRun) {
+          canvas.setAttribute('data-test1-home-run', '1');
+          if (window.__mlpTestConfig.test1HomePrep) {
+            canvas.setAttribute('data-test1-home-prep', '1');
+          }
+          if (window.__mlpTestConfig.test1HomeBgSettled) {
+            canvas.setAttribute('data-test1-home-bg-settled', '1');
+            canvas.setAttribute('data-test1-home-food-rise', '1');
+          }
+        }
+        canvas.removeAttribute('data-test1-intro');
+        canvas.removeAttribute('data-test1-intro-run');
+        canvas.removeAttribute('data-test1-pill-prep');
+        canvas.removeAttribute('data-test1-pill-run');
+        if (window.__mlpTestConfig && window.__mlpTestConfig.test1GreenRun) {
+          canvas.setAttribute('data-test1-green-run', '1');
+        } else {
+          canvas.removeAttribute('data-test1-green-run');
+        }
+        if (window.__mlpTestConfig && window.__mlpTestConfig.test1StackRun) {
+          canvas.setAttribute('data-test1-stack-run', '1');
+        } else {
+          canvas.removeAttribute('data-test1-stack-run');
+          canvas.removeAttribute('data-test1-stack-animate');
+        }
+        if (window.__mlpTestConfig && window.__mlpTestConfig.test1ShortcutsOut) {
+          canvas.setAttribute('data-test1-shortcuts-out', '1');
+        } else {
+          canvas.removeAttribute('data-test1-shortcuts-out');
+          canvas.removeAttribute('data-test1-shortcuts-animate');
+        }
+        if (window.__mlpTestConfig && window.__mlpTestConfig.test1PillOut) {
+          canvas.setAttribute('data-test1-pill-out', '1');
+          canvas.setAttribute('data-test1-pill-out-done', '1');
+        } else {
+          canvas.removeAttribute('data-test1-pill-out');
+          canvas.removeAttribute('data-test1-pill-out-animate');
+          canvas.removeAttribute('data-test1-pill-out-done');
+        }
+        if (window.__mlpTestConfig && window.__mlpTestConfig.test1GradientRun) {
+          canvas.setAttribute('data-test1-gradient-run', '1');
+        } else {
+          canvas.removeAttribute('data-test1-gradient-run');
+          canvas.removeAttribute('data-test1-gradient-animate');
+          canvas.removeAttribute('data-test1-gradient-out');
+        }
+        if (window.__mlpTestConfig && window.__mlpTestConfig.test1GradientOut) {
+          canvas.setAttribute('data-test1-gradient-out', '1');
+          canvas.removeAttribute('data-test1-gradient-animate');
+        }
+        if (window.__mlpTestConfig && window.__mlpTestConfig.test1CodaRun) {
+          canvas.setAttribute('data-test1-coda-run', '1');
+          if (window.__mlpTestConfig.test1CodaDone) {
+            canvas.setAttribute('data-test1-coda-done', '1');
+          }
+        } else {
+          canvas.removeAttribute('data-test1-coda-run');
+          canvas.removeAttribute('data-test1-coda-animate');
+          canvas.removeAttribute('data-test1-coda-done');
+          canvas.removeAttribute('data-test1-pill-text-b');
+        }
+      }
+    } else {
+      _clearTest1IntroTimer();
+      canvas.removeAttribute('data-test1-reveal-all');
+      canvas.removeAttribute('data-test1-intro');
+      canvas.removeAttribute('data-test1-intro-run');
+      canvas.removeAttribute('data-test1-pill-prep');
+      canvas.removeAttribute('data-test1-pill-run');
+      canvas.removeAttribute('data-test1-green-run');
+      canvas.removeAttribute('data-test1-stack-run');
+    }
     if (testScope === 'test3') {
+      canvas.style.setProperty('--test3-weather-drop', TEST3_WEATHER_DROP + 'px');
+      canvas.style.setProperty(
+        '--test3-weather-drop-expanded',
+        (TEST3_MUSIC_EXPAND_H + TEST3_CARD_GAP_V) + 'px'
+      );
+      canvas.style.setProperty('--test3-music-spawn-h', TEST3_MUSIC_SPAWN_H + 'px');
+      canvas.style.setProperty('--test3-music-expand-h', TEST3_MUSIC_EXPAND_H + 'px');
+      canvas.style.setProperty('--test3-card-gap-v', TEST3_CARD_GAP_V + 'px');
+      canvas.style.setProperty('--test3-music-ivory-handoff-ms', TEST3_MUSIC_IVORY_HANDOFF_MS + 'ms');
       var homeStage = window.__mlpTestConfig && window.__mlpTestConfig.homeStage;
       var shouldEnter = (homeStage === 'home') && !!window.__mlpTest3HomeEnterArmed;
       // Performance: avoid starting enter animation on the same frame as heavy DOM creation.
@@ -9104,13 +12344,19 @@ window.generateSurfaceScenario = function generateSurfaceScenario(surfaceType) {
         } else {
           canvas.removeAttribute('data-test3-weather-dropped');
         }
-        canvas.removeAttribute('data-test3-weather-prep');
+        /* Keep prep gate during music mount diff — dropping capsules + spawning music share one beat. */
+        if (canvas.getAttribute('data-test3-weather-prep') !== '1') {
+          canvas.removeAttribute('data-test3-weather-prep');
+        }
       } else {
         window.__mlpTest3MusicShifted = false;
         window.__mlpTest3MusicShiftPrep = false;
         window.__mlpTest3WeatherDropped = false;
         window.__mlpTest3MusicShiftRunId = (window.__mlpTest3MusicShiftRunId || 0) + 1;
         window.__mlpTest3WeatherRainArmed = false;
+        window.__mlpTest3PillsRevealed = false;
+        window.__mlpTest3PillsDropArmed = false;
+        window.__mlpTest3WeatherPrepPending = false;
         if (window.__mlpTest3WeatherRainTimer) {
           clearTimeout(window.__mlpTest3WeatherRainTimer);
           window.__mlpTest3WeatherRainTimer = null;
@@ -9122,6 +12368,34 @@ window.generateSurfaceScenario = function generateSurfaceScenario(surfaceType) {
         if (window.__mlpTest3MusicMountTimer) {
           clearTimeout(window.__mlpTest3MusicMountTimer);
           window.__mlpTest3MusicMountTimer = null;
+        }
+        if (window.__mlpTest3PillsRevealTimer) {
+          clearTimeout(window.__mlpTest3PillsRevealTimer);
+          window.__mlpTest3PillsRevealTimer = null;
+        }
+        if (window.__mlpTest3PillsBlackTimer) {
+          clearTimeout(window.__mlpTest3PillsBlackTimer);
+          window.__mlpTest3PillsBlackTimer = null;
+        }
+        if (window.__mlpTest3PillsDropTimer) {
+          clearTimeout(window.__mlpTest3PillsDropTimer);
+          window.__mlpTest3PillsDropTimer = null;
+        }
+        if (window.__mlpTest3PillsRevealEndTimer) {
+          clearTimeout(window.__mlpTest3PillsRevealEndTimer);
+          window.__mlpTest3PillsRevealEndTimer = null;
+        }
+        if (window.__mlpTest3WeatherDropCompleteTimer) {
+          clearTimeout(window.__mlpTest3WeatherDropCompleteTimer);
+          window.__mlpTest3WeatherDropCompleteTimer = null;
+        }
+        if (window.__mlpTest3MusicGlowHoldTimer) {
+          clearTimeout(window.__mlpTest3MusicGlowHoldTimer);
+          window.__mlpTest3MusicGlowHoldTimer = null;
+        }
+        if (window.__mlpTest3MusicGlowFadeTimer) {
+          clearTimeout(window.__mlpTest3MusicGlowFadeTimer);
+          window.__mlpTest3MusicGlowFadeTimer = null;
         }
         // Stop the goal time + distance tickers when leaving the home
         // stage so they don't run forever on every page load. Also
@@ -9154,15 +12428,78 @@ window.generateSurfaceScenario = function generateSurfaceScenario(surfaceType) {
       window.__mlpTest3HoverPaused = false;
     }
   } else {
+    _clearTest1IntroTimer();
     canvas.removeAttribute('data-test-scope');
+    canvas.removeAttribute('data-test1-reveal-all');
     canvas.removeAttribute('data-test3-home-enter');
     canvas.removeAttribute('data-test3-home-prep');
     canvas.removeAttribute('data-test3-music-shift');
+    canvas.removeAttribute('data-test1-intro');
+    canvas.removeAttribute('data-test1-intro-run');
+    canvas.removeAttribute('data-test1-pill-prep');
+    canvas.removeAttribute('data-test1-pill-run');
+    canvas.removeAttribute('data-test1-green-run');
+    canvas.removeAttribute('data-test1-stack-run');
+    canvas.removeAttribute('data-test1-shortcuts-out');
+    canvas.removeAttribute('data-test1-shortcuts-animate');
+    canvas.removeAttribute('data-test1-pill-out');
+    canvas.removeAttribute('data-test1-pill-out-animate');
+    canvas.removeAttribute('data-test1-gradient-run');
+    canvas.removeAttribute('data-test1-gradient-animate');
+    canvas.removeAttribute('data-test1-gradient-out');
+    canvas.removeAttribute('data-test1-home-widgets-ready');
+    canvas.removeAttribute('data-test1-coda-run');
+    canvas.removeAttribute('data-test1-coda-animate');
+    canvas.removeAttribute('data-test1-coda-inner-rise');
+    canvas.removeAttribute('data-test1-coda-done');
+    canvas.removeAttribute('data-test1-home-run');
+    canvas.removeAttribute('data-test1-home-prep');
+    canvas.removeAttribute('data-test1-home-exit');
+    canvas.removeAttribute('data-test1-home-animate');
+    canvas.removeAttribute('data-test1-home-inner-rise');
+    canvas.removeAttribute('data-test1-home-food-rise');
+    canvas.removeAttribute('data-test1-home-bg-settled');
+    canvas.removeAttribute('data-test1-pill-swipe-armed');
+    canvas.removeAttribute('data-test1-pill-swipe-out');
   }
   window.renderSurfacePlan(canvas, plan, layout);
+  if (testScope === 'test1' || testScope === 'test2' || testScope === 'test3') {
+    try { _armTestScopeEntry(canvas); } catch (_) {}
+  }
+  if (testScope === 'test1') {
+    try {
+      if (window.__mlpTestConfig && window.__mlpTestConfig.test1RevealAll) {
+        _mountTest1BottomPillTextB(true);
+      } else if (canvas.getAttribute('data-test1-pill-text-b')) {
+        _mountTest1BottomPillTextB(canvas.getAttribute('data-test1-pill-text-b') === 'done');
+      } else if (window.__mlpTestConfig && window.__mlpTestConfig.test1CodaDone) {
+        _mountTest1BottomPillTextB(true);
+      }
+      if (window.__mlpTestConfig && !window.__mlpTestConfig.test1RevealAll && !window.__mlpTestConfig.test1HomeRun) {
+        _armTest1IntroDelay(canvas);
+        if (canvas.getAttribute('data-test1-intro-run') && !canvas.getAttribute('data-test1-green-run')) {
+          _armTest1GreenAfterLotte(canvas);
+        }
+        if (canvas.getAttribute('data-test1-green-run') && !canvas.getAttribute('data-test1-stack-run')) {
+          _armTest1StackDelay(canvas);
+        }
+        if (canvas.getAttribute('data-test1-stack-run') && !canvas.getAttribute('data-test1-coda-run')) {
+          _armTest1CodaAfterStack(canvas);
+        }
+      }
+      if (canvas.getAttribute('data-test1-coda-done') && !(window.__mlpTestConfig && window.__mlpTestConfig.test1HomeRun)) {
+        _ensureTest1BottomPillTextBDone(canvas);
+        _installTest1BottomPillSwipe(canvas);
+      }
+      if (canvas.getAttribute('data-test1-home-run')) {
+        _applyTest1HomeStatusBar();
+      }
+    } catch (_) {}
+  }
   if (testScope === 'test2') {
     try {
       installTest2P2TransitionBridge(canvas);
+      installTest2GalaxyStar(canvas);
     } catch (_) {}
   }
 
@@ -9183,6 +12520,9 @@ window.generateSurfaceScenario = function generateSurfaceScenario(surfaceType) {
       window.__mlpTestConfig &&
       window.__mlpTestConfig.homeStage === 'home') {
     canvas.setAttribute('data-test3-home', '1');
+    if (typeof _armTest3PillsReveal === 'function') {
+      _armTest3PillsReveal(canvas);
+    }
     if (!window.__mlpTest3GoalFreshDone) {
       canvas.setAttribute('data-test3-goal-fresh', '1');
       window.__mlpTest3GoalFreshDone = true;
@@ -9203,12 +12543,31 @@ window.generateSurfaceScenario = function generateSurfaceScenario(surfaceType) {
       if (typeof _initTest3GoalMap !== 'function') return;
       // finishTransition defers map init while goal-fresh entrance runs.
       if (canvas.getAttribute('data-test3-goal-fresh') === '1') return;
+      var goalForMap = document.getElementById('test3-goal');
+      /* PNG expanded card — skip leaflet init until settled (avoids tile flash under photo). */
+      if (!goalForMap || !goalForMap.classList.contains('test3-goal-entrance-settled')) {
+        return;
+      }
       _initTest3GoalMap();
     });
+    if (canvas.getAttribute('data-test3-goal-expanded') === '1') {
+      requestAnimationFrame(function () {
+        try {
+          var expandedGoal = document.getElementById('test3-goal');
+          if (expandedGoal &&
+              !expandedGoal.classList.contains('test3-goal-entrance-settled') &&
+              typeof _lockTest3GoalExpandedState === 'function') {
+            _lockTest3GoalExpandedState(expandedGoal);
+          }
+        } catch (_) {}
+      });
+    }
   } else if (testScope === 'test3') {
     // Left home stage — clear all home flags.
     canvas.removeAttribute('data-test3-home');
     canvas.removeAttribute('data-test3-goal-fresh');
+    canvas.removeAttribute('data-test3-pills-reveal');
+    canvas.removeAttribute('data-test3-pills-revealed');
   }
 
   // test3: flip prep → enter on next frame, then tear down enter after animations complete
@@ -9283,29 +12642,7 @@ window.generateSurfaceScenario = function generateSurfaceScenario(surfaceType) {
       if (stage === 'home' && !window.__mlpTest3MusicShifted && !window.__mlpTest3MusicShiftPrep) {
         var musicShiftRunId = window.__mlpTest3MusicShiftRunId || 0;
         window.__mlpTest3MusicShiftTimer = setTimeout(function () {
-          try {
-            var stillTest3 =
-              (window.__mlpTestConfig && window.__mlpTestConfig.id === 'test3') ||
-              (document.body && document.body.dataset && document.body.dataset.mlpTest === 'test3');
-            if (!stillTest3) return;
-            if ((window.__mlpTest3MusicShiftRunId || 0) !== musicShiftRunId) return;
-            if (!window.__mlpTestConfig || window.__mlpTestConfig.homeStage !== 'home') return;
-            var c = document.getElementById('canvas');
-            if (!c || c.getAttribute('data-test-scope') !== 'test3') return;
-            // Phase 1 — weather + progress drop alone; music mounts after.
-            window.__mlpTest3MusicShiftPrep = true;
-            var weatherEl = c.querySelector('#test3-weather');
-            var stepsEl   = c.querySelector('#test3-steps');
-            if (weatherEl) weatherEl.classList.remove('test3-intro-prefade');
-            if (stepsEl)   stepsEl.classList.remove('test3-intro-prefade');
-            c.setAttribute('data-test3-weather-prep', '1');
-            if (typeof window.__mountTest3WeatherRainMotion === 'function') {
-              window.__mountTest3WeatherRainMotion(1020);
-            }
-            window.__mlpTest3MusicMountTimer = setTimeout(function () {
-              _mountTest3MusicAfterWeatherPrep(musicShiftRunId);
-            }, TEST3_MUSIC_PRE_DELAY_MS);
-          } catch (_) {}
+          _beginTest3WeatherPrep(musicShiftRunId);
         }, 5600);
       }
     } catch (_) {}

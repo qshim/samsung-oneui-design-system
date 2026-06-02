@@ -1,0 +1,224 @@
+{
+  "$schema": "ground-truth-v1",
+  "source": {
+    "fileKey": "kxDvBUif6pV502Si4RPidK",
+    "fileName": "One UI Design Kit (Community)",
+    "frame": {
+      "nodeId": "3010:2143",
+      "name": "Lock Screen",
+      "width": 451,
+      "height": 978,
+      "radius": 40
+    },
+    "capturedAt": "2026-04-19",
+    "_note": "All measurements copied verbatim from mcp__figma__get_design_context output. Pixel positions in px. Inset values are percent of parent. Fonts and colors are Figma-verified."
+  },
+
+  "tokens": {
+    "background": "#000000",
+    "primary": "#FFFFFF",
+    "statusBarText": "rgba(255,255,255,0.8)",
+    "widgetLabel": "rgba(255,255,255,0.86)",
+    "widgetBg": "rgba(23,23,26,0.3)",
+    "widgetBlur": 6,
+    "shortcutBg": "rgba(55,55,55,0.3)",
+    "shortcutBlur": 6,
+    "shortcutBorder": "0.25px solid rgba(55,55,55,0.3)",
+    "nowbarBg": "rgba(23,23,26,0.3)",
+    "nowbarBlur": 12,
+    "nowbarBorder": "0.25px solid rgba(55,55,55,0.3)",
+    "activityDotBg": "rgba(255,255,255,0.3)"
+  },
+
+  "fonts": {
+    "systemBold":    { "family": "One UI Sans APP VF", "weight": 700, "fallback": "Inter, sans-serif" },
+    "systemSemi":    { "family": "One UI Sans APP VF", "weight": 600, "fallback": "Inter, sans-serif" },
+    "systemMedium":  { "family": "One UI Sans APP VF", "weight": 500, "fallback": "Inter, sans-serif" },
+    "systemRegular": { "family": "One UI Sans APP VF", "weight": 400, "fallback": "Inter, sans-serif" },
+    "clockNum":      { "family": "SamsungNrDefault-V6", "weight": 400, "fallback": "Inter, sans-serif" }
+  },
+
+  "layout": {
+    "statusBar": {
+      "nodeId": "I989:22979;744:4992",
+      "position": { "x": 0, "y": 0, "w": 451, "h": 51 },
+      "padding": { "x": 24, "y": 16 },
+      "innerLayout": "flex end, gap 6px, items-center",
+      "children": {
+        "carrierText": {
+          "nodeId": "I989:22979;744:4992;452:644",
+          "text": "TJG",
+          "font": "systemBold",
+          "fontSize": 15,
+          "lineHeight": 12,
+          "letterSpacing": 0.15,
+          "color": "rgba(255,255,255,0.8)"
+        },
+        "accountRow": {
+          "nodeId": "I989:22979;744:4992;745:4511",
+          "layout": "flex, gap 6px",
+          "items": [
+            { "nodeId": "I989:22979;744:4992;745:4512", "name": "samsung-health",  "size": 19, "asset": "samsung-health.svg",  "inset": "8.22% 13.54%" },
+            { "nodeId": "I989:22979;744:4992;745:4513", "name": "samsung-account", "size": 19, "asset": "samsung-account.svg", "inset": "8.33%" },
+            { "nodeId": "I989:22979;744:4992;745:4514", "name": "google", "size": 19, "layers": [
+              { "asset": "google-1.svg", "inset": "8.33%" },
+              { "asset": "google-2.svg", "inset": "8.33% 21.63% 59.35% 13.14%" },
+              { "asset": "google-3.svg", "inset": "58.45% 22.06% 8.33% 12.91%" },
+              { "asset": "google-4.svg", "inset": "41.67% 8.33% 19.11% 50%" }
+            ]}
+          ]
+        },
+        "spacer": { "layout": "flex 1 0 0, self-stretch" },
+        "systemIcons": {
+          "nodeId": "I989:22979;744:4992;452:650",
+          "layout": "flex-wrap, gap 4px, items-center",
+          "items": [
+            { "name": "wifi",     "size": 18, "asset": "wifi.svg",     "vectorInset": "11.11% -0.11% 11.11% 0.68%" },
+            { "name": "cellular", "size": 18, "asset": "cellular.svg", "vectorInset": "center 14x14" },
+            { "name": "battery",  "layout": "flex items-center", "children": [
+              { "asset": "battery-left.svg",  "w": 15.414, "h": 16.515 },
+              { "asset": "battery-right.svg", "w": 8.808,  "h": 16.515 }
+            ]}
+          ]
+        }
+      }
+    },
+
+    "lockIcon": {
+      "nodeId": "750:6608",
+      "position": { "cx": 225.5, "y": 51, "w": 24, "h": 24 },
+      "asset": "lock-icon.svg",
+      "vectorInset": "11.87% 22.07% 11.88% 22.07%"
+    },
+
+    "clockGroup": {
+      "nodeId": "I989:22979;745:7949",
+      "position": { "x": 20, "y": 133, "w": 412 },
+      "innerLayout": "flex-col, gap 30px, items-center",
+      "children": {
+        "innerClock": {
+          "nodeId": "I989:22979;746:3229",
+          "width": 192,
+          "innerLayout": "flex-col, gap 26px, items-center",
+          "dateRow": {
+            "nodeId": "I989:22979;746:3229;746:2996",
+            "innerLayout": "flex, gap 10px, items-center justify-center",
+            "items": [
+              { "text": "Sat, May 3", "font": "systemRegular", "fontSize": 24, "lineHeight": 20, "color": "#FFFFFF" },
+              { "name": "moon", "size": 19, "asset": "moon.svg", "vectorSize": { "w": 18.73, "h": 17.52 }, "vectorCenter": "+0.36px -0.24px" },
+              { "text": "24°", "font": "systemRegular", "fontSize": 24, "lineHeight": 20, "color": "#FFFFFF" }
+            ]
+          },
+          "clock": {
+            "nodeId": "I989:22979;746:3229;750:4335",
+            "font": "clockNum",
+            "fontSize": 112,
+            "lineHeight": 82,
+            "color": "#FFFFFF",
+            "gap": 12,
+            "lines": ["09", "41"],
+            "textAlign": "center"
+          }
+        },
+        "widgetsRow": {
+          "nodeId": "I989:22979;746:2420",
+          "innerLayout": "flex, gap 16px, items-center",
+          "children": {
+            "batteryPairPill": {
+              "nodeId": "I989:22979;746:2420;746:2266",
+              "w": 138, "h": 62,
+              "bg": "rgba(23,23,26,0.3)", "blur": 6, "radius": 20,
+              "innerLayout": "flex, gap 10px, items-center justify-center",
+              "items": [
+                {
+                  "name": "watch-arc",
+                  "w": 50, "h": 48,
+                  "arcs": [
+                    { "asset": "arc-ellipse-1.svg", "inset": "3.04% -8% -8% -8%" },
+                    { "asset": "arc-ellipse-2.svg", "inset": "42.59% -8% 0.56% 69.97%" }
+                  ],
+                  "icon": { "asset": "watch.svg", "iconInset": "11.88% 21.04%", "size": 24, "positionInside": "top 22.92%, bottom 35.42%, cx" },
+                  "label": { "text": "29", "color": "rgba(255,255,255,0.8)", "fontSize": 12, "font": "systemSemi", "lineHeight": 12, "positionInside": "left 36%, right 34%, top 75%" }
+                },
+                {
+                  "name": "ring-arc",
+                  "w": 50, "h": 48,
+                  "arcs": [
+                    { "asset": "arc-ellipse-1.svg", "inset": "3.04% -8% -8% -8%" },
+                    { "asset": "arc-ellipse-3.svg", "inset": "42.59% -8% -8% -7.95%" }
+                  ],
+                  "icon": { "asset": "ring.svg", "iconInset": "18.12% 17.19% 16.62% 17.55%", "size": 24 },
+                  "label": { "text": "74", "color": "rgba(255,255,255,0.8)", "fontSize": 12, "font": "systemSemi", "lineHeight": 12 }
+                }
+              ]
+            },
+            "activityPill": {
+              "nodeId": "I989:22979;746:2420;746:2278",
+              "w": 138, "h": 62,
+              "bg": "rgba(23,23,26,0.3)", "blur": 6, "radius": 20,
+              "padding": { "left": 10, "right": 14 },
+              "innerLayout": "flex, gap 10px, items-center justify-center",
+              "items": [
+                { "name": "heart", "w": 48, "h": 48, "asset": "daily-activity.svg", "aspectRatio": "38.74 / 34.21" },
+                {
+                  "name": "stats-col",
+                  "innerLayout": "flex-col, gap 2px, items-start, flex 1",
+                  "rows": [
+                    { "glyph": { "asset": "steps.svg",     "size": 10, "bgColor": "rgba(255,255,255,0.3)", "padding": 2, "radius": 12 }, "text": "4,209", "fontSize": 10, "font": "systemSemi", "color": "rgba(255,255,255,0.86)" },
+                    { "glyph": { "asset": "time-icon.svg", "size": 10, "bgColor": "rgba(255,255,255,0.3)", "padding": 2, "radius": 12 }, "text": "25",    "fontSize": 10, "font": "systemSemi", "color": "rgba(255,255,255,0.86)" },
+                    { "glyph": { "asset": "exercise.svg",  "size": 10, "bgColor": "rgba(255,255,255,0.3)", "padding": 2, "radius": 12 }, "text": "650",   "fontSize": 10, "font": "systemSemi", "color": "rgba(255,255,255,0.86)" }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+
+    "swipeHint": {
+      "nodeId": "I989:22979;745:3635",
+      "position": { "cx": 222.5, "cy": 843.5 },
+      "text": "Swipe to unlock",
+      "font": "systemRegular",
+      "fontSize": 16,
+      "color": "#FFFFFF"
+    },
+
+    "shortcutRow": {
+      "nodeId": "I989:22979;744:5659",
+      "position": { "x": 31, "y": 880, "w": 389 },
+      "innerLayout": "flex, gap 14px, items-center",
+      "shortcut": {
+        "w": 47, "h": 47, "radius": 61,
+        "bg": "rgba(55,55,55,0.3)", "blur": 6,
+        "border": "0.25px solid rgba(55,55,55,0.3)",
+        "iconSize": 24,
+        "iconPositionInside": "bottom 18.09%, top 18.09%, cx"
+      },
+      "items": [
+        { "role": "phone",  "iconAsset": "phone-icon.svg",  "iconInset": "8.33% 36.15% 7.65% 33.33%" },
+        { "role": "nowbar", "type": "Dual Line", "w": "flex 1 0 0", "h": 64, "radius": 53,
+          "bg": "rgba(23,23,26,0.3)", "blur": 12, "border": "0.25px solid rgba(55,55,55,0.3)",
+          "padding": { "left": 12, "right": 18, "top": 12, "bottom": 12 },
+          "gap": 14,
+          "iconSlot": { "w": 40, "h": 40, "radius": 20, "asset": "nowbar-image.png" },
+          "text": {
+            "primary": { "text": "8min away", "font": "systemSemi", "fontSize": 16, "lineHeight": 14, "color": "#FFFFFF" },
+            "secondary": { "text": "Arrives 9:45 - 9:50", "font": "systemMedium", "fontSize": 12, "lineHeight": 14, "color": "#FFFFFF" },
+            "gap": 6
+          },
+          "trailing": { "size": 24, "asset": ["car-dim-1.svg", "car-dim-2.svg"] }
+        },
+        { "role": "camera", "iconAsset": "camera-icon.svg", "iconInset": "21.21% 12.5% 17.42% 12.5%" }
+      ]
+    },
+
+    "background": {
+      "nodeId": "I989:22979;989:24954",
+      "position": { "x": 0, "y": 0, "w": 451, "h": 978, "radius": 40 },
+      "asset": "background.png",
+      "objectFit": "cover"
+    }
+  }
+}

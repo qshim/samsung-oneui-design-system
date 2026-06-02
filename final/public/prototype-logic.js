@@ -415,14 +415,27 @@
       return Math.min(Math.max(sz.h, P2_AREA_DEFAULT_H), P2_AREA_MAX_H);
     }
 
+    function test2P2AreaDefaultH() {
+      return (window.__mlpTestConfig && window.__mlpTestConfig.id === 'test2') ? 148 : P2_AREA_DEFAULT_H;
+    }
+
     function setP2AreaHeight(h) {
       var area = document.getElementById('p2-area');
       if (!area) return;
-      area.style.height = Math.round(h) + 'px';
+      var isTest2 = window.__mlpTestConfig && window.__mlpTestConfig.id === 'test2';
+      var nextH = Math.round(h);
+      if (isTest2 && !area.classList.contains('p2-contact-layout-active')) {
+        nextH = Math.max(148, nextH);
+      }
+      area.style.height = nextH + 'px';
+      if (isTest2) {
+        area.style.minHeight = nextH + 'px';
+        area.style.setProperty('--p2-shell-h', nextH + 'px');
+      }
     }
 
     function resetP2AreaHeight() {
-      setP2AreaHeight(P2_AREA_DEFAULT_H);
+      setP2AreaHeight(test2P2AreaDefaultH());
     }
 
     function clearP2DefaultRevealState() {
@@ -459,11 +472,11 @@
       seqRowStagger: 100
     };
     var P2_TEST2_REVEAL_TIMING = {
-      phase1: 280,
-      phase2Pause: 120,
-      seqColor: 0,
-      seqAfterTitle: 180,
-      seqRowStagger: 72
+      phase1: 220,
+      phase2Pause: 200,
+      seqColor: 160,
+      seqAfterTitle: 280,
+      seqRowStagger: 110
     };
 
     function wrapP2RevealStage(innerHtml, contentH) {
@@ -541,12 +554,8 @@
       var t = isTest2 ? P2_TEST2_REVEAL_TIMING : P2_REVEAL_TIMING;
       var hasContactList = !!(slot.querySelector && slot.querySelector('.p2-contact-list'));
 
-      if (contentH > P2_AREA_DEFAULT_H) {
-        if (isTest2 && hasContactList && typeof window.applyTest2ContactListShellHeight === 'function') {
-          window.applyTest2ContactListShellHeight(slot);
-        } else {
-          setP2AreaHeight(contentH);
-        }
+      if (contentH > P2_AREA_DEFAULT_H && !(isTest2 && hasContactList)) {
+        setP2AreaHeight(contentH);
       }
 
       slot.classList.remove('p2-reveal-waiting');
@@ -560,15 +569,12 @@
       void slot.offsetWidth;
 
       if (isTest2 && hasContactList) {
-        slot.classList.add('p2-seq-title');
-        if (typeof window.beginTest2LoadingChromeExit === 'function') {
-          window.beginTest2LoadingChromeExit(slot);
+        if (typeof window.prepareTest2ContactListShellExpand === 'function') {
+          window.prepareTest2ContactListShellExpand(slot);
+        } else if (typeof window.applyTest2ContactListShellHeight === 'function') {
+          window.applyTest2ContactListShellHeight(slot);
         }
-        setTimeout(function () {
-          if (window.P2AgentFillGL && window.P2AgentFillGL.setPhase) {
-            window.P2AgentFillGL.setPhase('settling');
-          }
-        }, 80);
+        slot.classList.add('p2-seq-title');
         return;
       }
 
@@ -593,7 +599,7 @@
 
       slot.style.setProperty('--p2-reveal-h', Math.round(contentH) + 'px');
       if (result) result.style.setProperty('--p2-reveal-h', Math.round(contentH) + 'px');
-      setP2AreaHeight(P2_AREA_DEFAULT_H);
+      setP2AreaHeight(test2P2AreaDefaultH());
 
       slot.classList.remove('p2-reveal-swap', 'p2-reveal-visible', 'p2-seq-color', 'p2-seq-color-active', 'p2-seq-title', 'p2-seq-done');
       slot.classList.add('p2-reveal-waiting');
@@ -757,7 +763,11 @@
       if (isTest2) {
         var agentInput = document.querySelector('.p2-agent-input');
         if (agentInput) {
-          agentInput.textContent = userText;
+          if (typeof window.setTest2InputDisplayText === 'function') {
+            window.setTest2InputDisplayText(agentInput, userText);
+          } else {
+            agentInput.textContent = userText;
+          }
           agentInput.classList.add('p2-agent-input--glow');
         }
         var loadingSubEarly = el.querySelector('.p2-result-loading__sub');
@@ -833,7 +843,7 @@
         
         // Brief pause for dramatic "UI Reconstruction" effect
         await new Promise(function (resolve) {
-          setTimeout(resolve, isTest2 ? 520 : 1500);
+          setTimeout(resolve, isTest2 ? 340 : 1500);
         });
 
         applyTheme(resolved && resolved.themeKey);

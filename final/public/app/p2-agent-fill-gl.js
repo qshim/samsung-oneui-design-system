@@ -20,7 +20,11 @@
     'uniform float u_spread;',
     'uniform float u_intensity;',
     'uniform float u_fill;',
+    'uniform float u_sweep;',
     'uniform float u_audio;',
+    'uniform float u_compact;',
+    'uniform float u_virtAspect;',
+    'uniform float u_variant;',
     '',
     'float hash(vec2 p) {',
     '  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);',
@@ -63,75 +67,106 @@
     '  float s = clamp(spread, 0.0, 1.45);',
     '  if (s < 0.001) return 0.0;',
     '  float onset = smoothstep(0.0, 0.09, s);',
-    '  float early = (1.0 - smoothstep(0.0, 0.58, s)) * onset;',
-    '  vec2 target = vec2(0.05, 0.95);',
-    '  vec2 diag = vec2((target.x - u_origin.x) * u_aspect, target.y - u_origin.y);',
+    '  float early = (1.0 - smoothstep(0.0, 0.48, s)) * onset;',
+    '  float wt = time * (1.82 + early * 1.55);',
+    '  float isCompact = step(0.5, u_compact);',
+    '  vec2 target = mix(vec2(0.05, 0.95), vec2(0.04, u_origin.y), isCompact);',
+    '  float diagAspect = mix(u_aspect, u_virtAspect, isCompact);',
+    '  vec2 diag = vec2((target.x - u_origin.x) * diagAspect, target.y - u_origin.y);',
     '  vec2 diagN = diag / max(length(diag), 0.0001);',
-    '  vec2 ellRel = rel * vec2(0.72, 1.0);',
+    '  vec2 ellRel = rel * vec2(',
+    '    mix(mix(0.50, 0.72, s), mix(0.48, 0.66, s), isCompact),',
+    '    mix(mix(1.10, 1.0, early), mix(0.78, 0.72, early), isCompact)',
+    '  );',
     '  float dist = length(ellRel);',
+    '  float horizLead = max(0.0, -rel.x);',
+    '  float vertRound = abs(rel.y) * mix(1.0, 0.58, isCompact);',
+    '  float roundFlow = sqrt(horizLead * horizLead * 0.94 + vertRound * vertRound);',
+    '  dist = mix(dist, roundFlow, isCompact);',
     '  float align = max(0.0, dot(normalize(rel + vec2(0.001)), diagN));',
-    '  dist *= 1.0 - align * 0.10;',
+    '  dist *= 1.0 - align * mix(',
+    '    mix(0.22, 0.10, smoothstep(0.0, 0.55, s)),',
+    '    mix(0.04, 0.01, smoothstep(0.0, 0.55, s)),',
+    '    isCompact',
+    '  );',
     '  float depthIn = clamp(-sdf / max(u_radius * 2.4, 0.08), 0.0, 1.0);',
     '  float edgeProx = 1.0 - smoothstep(0.0, 0.26, depthIn);',
-    '  float wobble = (fbm(uv * 2.4 + time * 0.026) - 0.5)',
-    '    * (0.092 + early * 0.11) * max(s, 0.06);',
-    '  float ripple = sin(time * 1.18 + atan(rel.y, rel.x + 0.0001) * 5.0',
-    '    + fbm(rel * 3.6 + time * 0.055) * 3.0) * 0.038 * max(early, 0.28);',
-    '  float edgeShimmer = (fbm(uv * 4.2 + time * 0.09) - 0.5) * 0.042 * max(s, 0.12);',
-    '  dist += ripple + wobble * 0.52 + edgeShimmer;',
-    '  float revealAt = s * 1.24 + early * 0.14;',
-    '  float edgeBoost = edgeProx * (0.38 + early * 0.20);',
-    '  float centerLag = depthIn * 0.20 * (1.0 - smoothstep(0.44, 1.08, s));',
+    '  float wobble = (fbm(uv * 2.4 + wt * 0.052) - 0.5)',
+    '    * (0.10 + early * 0.15) * max(s, 0.06);',
+    '  float ripple = sin(wt * 2.05 + atan(rel.y, rel.x + 0.0001) * 6.4)',
+    '    * 0.072 * max(early, 0.26);',
+    '  float flowWave = (sin(wt * 1.92 + uv.x * 8.2 + uv.y * 3.2)',
+    '    + sin(wt * 1.62 - uv.y * 6.4 + uv.x * 2.8)) * 0.5 * early * 0.074;',
+    '  float edgeShimmer = (fbm(uv * 4.2 + wt * 0.07) - 0.5) * 0.038 * max(s, 0.12);',
+    '  dist += ripple + wobble * 0.54 + flowWave + edgeShimmer;',
+    '  float revealAt = s * 1.44 + early * 0.08;',
+    '  float edgeBoost = edgeProx * (0.36 + early * 0.18);',
+    '  float centerLag = depthIn * 0.17 * (1.0 - smoothstep(0.40, 1.02, s));',
     '  float localFront = revealAt + edgeBoost - centerLag;',
-    '  float softLead = max(0.34, 0.46 * s + early * 0.28 + audio * 0.024);',
-    '  float softTrail = softLead * 1.55;',
+    '  float softLead = mix(',
+    '    max(0.26, 0.44 * s + early * 0.14 + audio * 0.02),',
+    '    max(0.24, 0.34 * s + early * 0.12 + audio * 0.028),',
+    '    isCompact',
+    '  );',
+    '  softLead *= mix(1.0, 1.42, step(1.5, u_variant));',
+    '  float softTrail = softLead * mix(1.32, 1.52, isCompact);',
+    '  softTrail *= mix(1.0, 1.18, step(1.5, u_variant));',
     '  float revealCore = 1.0 - smoothstep(',
-    '    localFront - softLead * 0.72 + wobble,',
-    '    localFront + softTrail * 0.78 + wobble,',
+    '    localFront - softLead * 0.82 + wobble,',
+    '    localFront + softTrail * 0.88 + wobble,',
     '    dist',
     '  );',
     '  float revealWide = 1.0 - smoothstep(',
-    '    localFront - softLead * 1.45 + wobble * 0.8,',
-    '    localFront + softTrail * 1.65 + wobble * 0.8,',
+    '    localFront - softLead * 1.58 + wobble * 0.8,',
+    '    localFront + softTrail * 1.78 + wobble * 0.8,',
     '    dist',
     '  );',
-    '  float reveal = max(revealCore, revealWide * 0.38);',
+    '  float reveal = max(revealCore, revealWide * mix(0.56, 0.38, smoothstep(0.0, 0.52, s)));',
     '  vec2 pulseRel = rel + vec2(',
-    '    sin(time * 0.78) * 0.014,',
-    '    cos(time * 0.62) * 0.012',
+    '    sin(wt * 1.58 + uv.x * 5.8) * 0.034,',
+    '    cos(wt * 1.32 + uv.y * 4.2) * 0.028',
     '  ) * early;',
-    '  float rel2 = dot(pulseRel, pulseRel);',
-    '  float pulseDist = length(pulseRel * vec2(0.72, 1.0));',
-    '  float originCore = exp(-rel2 * 2.4) * (1.0 + early * 0.22);',
-    '  float originHalo = exp(-rel2 * 1.0) * (0.68 + early * 0.34);',
-    '  float originWide = exp(-pulseDist * 1.25) * (0.42 + early * 0.38);',
-    '  float originMist = exp(-pulseDist * 0.72) * early * 0.52;',
+    '  vec2 waveRel = pulseRel * mix(vec2(1.42, 0.84), vec2(0.90, 0.92), isCompact);',
+    '  float rel2 = dot(waveRel, waveRel);',
+    '  float pulseDist = length(pulseRel * mix(vec2(0.62, 1.08), vec2(1.02, 0.94), isCompact));',
+    '  float originCore = exp(-rel2 * mix(2.1, 3.4, isCompact)) * (1.0 + early * 0.14);',
+    '  float originHalo = exp(-rel2 * mix(0.82, 1.05, isCompact)) * (0.52 + early * 0.22);',
+    '  float originWide = exp(-pulseDist * mix(1.05, 1.42, isCompact)) * (0.34 + early * 0.26);',
+    '  float originMist = exp(-pulseDist * mix(0.58, 0.82, isCompact)) * early * mix(0.34, 0.42, isCompact);',
     '  float originPulse = (originCore + originHalo + originWide + originMist)',
-    '    * (1.0 - smoothstep(0.18, 0.82, s)) * onset;',
+    '    * (1.0 - smoothstep(0.18, 0.82, s)) * onset',
+    '    * mix(1.0, 1.24, isCompact)',
+    '    * mix(0.40, 1.0, smoothstep(0.18, 0.56, s));',
     '  float travelMist = exp(-max(dist - localFront * 0.35, 0.0) * 2.4) * s * 0.28 * onset;',
+    '  float flowSheet = exp(-abs(dist - localFront * 0.46 - flowWave * 3.0) * 2.1)',
+    '    * early * 0.44 * onset;',
+    '  float flowDrift = sin(wt * 2.0 + uv.x * 7.6 + uv.y * 2.0)',
+    '    * 0.5 + sin(wt * 1.48 - uv.y * 5.0) * 0.5;',
+    '  flowSheet *= mix(0.68, 1.0, flowDrift);',
     '  reveal *= mix(0.12, 1.0, onset);',
-    '  return clamp(max(reveal, max(originPulse, travelMist)), 0.0, 1.0);',
+    '  return clamp(max(reveal, max(max(originPulse, travelMist), flowSheet)), 0.0, 1.0);',
     '}',
     '',
     'vec3 meshWarmGradient(vec2 uv, float time, float audio) {',
-    '  float warpAmt = 0.018 + audio * 0.008;',
+    '  float mt = time * (1.34 + audio * 0.22);',
+    '  float warpAmt = 0.026 + audio * 0.010;',
     '  vec2 warp = vec2(',
-    '    fbm(uv * 1.8 + time * 0.045) - 0.5,',
-    '    fbm(uv * 1.8 + vec2(17.3, 9.1) + time * 0.04) - 0.5',
+    '    fbm(uv * 1.8 + mt * 0.062) - 0.5,',
+    '    fbm(uv * 1.8 + vec2(17.3, 9.1) + mt * 0.055) - 0.5',
     '  ) * warpAmt;',
     '  vec2 u = uv + warp;',
     '',
-    '  vec2 a1 = u_origin + vec2(sin(time * 0.22) * 0.018, cos(time * 0.19) * 0.015);',
-    '  vec2 a2 = u_origin + vec2(-0.14, 0.10) + vec2(cos(time * 0.16) * 0.020, sin(time * 0.15) * 0.018);',
-    '  vec2 a3 = u_origin + vec2(-0.26, 0.20) + vec2(sin(time * 0.14) * 0.022, cos(time * 0.17) * 0.020);',
-    '  vec2 a4 = u_origin + vec2(-0.38, 0.30) + vec2(cos(time * 0.18) * 0.018, sin(time * 0.16) * 0.016);',
-    '  vec2 a5 = u_origin + vec2(-0.48, 0.38) + vec2(sin(time * 0.15) * 0.016, cos(time * 0.14) * 0.014);',
+    '  vec2 a1 = u_origin + vec2(sin(mt * 0.36) * 0.024, cos(mt * 0.31) * 0.020);',
+    '  vec2 a2 = u_origin + vec2(-0.14, 0.10) + vec2(cos(mt * 0.28) * 0.026, sin(mt * 0.26) * 0.022);',
+    '  vec2 a3 = u_origin + vec2(-0.26, 0.20) + vec2(sin(mt * 0.24) * 0.028, cos(mt * 0.30) * 0.024);',
+    '  vec2 a4 = u_origin + vec2(-0.38, 0.30) + vec2(cos(mt * 0.32) * 0.024, sin(mt * 0.28) * 0.021);',
+    '  vec2 a5 = u_origin + vec2(-0.48, 0.38) + vec2(sin(mt * 0.27) * 0.022, cos(mt * 0.25) * 0.019);',
     '',
-    '  vec3 orange = vec3(1.0, 0.498, 0.12);',
-    '  vec3 amber = vec3(1.0, 0.650, 0.18);',
-    '  vec3 gold = vec3(1.0, 0.820, 0.32);',
-    '  vec3 cream = vec3(1.0, 0.930, 0.58);',
-    '  vec3 pale = vec3(1.0, 0.980, 0.780);',
+    '  vec3 deepPink = vec3(1.0, 0.616, 0.855);',
+    '  vec3 pink = vec3(1.0, 0.722, 0.894);',
+    '  vec3 lightPink = vec3(1.0, 0.831, 0.933);',
+    '  vec3 palePink = vec3(1.0, 0.918, 0.973);',
+    '  vec3 whitePink = vec3(1.0, 0.973, 0.988);',
     '',
     '  float falloff = 1.38;',
     '  float w1 = 1.0 / (pow(length(u - a1), falloff) + 0.078);',
@@ -140,8 +175,31 @@
     '  float w4 = 1.0 / (pow(length(u - a4), falloff) + 0.078);',
     '  float w5 = 1.0 / (pow(length(u - a5), falloff) + 0.078);',
     '  float wSum = w1 + w2 + w3 + w4 + w5;',
-    '  vec3 col = (orange * w1 + pale * w2 + cream * w3 + gold * w4 + amber * w5) / wSum;',
+    '  vec3 col = (deepPink * w1 + whitePink * w2 + palePink * w3 + lightPink * w4 + pink * w5) / wSum;',
     '  return col * 1.06;',
+    '}',
+    '',
+    'vec3 meshTest1GleamGradient(vec2 uv, float time, float audio) {',
+    '  float mt = time * (1.36 + audio * 0.08);',
+    '  float warpAmt = 0.034 + audio * 0.010;',
+    '  vec2 warp = vec2(',
+    '    fbm(uv * 2.0 + mt * 0.055) - 0.5,',
+    '    fbm(uv * 2.0 + vec2(11.1, 7.4) + mt * 0.048) - 0.5',
+    '  ) * warpAmt;',
+    '  vec2 u = uv + warp;',
+    '  vec3 sage = vec3(0.808, 0.867, 0.839);',
+    '  vec3 gleam = vec3(0.851, 0.796, 0.914);',
+    '  vec3 white = vec3(1.0, 0.992, 1.0);',
+    '  vec2 a1 = u_origin + vec2(sin(mt * 0.42) * 0.028, cos(mt * 0.36) * 0.024);',
+    '  vec2 a2 = u_origin + vec2(-0.10, 0.12) + vec2(cos(mt * 0.31) * 0.022, sin(mt * 0.28) * 0.020);',
+    '  vec2 a3 = u_origin + vec2(-0.18, 0.20) + vec2(sin(mt * 0.26) * 0.024, cos(mt * 0.30) * 0.018);',
+    '  float falloff = 1.16;',
+    '  float w1 = 1.0 / (pow(length(u - a1), falloff) + 0.092);',
+    '  float w2 = 1.0 / (pow(length(u - a2), falloff) + 0.098);',
+    '  float w3 = 1.0 / (pow(length(u - a3), falloff) + 0.104);',
+    '  float wSum = w1 + w2 + w3;',
+    '  vec3 col = (gleam * w1 + white * w2 + sage * w3) / wSum;',
+    '  return col * 1.08;',
     '}',
     '',
     'float edgeRingHandoff(vec2 uv, vec2 p, float sdf, float aspect, float tightness, float time) {',
@@ -170,6 +228,42 @@
     '  return clamp(ring + corner, 0.0, 1.0);',
     '}',
     '',
+    'float edgePerimeterSweep(vec2 uv, vec2 p, float sdf, float aspect, float sweep, float time) {',
+    '  if (sweep <= 0.001) return 0.0;',
+    '  float distFromEdge = abs(sdf);',
+    '  float perimeter = exp(-distFromEdge * mix(11.5, 16.5, sweep));',
+    '  float depthIn = clamp(-sdf / max(u_radius * 1.55, 0.06), 0.0, 1.0);',
+    '  float edgeBand = perimeter * (1.0 - smoothstep(0.0, 0.56, depthIn));',
+    '  float softRing = exp(-distFromEdge * 8.2) * (1.0 - smoothstep(0.0, 0.68, depthIn));',
+    '  float outerBleed = exp(-max(sdf, 0.0) * 14.5)',
+    '    * (1.0 - smoothstep(0.0, 0.040, max(-sdf, 0.0))) * 0.68;',
+    '  edgeBand = max(edgeBand, max(softRing * 0.78, outerBleed));',
+    '  vec2 originPlane = vec2((u_origin.x - 0.5) * aspect, u_origin.y - 0.5);',
+    '  float startAngle = atan(originPlane.y, originPlane.x + 0.0001);',
+    '  float pointAngle = atan(p.y, p.x + 0.0001);',
+    '  float posFromStart = fract((pointAngle - startAngle) / 6.28318530718 + 1.0);',
+    '  float head = clamp(sweep, 0.0, 1.0);',
+    '  float passed = 1.0 - smoothstep(head - 0.022, head + 0.034, posFromStart);',
+    '  float trailDist = head - posFromStart;',
+    '  if (trailDist < 0.0) trailDist = 0.0;',
+    '  float trail = smoothstep(0.0, 0.08, trailDist)',
+    '    * (1.0 - smoothstep(0.12, 0.50, trailDist));',
+    '  float headDist = abs(posFromStart - head);',
+    '  headDist = min(headDist, 1.0 - headDist);',
+    '  float headGlow = exp(-headDist * 16.0) * smoothstep(0.02, 0.10, head);',
+    '  float headWide = exp(-headDist * 7.2) * 0.52 * smoothstep(0.02, 0.10, head);',
+    '  float wave = sin(time * 1.28 + posFromStart * 6.28318530718',
+    '    + fbm(uv * 3.1 + time * 0.08) * 4.4) * 0.5 + 0.5;',
+    '  float ripple = sin(time * 1.62 + depthIn * 7.4 - posFromStart * 11.0',
+    '    + fbm(uv * 2.5 + time * 0.09) * 3.2) * 0.5 + 0.5;',
+    '  float waver = 0.82 + wave * 0.12 + ripple * 0.08;',
+    '  float lit = max(max(trail * 0.92, headGlow * 1.34 + headWide), passed * trail * 0.58);',
+    '  lit *= waver;',
+    '  float handoff = 1.0 - smoothstep(0.90, 1.0, sweep) * smoothstep(0.0, 0.18, u_spread);',
+    '  lit *= mix(1.0, max(handoff, 0.42), smoothstep(0.92, 1.0, sweep));',
+    '  return clamp(edgeBand * lit * 1.12, 0.0, 1.0);',
+    '}',
+    '',
     'void main() {',
     '  vec2 uv = v_uv;',
     '  vec2 p = toPlane(uv);',
@@ -181,34 +275,48 @@
     '  float edgeWobble = (fbm(uv * 2.5 + u_time * 0.05) - 0.5) * 0.010 * morph;',
     '  float sdf = sdRoundedBox(p, halfSize, u_radius) + edgeBreath + edgeWobble;',
     '  float morphEarly = smoothstep(0.02, 0.12, morph);',
-    '  float shapeAlpha = mix(',
-    '    1.0 - smoothstep(-0.012, 0.038, sdf),',
-    '    1.0 - smoothstep(-0.036, 0.062, sdf),',
-    '    morphEarly',
-    '  );',
+    '  float shapeAlpha = u_variant >= 1.5',
+    '    ? (1.0 - smoothstep(-0.018, 0.042, sdf))',
+    '    : mix(',
+    '        1.0 - smoothstep(-0.018, 0.048, sdf),',
+    '        1.0 - smoothstep(-0.042, 0.072, sdf),',
+    '        morphEarly',
+    '      );',
     '  if (shapeAlpha < 0.001) discard;',
     '',
     '  float depth = clamp(-sdf / 0.36, 0.0, 1.0);',
     '',
-    '  vec2 rel = vec2((uv.x - u_origin.x) * u_aspect, uv.y - u_origin.y);',
+    '  vec2 rel = vec2(',
+    '    (uv.x - u_origin.x) * mix(u_aspect, u_virtAspect, step(0.5, u_compact)),',
+    '    (uv.y - u_origin.y) * mix(1.0, 0.72, step(0.5, u_compact))',
+    '  );',
     '',
-    '  float reveal = organicReveal(uv, rel, sdf, u_spread, u_time, u_audio);',
+    '  float reveal = organicReveal(uv, rel, sdf, u_spread, u_time, u_audio)',
+    '    * smoothstep(0.82, 0.98, u_sweep);',
     '',
-    '  vec3 mesh = meshWarmGradient(uv, u_time, u_audio);',
+    '  vec3 mesh = u_variant >= 1.5',
+    '    ? meshTest1GleamGradient(uv, u_time, u_audio)',
+    '    : meshWarmGradient(uv, u_time, u_audio);',
+    '  float sweepMask = edgePerimeterSweep(uv, p, sdf, u_aspect, u_sweep, u_time);',
     '  float tightness = smoothstep(0.38, 0.98, handoffT);',
+    '  float spreadShimmer = 1.0 - smoothstep(0.04, 0.78, u_spread);',
     '  float colorLift = morph > 0.04',
     '    ? (1.0 + 0.016 * sin(u_time * 0.86 + fbm(uv * 2.6 + u_time * 0.05) * 4.8))',
-    '    : (1.0 + 0.048 * sin(u_time * 1.12 + uv.x * 5.2 + uv.y * 3.8)',
-    '      + 0.022 * sin(u_time * 0.72 + fbm(uv * 2.2 + u_time * 0.04) * 6.0));',
+    '    : (1.0 + 0.072 * sin(u_time * 1.82 + uv.x * 7.2 + uv.y * 5.0)',
+    '      + 0.038 * sin(u_time * 1.34 + fbm(uv * 2.2 + u_time * 0.068) * 5.6)',
+    '      + spreadShimmer * 0.048 * sin(u_time * 2.55 + uv.x * 11.0 + uv.y * 3.0));',
     '  vec3 color = mesh * colorLift;',
     '  float grain = (hash(floor(uv * 520.0) + floor(u_time * 6.0)) - 0.5) * 0.018;',
     '',
     '  float fillMask = clamp(reveal * u_intensity, 0.0, 1.0);',
     '  float edgeMask = edgeRingHandoff(uv, p, sdf, u_aspect, tightness, u_time);',
+    '  float edgeSweepFill = sweepMask * u_intensity * (1.0 - smoothstep(0.0, 0.24, u_spread));',
     '  float centerFill = fillMask * (1.0 - morph);',
     '  float edgeFill = edgeMask * u_intensity * morph * 0.84;',
-    '  float combinedMask = max(centerFill, edgeFill);',
+    '  float combinedMask = max(max(centerFill, edgeFill), edgeSweepFill);',
     '  color += mesh * edgeFill * 0.28;',
+    '  color += mesh * edgeSweepFill * 0.42;',
+    '  color += vec3(0.10, 0.05, 0.08) * edgeSweepFill * 0.36;',
     '  color += grain * combinedMask;',
     '',
     '  float frontier = smoothstep(0.04, 0.42, combinedMask)',
@@ -257,6 +365,10 @@
     return t * t * t * (t * (t * 6.0 - 15.0) + 10.0);
   }
 
+  function easeGlowRetire(t) {
+    return 1 - Math.pow(1 - t, 1.75);
+  }
+
   function easeOutCubic(t) {
     return 1 - Math.pow(1 - t, 3);
   }
@@ -294,6 +406,18 @@
     return !!(window.__mlpTestConfig && window.__mlpTestConfig.id === 'test2');
   }
 
+  function isTest3Scope() {
+    var canvas = document.getElementById('canvas');
+    if (canvas && canvas.getAttribute('data-test-scope') === 'test3') return true;
+    return !!(window.__mlpTestConfig && window.__mlpTestConfig.id === 'test3');
+  }
+
+  function isTest1Scope() {
+    var canvas = document.getElementById('canvas');
+    if (canvas && canvas.getAttribute('data-test-scope') === 'test1') return true;
+    return !!(window.__mlpTestConfig && window.__mlpTestConfig.id === 'test1');
+  }
+
   function compileShader(gl, type, source) {
     var shader = gl.createShader(type);
     gl.shaderSource(shader, source);
@@ -324,6 +448,9 @@
     return program;
   }
 
+  var LISTEN_SWEEP_PORTION = 0.28;
+  var INPUT_VIRT_ASPECT = 1.65;
+
   function AgentFillGL() {
     this.canvas = null;
     this.fillEl = null;
@@ -338,36 +465,54 @@
     this.phaseFrom = { spread: 0, intensity: 0, fill: 0 };
     this.phaseTo = { spread: 0, intensity: 0, fill: 0 };
     this.phaseDuration = 0;
-    this.values = { spread: 0, intensity: 0, fill: 0 };
+    this.values = { spread: 0, intensity: 0, fill: 0, sweep: 0 };
     this.audio = 0;
     this.smoothAudio = 0;
     this.startTime = 0;
-    this.layout = { aspect: 1, radius: 0.24 };
+    this.layout = { aspect: 1, radius: 0.24, compact: 0, virtAspect: INPUT_VIRT_ASPECT };
     this._layoutCache = { w: 0, h: 0, aspect: 0 };
     this.resizeObserver = null;
     this.uniforms = {};
     this._onFrame = this._tick.bind(this);
   }
 
+  AgentFillGL.prototype._fillRect = function () {
+    if (!this.fillEl) return null;
+    var rect = this.fillEl.getBoundingClientRect();
+    if (!rect.width || !rect.height) return null;
+    return rect;
+  };
+
   AgentFillGL.prototype._updateLayout = function () {
-    if (!this.shellEl) return;
-    var rect = this.shellEl.getBoundingClientRect();
-    if (!rect.width || !rect.height) return;
+    var rect = this._fillRect();
+    if (!rect) return;
     this.layout.aspect = rect.width / rect.height;
-    this.layout.radius = 36 / rect.height;
+    this.layout.radius = Math.min(22, rect.height * 0.5) / rect.height;
   };
 
   AgentFillGL.prototype._getOrigin = function () {
-    if (!this.shellEl) return [0.92, 0.10];
-    var shell = this.shellEl.getBoundingClientRect();
-    if (!shell.width || !shell.height) return [0.92, 0.10];
+    var fill = this._fillRect();
+    if (!fill) return [0.92, 0.10];
+    var isInput = this.fillEl && this.fillEl.closest('.p2-agent-input');
     var star = document.getElementById('p2-star');
-    if (!star) return [0.92, 0.10];
+    if (!star) return isInput ? [0.06, 0.50] : [0.92, 0.10];
     var btn = star.getBoundingClientRect();
-    var btnX = (btn.left + btn.width * 0.5 - shell.left) / shell.width;
-    var btnY = 1 - (btn.top + btn.height * 0.5 - shell.top) / shell.height;
-    var cornerX = clamp((shell.width - 8) / shell.width, 0, 1);
-    var cornerY = clamp(8 / shell.height, 0, 1);
+    var btnX = (btn.left + btn.width * 0.5 - fill.left) / fill.width;
+    var btnY = 1 - (btn.top + btn.height * 0.5 - fill.top) / fill.height;
+    if (isInput) {
+      if (isTest2Scope()) {
+        return [
+          clamp(btnX * 0.35 + 0.06 * 0.65, 0.02, 0.22),
+          clamp(btnY * 0.22 + 0.5 * 0.78, 0.38, 0.62)
+        ];
+      }
+      return [
+        clamp(btnX * 0.52 + 0.98 * 0.48, 0.88, 1.06),
+        clamp(btnY * 0.62 + 0.5 * 0.38, 0.40, 0.60)
+      ];
+    }
+    var cornerX = clamp((fill.width - 8) / fill.width, 0, 1);
+    var cornerY = clamp(8 / fill.height, 0, 1);
     return [
       clamp(btnX * 0.35 + cornerX * 0.65, 0, 1),
       clamp(btnY * 0.35 + cornerY * 0.65, 0, 1)
@@ -375,9 +520,9 @@
   };
 
   AgentFillGL.prototype._resize = function (force) {
-    if (!this.canvas || !this.gl || !this.shellEl) return;
-    var rect = this.shellEl.getBoundingClientRect();
-    if (!rect.width || !rect.height) return;
+    if (!this.canvas || !this.gl || !this.fillEl) return;
+    var rect = this._fillRect();
+    if (!rect) return;
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
     var w = Math.max(1, Math.round(rect.width * dpr));
     var h = Math.max(1, Math.round(rect.height * dpr));
@@ -395,15 +540,60 @@
     }
     if (sizeChanged || Math.abs(cache.aspect - aspect) > 0.002) {
       this.layout.aspect = aspect;
-      this.layout.radius = 36 / rect.height;
+      this.layout.radius = Math.min(22, rect.height * 0.5) / rect.height;
       cache.aspect = aspect;
     }
+    this.layout.compact = this.fillEl.closest('.p2-agent-input') ? 1 : 0;
+  };
+
+  function getPhaseConfig(phaseName) {
+    var next = PHASES[phaseName] || PHASES.idle;
+    if (!isTest2Scope()) return next;
+    if (phaseName === 'generating') {
+      return { spread: 1.42, intensity: 1.0, fill: 0.0, duration: 1780 };
+    }
+    if (phaseName === 'hollowReveal') {
+      return { spread: 1.42, intensity: 0.86, fill: 0.74, duration: 780 };
+    }
+    if (phaseName === 'settling') {
+      return { spread: 1.42, intensity: 0.20, fill: 1.0, duration: 380 };
+    }
+    if (phaseName === 'fadeOut') {
+      return { spread: 1.42, intensity: 0.0, fill: 0.0, duration: 1420 };
+    }
+    return next;
+  }
+
+  AgentFillGL.prototype._finishFadeOutTail = function () {
+    if (this._fadeTailDone || !isTest2Scope()) return;
+    this._fadeTailDone = true;
+    var self = this;
+    var shell = this.shellEl;
+    var fill = this.fillEl;
+    setTimeout(function () {
+      self.phase = 'idle';
+      if (fill) {
+        fill.classList.remove('p2-agent-fill--gl-active');
+        fill.classList.remove('p2-agent-fill--gl-fading');
+      }
+      if (shell) shell.classList.remove('p2-agent-shell--gl-fill');
+      self._stopLoop(true);
+      setTimeout(function () {
+        if (!shell) return;
+        shell.classList.remove(
+          'p2-agent-shell--glow-retire',
+          'p2-agent-shell--flow-handoff',
+          'p2-loading-chrome-exiting'
+        );
+      }, 560);
+    }, 420);
   };
 
   AgentFillGL.prototype._setPhaseTargets = function (phaseName) {
-    var next = PHASES[phaseName] || PHASES.idle;
+    var next = getPhaseConfig(phaseName);
     this.phase = phaseName;
     this.phaseStart = performance.now();
+    this._fadeTailDone = false;
     this.phaseFrom = {
       spread: this.values.spread,
       intensity: this.values.intensity,
@@ -424,11 +614,18 @@
         this.fillEl.classList.remove('p2-agent-fill--gl-fading');
       }
       if (phaseName === 'fadeOut') {
-        this.fillEl.classList.remove('p2-agent-fill--gl-active');
         this.fillEl.classList.add('p2-agent-fill--gl-fading');
       }
     }
     if (this.shellEl) {
+      if (isTest2Scope() && (phaseName === 'fadeOut' || phaseName === 'settling')) {
+        this.shellEl.classList.add('p2-agent-shell--glow-retire');
+      } else if (
+        isTest2Scope() &&
+        (phaseName === 'idle' || phaseName === 'listening' || phaseName === 'generating')
+      ) {
+        this.shellEl.classList.remove('p2-agent-shell--glow-retire');
+      }
       if (
         phaseName === 'listening' || phaseName === 'generating' ||
         phaseName === 'hollowReveal' || phaseName === 'handoff' ||
@@ -440,9 +637,13 @@
       }
     }
     if (phaseName === 'fadeOut' && isTest2Scope()) {
-      try {
-        document.dispatchEvent(new CustomEvent('p2-test2-fill-fadeout'));
-      } catch (e) { /* noop */ }
+      var fadeMs = next.duration;
+      var layoutMs = Math.round(fadeMs * 0.94);
+      setTimeout(function () {
+        try {
+          document.dispatchEvent(new CustomEvent('p2-test2-fill-fadeout'));
+        } catch (e) { /* noop */ }
+      }, layoutMs);
     }
   };
 
@@ -452,6 +653,7 @@
       this.values.spread = 0;
       this.values.intensity = 0;
       this.values.fill = 0;
+      this.values.sweep = 0;
       this.smoothAudio = 0;
     }
     this._setPhaseTargets(phaseName || 'idle');
@@ -501,15 +703,38 @@
       : 1;
     var eased;
     if (this.phase === 'listening') {
-      eased = easeListeningSpread(t);
-    } else if (this.phase === 'generating') {
+      if (t < LISTEN_SWEEP_PORTION) {
+        var sweepT = t / LISTEN_SWEEP_PORTION;
+        this.values.sweep = easeOutCubic(sweepT);
+        this.values.spread = 0;
+        this.values.intensity = easeListenIntensity(sweepT * 0.78);
+        this.values.fill = 0;
+      } else {
+        var fillT = (t - LISTEN_SWEEP_PORTION) / (1 - LISTEN_SWEEP_PORTION);
+        this.values.sweep = 1;
+        this.values.spread = lerp(
+          this.phaseFrom.spread,
+          this.phaseTo.spread,
+          easeListeningSpread(fillT)
+        );
+        this.values.intensity = lerp(
+          this.phaseFrom.intensity,
+          this.phaseTo.intensity,
+          easeListenIntensity(0.62 + fillT * 0.38)
+        );
+        this.values.fill = 0;
+      }
+      this._maybeAdvancePhase(t);
+      return;
+    }
+    if (this.phase === 'generating') {
       eased = easeContinueSpread(t, this.phaseFrom.spread);
     } else if (this.phase === 'hollowReveal') {
-      eased = easeOutQuint(t);
+      eased = isTest2Scope() ? easeOutCubic(t) : easeOutQuint(t);
     } else if (this.phase === 'handoff') {
       eased = easeInOutCubic(t);
     } else if (this.phase === 'fadeOut') {
-      eased = easeOutCubic(t);
+      eased = easeGlowRetire(t);
     } else if (this.phase === 'settling') {
       eased = easeInOutCubic(t);
     } else {
@@ -558,7 +783,13 @@
     gl.uniform1f(this.uniforms.spread, this.values.spread);
     gl.uniform1f(this.uniforms.intensity, this.values.intensity);
     gl.uniform1f(this.uniforms.fill, this.values.fill);
+    gl.uniform1f(this.uniforms.sweep, this.values.sweep);
     gl.uniform1f(this.uniforms.audio, this.smoothAudio);
+    gl.uniform1f(this.uniforms.compact, this.layout.compact || 0);
+    gl.uniform1f(this.uniforms.virtAspect, this.layout.virtAspect || INPUT_VIRT_ASPECT);
+    if (this.uniforms.variant) {
+      gl.uniform1f(this.uniforms.variant, this._meshVariant || 0);
+    }
 
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
@@ -568,13 +799,17 @@
       this._stopLoop(true);
     }
     if (this.phase === 'fadeOut' && now - this.phaseStart >= this.phaseDuration) {
-      this.phase = 'idle';
-      if (this.fillEl) {
-        this.fillEl.classList.remove('p2-agent-fill--gl-active');
-        this.fillEl.classList.remove('p2-agent-fill--gl-fading');
+      if (isTest2Scope()) {
+        this._finishFadeOutTail();
+      } else {
+        this.phase = 'idle';
+        if (this.fillEl) {
+          this.fillEl.classList.remove('p2-agent-fill--gl-active');
+          this.fillEl.classList.remove('p2-agent-fill--gl-fading');
+        }
+        if (this.shellEl) this.shellEl.classList.remove('p2-agent-shell--gl-fill');
+        this._stopLoop(true);
       }
-      if (this.shellEl) this.shellEl.classList.remove('p2-agent-shell--gl-fill');
-      this._stopLoop(true);
     }
   };
 
@@ -605,8 +840,11 @@
 
   AgentFillGL.prototype.destroy = function () {
     this._stopLoop(true);
-    if (this.resizeObserver && this.shellEl) {
-      this.resizeObserver.unobserve(this.shellEl);
+    if (this.resizeObserver) {
+      if (this.fillEl) this.resizeObserver.unobserve(this.fillEl);
+      if (this.shellEl && this.shellEl !== this.fillEl) {
+        this.resizeObserver.unobserve(this.shellEl);
+      }
     }
     this.resizeObserver = null;
     if (this.fillEl) {
@@ -669,7 +907,11 @@
       spread: gl.getUniformLocation(program, 'u_spread'),
       intensity: gl.getUniformLocation(program, 'u_intensity'),
       fill: gl.getUniformLocation(program, 'u_fill'),
-      audio: gl.getUniformLocation(program, 'u_audio')
+      sweep: gl.getUniformLocation(program, 'u_sweep'),
+      audio: gl.getUniformLocation(program, 'u_audio'),
+      compact: gl.getUniformLocation(program, 'u_compact'),
+      virtAspect: gl.getUniformLocation(program, 'u_virtAspect'),
+      variant: gl.getUniformLocation(program, 'u_variant')
     };
 
     this.ready = true;
@@ -683,7 +925,10 @@
       this.resizeObserver = new ResizeObserver(function () {
         self._resize(true);
       });
-      this.resizeObserver.observe(this.shellEl);
+      this.resizeObserver.observe(this.fillEl);
+      if (this.shellEl && this.shellEl !== this.fillEl) {
+        this.resizeObserver.observe(this.shellEl);
+      }
     }
 
     canvas.addEventListener('webglcontextlost', function (e) {
@@ -698,7 +943,7 @@
 
   function ensureBound() {
     if (!isTest2Scope() || prefersReducedMotion()) return false;
-    var canvas = document.querySelector('.p2-agent-fill__gl');
+    var canvas = document.querySelector('.p2-agent-input .p2-agent-fill__gl');
     if (!canvas) return false;
     if (instance.canvas === canvas && instance.ready) return true;
     return instance.bind(canvas);
@@ -721,23 +966,16 @@
     }
   };
 
-  function isTest3Scope() {
-    var canvas = document.getElementById('canvas');
-    if (canvas && canvas.getAttribute('data-test-scope') === 'test3') return true;
-    return !!(window.__mlpTestConfig && window.__mlpTestConfig.id === 'test3');
-  }
-
   function Test3MusicFillGL() {
     AgentFillGL.call(this);
+    this._meshVariant = 1;
   }
   Test3MusicFillGL.prototype = Object.create(AgentFillGL.prototype);
   Test3MusicFillGL.prototype.constructor = Test3MusicFillGL;
 
   Test3MusicFillGL.prototype._getOrigin = function () {
-    if (!this.shellEl) return [0.92, 0.88];
-    var shell = this.shellEl.getBoundingClientRect();
-    if (!shell.width || !shell.height) return [0.92, 0.88];
-    return [0.92, 0.88];
+    /* Left orb anchor — fill sweeps orange → cream left-to-right (image 1). */
+    return [0.11, 0.5];
   };
 
   Test3MusicFillGL.prototype._maybeAdvancePhase = function (t) {
@@ -802,7 +1040,8 @@
       spread: gl.getUniformLocation(program, 'u_spread'),
       intensity: gl.getUniformLocation(program, 'u_intensity'),
       fill: gl.getUniformLocation(program, 'u_fill'),
-      audio: gl.getUniformLocation(program, 'u_audio')
+      audio: gl.getUniformLocation(program, 'u_audio'),
+      variant: gl.getUniformLocation(program, 'u_variant')
     };
 
     this.ready = true;
@@ -851,6 +1090,288 @@
     },
     destroy: function () {
       test3Instance.destroy();
+    }
+  };
+
+  function Test1HomeWidgetFillGL() {
+    AgentFillGL.call(this);
+    this._meshVariant = 2;
+    this._origin = [0.08, 0.11];
+  }
+  Test1HomeWidgetFillGL.prototype = Object.create(AgentFillGL.prototype);
+  Test1HomeWidgetFillGL.prototype.constructor = Test1HomeWidgetFillGL;
+
+  Test1HomeWidgetFillGL.prototype._getOrigin = function () {
+    return this._origin.slice();
+  };
+
+  Test1HomeWidgetFillGL.prototype._maybeAdvancePhase = function () {};
+
+  var TEST1_HOME_GL_PULSE_MS = 5200;
+  var TEST1_HOME_GL_EXPAND_RATIO = 3200 / 5200;
+
+  Test1HomeWidgetFillGL.prototype._getPhaseConfig = function (phaseName) {
+    var isFood = this.shellEl && this.shellEl.classList.contains('test1-home-food');
+    if (phaseName === 'generating') {
+      return {
+        spread: isFood ? 1.45 : 1.38,
+        intensity: isFood ? 0.82 : 0.72,
+        fill: 0,
+        duration: TEST1_HOME_GL_PULSE_MS
+      };
+    }
+    if (phaseName === 'fadeOut') {
+      return {
+        spread: isFood ? 1.45 : 1.38,
+        intensity: 0,
+        fill: 0,
+        duration: 2000
+      };
+    }
+    return PHASES[phaseName] || PHASES.idle;
+  };
+
+  Test1HomeWidgetFillGL.prototype._pulseWave = function (t, cycles) {
+    var wave = Math.sin(t * Math.PI * 2 * cycles) * 0.5 + 0.5;
+    return wave * wave * (3 - 2 * wave);
+  };
+
+  Test1HomeWidgetFillGL.prototype._updateValues = function (now) {
+    if (this.phase !== 'generating') {
+      AgentFillGL.prototype._updateValues.call(this, now);
+      return;
+    }
+    var t = this.phaseDuration > 0
+      ? clamp((now - this.phaseStart) / this.phaseDuration, 0, 1)
+      : 1;
+    var isFood = this.shellEl && this.shellEl.classList.contains('test1-home-food');
+    var expandRatio = TEST1_HOME_GL_EXPAND_RATIO;
+    var pulseT;
+    var opacityMul = 1;
+    if (t <= expandRatio) {
+      var expandT = t / expandRatio;
+      expandT = 1 - Math.pow(1 - expandT, 2.1);
+      pulseT = expandT;
+    } else {
+      var contractT = (t - expandRatio) / (1 - expandRatio);
+      contractT = contractT * contractT * (3 - 2 * contractT);
+      pulseT = 1 - contractT;
+    }
+    if (this._crossfadeUntil && now <= this._crossfadeUntil) {
+      var crossT = clamp((now - this._crossfadeStart) / this._crossfadeDur, 0, 1);
+      opacityMul = 1 - crossT;
+    }
+    if (isFood) {
+      this.values.spread = lerp(0.34, 1.45, pulseT);
+      this.values.intensity = lerp(0.12, 0.82, pulseT) * opacityMul;
+    } else {
+      this.values.spread = lerp(0.28, 1.38, pulseT);
+      this.values.intensity = lerp(0.1, 0.72, pulseT) * opacityMul;
+    }
+    this.values.fill = 0;
+    this.values.sweep = 1;
+  };
+
+  Test1HomeWidgetFillGL.prototype._resize = function (force) {
+    AgentFillGL.prototype._resize.call(this, force);
+    var rect = this._fillRect();
+    if (!rect) return;
+    this.layout.radius = Math.min(42, rect.height * 0.5) / rect.height;
+  };
+
+  Test1HomeWidgetFillGL.prototype.setPhase = function (phaseName) {
+    if (!this.ready || prefersReducedMotion()) return;
+    if (phaseName === 'generating') {
+      this.values.sweep = 1;
+      this.values.spread = 0;
+      this.values.intensity = 0;
+      this.values.fill = 0;
+      this.smoothAudio = 0;
+    }
+    AgentFillGL.prototype.setPhase.call(this, phaseName);
+  };
+
+  Test1HomeWidgetFillGL.prototype._setPhaseTargets = function (phaseName) {
+    var next = this._getPhaseConfig(phaseName);
+    this.phase = phaseName;
+    this.phaseStart = performance.now();
+    this._fadeTailDone = false;
+    this.phaseFrom = {
+      spread: this.values.spread,
+      intensity: this.values.intensity,
+      fill: this.values.fill
+    };
+    this.phaseTo = {
+      spread: next.spread,
+      intensity: next.intensity,
+      fill: next.fill
+    };
+    this.phaseDuration = next.duration;
+    if (this.fillEl) {
+      if (phaseName !== 'idle') {
+        this.fillEl.classList.add('p2-agent-fill--gl-active');
+        this.fillEl.classList.remove('p2-agent-fill--gl-fading');
+      } else {
+        this.fillEl.classList.remove('p2-agent-fill--gl-active');
+        this.fillEl.classList.remove('p2-agent-fill--gl-fading');
+      }
+      if (phaseName === 'fadeOut') {
+        this.fillEl.classList.add('p2-agent-fill--gl-fading');
+      }
+    }
+    if (this.shellEl) {
+      if (phaseName === 'generating' || phaseName === 'fadeOut') {
+        this.shellEl.classList.add('test1-home-widget--gl-fill');
+      } else if (phaseName === 'idle') {
+        this.shellEl.classList.remove('test1-home-widget--gl-fill');
+      }
+    }
+  };
+
+  Test1HomeWidgetFillGL.prototype.destroy = function () {
+    AgentFillGL.prototype.destroy.call(this);
+    if (this.shellEl) this.shellEl.classList.remove('test1-home-widget--gl-fill');
+  };
+
+  Test1HomeWidgetFillGL.prototype.bind = function (canvas) {
+    this.destroy();
+    if (!canvas || prefersReducedMotion() || !isTest1Scope()) return false;
+
+    this.canvas = canvas;
+    this.fillEl = canvas.closest('.test1-home-widget__veil-gl');
+    this.shellEl = canvas.closest('.test1-home-widget');
+    if (!this.fillEl || !this.shellEl) return false;
+
+    if (this.shellEl.classList.contains('test1-home-food')) {
+      this._origin = [0.06, 0.07];
+    } else {
+      this._origin = [0.08, 0.11];
+    }
+
+    var gl = canvas.getContext('webgl', {
+      alpha: true,
+      antialias: false,
+      premultipliedAlpha: true,
+      preserveDrawingBuffer: false
+    });
+    if (!gl) {
+      console.warn('[Test1HomeWidgetFillGL] WebGL unavailable');
+      return false;
+    }
+
+    var program = createProgram(gl, VERT_SRC, FRAG_SRC);
+    if (!program) return false;
+
+    var buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+      -1, -1, 1, -1, -1, 1, 1, 1
+    ]), gl.STATIC_DRAW);
+
+    var aPos = gl.getAttribLocation(program, 'a_pos');
+    gl.enableVertexAttribArray(aPos);
+    gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+    this.gl = gl;
+    this.program = program;
+    this.uniforms = {
+      origin: gl.getUniformLocation(program, 'u_origin'),
+      aspect: gl.getUniformLocation(program, 'u_aspect'),
+      radius: gl.getUniformLocation(program, 'u_radius'),
+      time: gl.getUniformLocation(program, 'u_time'),
+      spread: gl.getUniformLocation(program, 'u_spread'),
+      intensity: gl.getUniformLocation(program, 'u_intensity'),
+      fill: gl.getUniformLocation(program, 'u_fill'),
+      sweep: gl.getUniformLocation(program, 'u_sweep'),
+      audio: gl.getUniformLocation(program, 'u_audio'),
+      compact: gl.getUniformLocation(program, 'u_compact'),
+      virtAspect: gl.getUniformLocation(program, 'u_virtAspect'),
+      variant: gl.getUniformLocation(program, 'u_variant')
+    };
+
+    this.ready = true;
+    this.startTime = performance.now();
+    this._setPhaseTargets('idle');
+    this.fillEl.classList.add('p2-agent-fill--gl-ready');
+    this._resize(true);
+
+    var self = this;
+    if (typeof ResizeObserver !== 'undefined') {
+      this.resizeObserver = new ResizeObserver(function () {
+        self._resize(true);
+      });
+      this.resizeObserver.observe(this.fillEl);
+      if (this.shellEl && this.shellEl !== this.fillEl) {
+        this.resizeObserver.observe(this.shellEl);
+      }
+    }
+
+    canvas.addEventListener('webglcontextlost', function (e) {
+      e.preventDefault();
+      self.destroy();
+    }, false);
+
+    return true;
+  };
+
+  var test1Instances = [];
+
+  function bindTest1Canvases() {
+    if (!isTest1Scope() || prefersReducedMotion()) return false;
+    test1Instances.forEach(function (inst) { inst.destroy(); });
+    test1Instances = [];
+    var canvases = document.querySelectorAll(
+      '#canvas[data-test-scope="test1"] .test1-home-widget__veil-gl-canvas'
+    );
+    if (!canvases.length) return false;
+    var ok = false;
+    canvases.forEach(function (canvas) {
+      var inst = new Test1HomeWidgetFillGL();
+      if (inst.bind(canvas)) {
+        test1Instances.push(inst);
+        ok = true;
+      }
+    });
+    return ok;
+  }
+
+  window.Test1HomeWidgetFillGL = {
+    startAll: function () {
+      if (!bindTest1Canvases()) return;
+      test1Instances.forEach(function (inst) {
+        inst.setPhase('generating');
+      });
+    },
+    crossfadeAll: function (duration) {
+      var dur = duration || 2000;
+      var now = performance.now();
+      test1Instances.forEach(function (inst) {
+        if (!inst.ready) return;
+        inst._crossfadeStart = now;
+        inst._crossfadeDur = dur;
+        inst._crossfadeUntil = now + dur;
+      });
+    },
+    fadeAll: function () {
+      test1Instances.forEach(function (inst) {
+        if (inst.ready) inst.setPhase('fadeOut');
+      });
+    },
+    fadeWidgets: function (which) {
+      test1Instances.forEach(function (inst) {
+        if (!inst.ready || !inst.shellEl) return;
+        var isFood = inst.shellEl.classList.contains('test1-home-food');
+        if (which === 'top' && isFood) return;
+        if (which === 'food' && !isFood) return;
+        inst.setPhase('fadeOut');
+      });
+    },
+    destroyAll: function () {
+      test1Instances.forEach(function (inst) { inst.destroy(); });
+      test1Instances = [];
     }
   };
 })();
