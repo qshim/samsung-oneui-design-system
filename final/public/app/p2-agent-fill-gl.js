@@ -202,6 +202,29 @@
     '  return col * 1.08;',
     '}',
     '',
+    'vec3 meshTest1PillGradient(vec2 uv, float time, float audio) {',
+    '  float mt = time * (1.36 + audio * 0.08);',
+    '  float warpAmt = 0.034 + audio * 0.010;',
+    '  vec2 warp = vec2(',
+    '    fbm(uv * 2.0 + mt * 0.055) - 0.5,',
+    '    fbm(uv * 2.0 + vec2(11.1, 7.4) + mt * 0.048) - 0.5',
+    '  ) * warpAmt;',
+    '  vec2 u = uv + warp;',
+    '  vec3 mint = vec3(0.616, 0.773, 0.718);',
+    '  vec3 pink = vec3(0.933, 0.796, 1.0);',
+    '  vec3 white = vec3(1.0, 0.992, 1.0);',
+    '  vec2 a1 = u_origin + vec2(sin(mt * 0.42) * 0.028, cos(mt * 0.36) * 0.024);',
+    '  vec2 a2 = u_origin + vec2(-0.10, 0.12) + vec2(cos(mt * 0.31) * 0.022, sin(mt * 0.28) * 0.020);',
+    '  vec2 a3 = u_origin + vec2(-0.18, 0.20) + vec2(sin(mt * 0.26) * 0.024, cos(mt * 0.30) * 0.018);',
+    '  float falloff = 1.16;',
+    '  float w1 = 1.0 / (pow(length(u - a1), falloff) + 0.092);',
+    '  float w2 = 1.0 / (pow(length(u - a2), falloff) + 0.098);',
+    '  float w3 = 1.0 / (pow(length(u - a3), falloff) + 0.104);',
+    '  float wSum = w1 + w2 + w3;',
+    '  vec3 col = (pink * w1 + white * w2 + mint * w3) / wSum;',
+    '  return col * 1.08;',
+    '}',
+    '',
     'float edgeRingHandoff(vec2 uv, vec2 p, float sdf, float aspect, float tightness, float time) {',
     '  float maxInward = mix(0.64, 0.28, clamp(tightness, 0.0, 1.0));',
     '  float inward = clamp(-sdf, 0.0, maxInward);',
@@ -294,9 +317,11 @@
     '  float reveal = organicReveal(uv, rel, sdf, u_spread, u_time, u_audio)',
     '    * smoothstep(0.82, 0.98, u_sweep);',
     '',
-    '  vec3 mesh = u_variant >= 1.5',
-    '    ? meshTest1GleamGradient(uv, u_time, u_audio)',
-    '    : meshWarmGradient(uv, u_time, u_audio);',
+    '  vec3 mesh = u_variant >= 2.5',
+    '    ? meshTest1PillGradient(uv, u_time, u_audio)',
+    '    : u_variant >= 1.5',
+    '      ? meshTest1GleamGradient(uv, u_time, u_audio)',
+    '      : meshWarmGradient(uv, u_time, u_audio);',
     '  float sweepMask = edgePerimeterSweep(uv, p, sdf, u_aspect, u_sweep, u_time);',
     '  float tightness = smoothstep(0.38, 0.98, handoffT);',
     '  float spreadShimmer = 1.0 - smoothstep(0.04, 0.78, u_spread);',
@@ -349,6 +374,10 @@
 
   function easeOutExpo(t) {
     return t >= 1 ? 1 : 1 - Math.pow(2, -10 * t);
+  }
+
+  function easeInOutQuint(t) {
+    return t < 0.5 ? 16 * t * t * t * t * t : 1 - Math.pow(-2 * t + 2, 5) / 2;
   }
 
   function easeInOutCubic(t) {
@@ -404,6 +433,32 @@
     var canvas = document.getElementById('canvas');
     if (canvas && canvas.getAttribute('data-test-scope') === 'test2') return true;
     return !!(window.__mlpTestConfig && window.__mlpTestConfig.id === 'test2');
+  }
+
+  function pickTest2FillCanvas() {
+    var result = document.getElementById('p2-result');
+    var shell = document.getElementById('p2-area');
+    if (shell && shell.classList.contains('p2-contact-voice-renew')) {
+      var renewFooter = document.querySelector(
+        '.p2-agent-footer .p2-agent-input .p2-agent-fill__gl'
+      );
+      if (renewFooter) return renewFooter;
+    }
+    if (result && result.classList.contains('is-loading') && !result.classList.contains('has-swap')) {
+      var chromeHandoff =
+        (shell && shell.classList.contains('p2-loading-chrome-exiting')) ||
+        (shell && shell.classList.contains('p2-loading-footer-handoff')) ||
+        result.classList.contains('p2-loading-ui-exiting');
+      if (chromeHandoff) {
+        var footerCanvas = document.querySelector(
+          '.p2-agent-footer .p2-agent-input .p2-agent-fill__gl'
+        );
+        if (footerCanvas) return footerCanvas;
+      }
+      var loadingCanvas = document.querySelector('.p2-result-loading__input .p2-agent-fill__gl');
+      if (loadingCanvas) return loadingCanvas;
+    }
+    return document.querySelector('.p2-agent-input .p2-agent-fill__gl');
   }
 
   function isTest3Scope() {
@@ -471,6 +526,7 @@
     this.startTime = 0;
     this.layout = { aspect: 1, radius: 0.24, compact: 0, virtAspect: INPUT_VIRT_ASPECT };
     this._layoutCache = { w: 0, h: 0, aspect: 0 };
+    this._resizeLock = false;
     this.resizeObserver = null;
     this.uniforms = {};
     this._onFrame = this._tick.bind(this);
@@ -493,19 +549,18 @@
   AgentFillGL.prototype._getOrigin = function () {
     var fill = this._fillRect();
     if (!fill) return [0.92, 0.10];
-    var isInput = this.fillEl && this.fillEl.closest('.p2-agent-input');
+    var isLoadingInput = this.fillEl && this.fillEl.closest('.p2-result-loading__input');
+    var isInput = isLoadingInput || (this.fillEl && this.fillEl.closest('.p2-agent-input'));
     var star = document.getElementById('p2-star');
-    if (!star) return isInput ? [0.06, 0.50] : [0.92, 0.10];
-    var btn = star.getBoundingClientRect();
+    var loadIcon = isLoadingInput
+      ? (this.fillEl.closest('.p2-result-loading') || document).querySelector('.p2-result-loading__icon')
+      : null;
+    var anchor = loadIcon || star;
+    if (!anchor) return isInput ? [0.06, 0.50] : [0.92, 0.10];
+    var btn = anchor.getBoundingClientRect();
     var btnX = (btn.left + btn.width * 0.5 - fill.left) / fill.width;
     var btnY = 1 - (btn.top + btn.height * 0.5 - fill.top) / fill.height;
     if (isInput) {
-      if (isTest2Scope()) {
-        return [
-          clamp(btnX * 0.35 + 0.06 * 0.65, 0.02, 0.22),
-          clamp(btnY * 0.22 + 0.5 * 0.78, 0.38, 0.62)
-        ];
-      }
       return [
         clamp(btnX * 0.52 + 0.98 * 0.48, 0.88, 1.06),
         clamp(btnY * 0.62 + 0.5 * 0.38, 0.40, 0.60)
@@ -520,7 +575,7 @@
   };
 
   AgentFillGL.prototype._resize = function (force) {
-    if (!this.canvas || !this.gl || !this.fillEl) return;
+    if (!this.canvas || !this.gl || !this.fillEl || this._resizeLock) return;
     var rect = this._fillRect();
     if (!rect) return;
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -530,27 +585,35 @@
     var cache = this._layoutCache;
     var sizeChanged = force || cache.w !== w || cache.h !== h;
     if (sizeChanged) {
-      this.canvas.width = w;
-      this.canvas.height = h;
-      this.canvas.style.width = rect.width + 'px';
-      this.canvas.style.height = rect.height + 'px';
-      this.gl.viewport(0, 0, w, h);
-      cache.w = w;
-      cache.h = h;
+      this._resizeLock = true;
+      try {
+        var cssW = Math.round(rect.width) + 'px';
+        var cssH = Math.round(rect.height) + 'px';
+        this.canvas.width = w;
+        this.canvas.height = h;
+        if (this.canvas.style.width !== cssW) this.canvas.style.width = cssW;
+        if (this.canvas.style.height !== cssH) this.canvas.style.height = cssH;
+        this.gl.viewport(0, 0, w, h);
+        cache.w = w;
+        cache.h = h;
+      } finally {
+        this._resizeLock = false;
+      }
     }
     if (sizeChanged || Math.abs(cache.aspect - aspect) > 0.002) {
       this.layout.aspect = aspect;
       this.layout.radius = Math.min(22, rect.height * 0.5) / rect.height;
       cache.aspect = aspect;
     }
-    this.layout.compact = this.fillEl.closest('.p2-agent-input') ? 1 : 0;
+    this.layout.compact = (this.fillEl.closest('.p2-agent-input') ||
+      this.fillEl.closest('.p2-result-loading__input')) ? 1 : 0;
   };
 
   function getPhaseConfig(phaseName) {
     var next = PHASES[phaseName] || PHASES.idle;
     if (!isTest2Scope()) return next;
     if (phaseName === 'generating') {
-      return { spread: 1.42, intensity: 1.0, fill: 0.0, duration: 1780 };
+      return { spread: 1.42, intensity: 1.0, fill: 0.0, duration: 3200 };
     }
     if (phaseName === 'hollowReveal') {
       return { spread: 1.42, intensity: 0.86, fill: 0.74, duration: 780 };
@@ -583,7 +646,8 @@
         shell.classList.remove(
           'p2-agent-shell--glow-retire',
           'p2-agent-shell--flow-handoff',
-          'p2-loading-chrome-exiting'
+          'p2-loading-chrome-exiting',
+          'p2-loading-footer-handoff'
         );
       }, 560);
     }, 420);
@@ -605,6 +669,13 @@
       fill: next.fill
     };
     this.phaseDuration = next.duration;
+    if (
+      phaseName === 'generating' &&
+      isTest2Scope() &&
+      this.phaseFrom.spread < 0.12
+    ) {
+      this.phaseDuration = 5200;
+    }
     if (this.fillEl) {
       if (phaseName !== 'idle') {
         this.fillEl.classList.add('p2-agent-fill--gl-active');
@@ -618,6 +689,7 @@
       }
     }
     if (this.shellEl) {
+      var voiceRenew = this.shellEl.classList.contains('p2-contact-voice-renew');
       if (isTest2Scope() && (phaseName === 'fadeOut' || phaseName === 'settling')) {
         this.shellEl.classList.add('p2-agent-shell--glow-retire');
       } else if (
@@ -627,12 +699,13 @@
         this.shellEl.classList.remove('p2-agent-shell--glow-retire');
       }
       if (
-        phaseName === 'listening' || phaseName === 'generating' ||
+        !voiceRenew &&
+        (phaseName === 'listening' || phaseName === 'generating' ||
         phaseName === 'hollowReveal' || phaseName === 'handoff' ||
-        phaseName === 'settling' || phaseName === 'fadeOut'
+        phaseName === 'settling' || phaseName === 'fadeOut')
       ) {
         this.shellEl.classList.add('p2-agent-shell--gl-fill');
-      } else if (phaseName === 'idle') {
+      } else if (phaseName === 'idle' || voiceRenew) {
         this.shellEl.classList.remove('p2-agent-shell--gl-fill');
       }
     }
@@ -703,14 +776,15 @@
       : 1;
     var eased;
     if (this.phase === 'listening') {
-      if (t < LISTEN_SWEEP_PORTION) {
-        var sweepT = t / LISTEN_SWEEP_PORTION;
+      var sweepPortion = isTest2Scope() ? 0.14 : LISTEN_SWEEP_PORTION;
+      if (t < sweepPortion) {
+        var sweepT = t / sweepPortion;
         this.values.sweep = easeOutCubic(sweepT);
         this.values.spread = 0;
         this.values.intensity = easeListenIntensity(sweepT * 0.78);
         this.values.fill = 0;
       } else {
-        var fillT = (t - LISTEN_SWEEP_PORTION) / (1 - LISTEN_SWEEP_PORTION);
+        var fillT = (t - sweepPortion) / (1 - sweepPortion);
         this.values.sweep = 1;
         this.values.spread = lerp(
           this.phaseFrom.spread,
@@ -728,7 +802,9 @@
       return;
     }
     if (this.phase === 'generating') {
-      eased = easeContinueSpread(t, this.phaseFrom.spread);
+      eased = isTest2Scope()
+        ? easeListeningSpread(t)
+        : easeContinueSpread(t, this.phaseFrom.spread);
     } else if (this.phase === 'hollowReveal') {
       eased = isTest2Scope() ? easeOutCubic(t) : easeOutQuint(t);
     } else if (this.phase === 'handoff') {
@@ -862,6 +938,20 @@
   };
 
   AgentFillGL.prototype.bind = function (canvas) {
+    var preserved = null;
+    if (this.ready && isTest2Scope() && this.canvas && canvas && this.canvas !== canvas) {
+      preserved = {
+        phase: this.phase,
+        values: {
+          spread: this.values.spread,
+          intensity: this.values.intensity,
+          fill: this.values.fill,
+          sweep: this.values.sweep
+        },
+        smoothAudio: this.smoothAudio,
+        startTime: this.startTime
+      };
+    }
     this.destroy();
     if (!canvas || prefersReducedMotion() || !isTest2Scope()) return false;
 
@@ -915,20 +1005,29 @@
     };
 
     this.ready = true;
-    this.startTime = performance.now();
-    this._setPhaseTargets('idle');
+    if (preserved && preserved.phase && preserved.phase !== 'idle') {
+      this.values.spread = preserved.values.spread;
+      this.values.intensity = preserved.values.intensity;
+      this.values.fill = preserved.values.fill;
+      this.values.sweep = preserved.values.sweep;
+      this.smoothAudio = preserved.smoothAudio;
+      this.startTime = preserved.startTime;
+      this._setPhaseTargets(preserved.phase);
+      this._startLoop();
+    } else {
+      this.startTime = performance.now();
+      this._setPhaseTargets('idle');
+    }
     this.fillEl.classList.add('p2-agent-fill--gl-ready');
     this._resize(true);
 
     var self = this;
     if (typeof ResizeObserver !== 'undefined') {
       this.resizeObserver = new ResizeObserver(function () {
+        if (self._resizeLock) return;
         self._resize(true);
       });
       this.resizeObserver.observe(this.fillEl);
-      if (this.shellEl && this.shellEl !== this.fillEl) {
-        this.resizeObserver.observe(this.shellEl);
-      }
     }
 
     canvas.addEventListener('webglcontextlost', function (e) {
@@ -943,7 +1042,7 @@
 
   function ensureBound() {
     if (!isTest2Scope() || prefersReducedMotion()) return false;
-    var canvas = document.querySelector('.p2-agent-input .p2-agent-fill__gl');
+    var canvas = pickTest2FillCanvas();
     if (!canvas) return false;
     if (instance.canvas === canvas && instance.ready) return true;
     return instance.bind(canvas);
@@ -1372,6 +1471,387 @@
     destroyAll: function () {
       test1Instances.forEach(function (inst) { inst.destroy(); });
       test1Instances = [];
+    }
+  };
+
+  /* Keep in sync with surface-layout TEST1_PILL_PINK_FLOW_MS */
+  var TEST1_PILL_PINK_FLOW_MS = 1667 + (1667 - 620) * 2;
+  var TEST1_PILL_FLOW_SPREAD_MID = 0.92;
+  var TEST1_PILL_FLOW_SPREAD_END = 1.42;
+  var TEST1_PILL_FLOW_SPREAD_SPLIT = 0.58;
+  /* Keep in sync with surface-layout TEST1_PILL_FILL_HOLD_MS / TEST1_PILL_GL_FADE_MS */
+  var TEST1_PILL_FILL_HOLD_MS = 350;
+  var TEST1_PILL_GL_FADE_MS = 1320;
+  var TEST1_PILL_BG_REVEAL_START = -4;
+  var TEST1_PILL_BG_REVEAL_END = 128;
+
+  function Test1BottomPillFillGL() {
+    AgentFillGL.call(this);
+    this._meshVariant = 3;
+    this._origin = [0.94, 0.5];
+  }
+  Test1BottomPillFillGL.prototype = Object.create(AgentFillGL.prototype);
+  Test1BottomPillFillGL.prototype.constructor = Test1BottomPillFillGL;
+
+  Test1BottomPillFillGL.prototype._getOrigin = function () {
+    return this._origin.slice();
+  };
+
+  Test1BottomPillFillGL.prototype._maybeAdvancePhase = function () {};
+
+  Test1BottomPillFillGL.prototype._getPhaseConfig = function (phaseName) {
+    if (phaseName === 'pillFlow') {
+      return {
+        spread: TEST1_PILL_FLOW_SPREAD_END,
+        intensity: 1.0,
+        fill: 0.0,
+        duration: TEST1_PILL_PINK_FLOW_MS
+      };
+    }
+    if (phaseName === 'pillHold') {
+      return {
+        spread: TEST1_PILL_FLOW_SPREAD_END,
+        intensity: 1.0,
+        fill: 0.0,
+        duration: TEST1_PILL_FILL_HOLD_MS
+      };
+    }
+    if (phaseName === 'pillGlFade') {
+      return {
+        spread: TEST1_PILL_FLOW_SPREAD_END,
+        intensity: 0.0,
+        fill: 0.0,
+        duration: TEST1_PILL_GL_FADE_MS
+      };
+    }
+    return PHASES[phaseName] || PHASES.idle;
+  };
+
+  Test1BottomPillFillGL.prototype._updateValues = function (now) {
+    if (this.phase === 'pillHold') {
+      this.values.spread = TEST1_PILL_FLOW_SPREAD_END;
+      this.values.intensity = 1.0;
+      this.values.fill = 0;
+      return;
+    }
+    if (this.phase === 'pillGlFade') {
+      this.values.spread = TEST1_PILL_FLOW_SPREAD_END;
+      this.values.intensity = 1.0;
+      this.values.fill = 0;
+      return;
+    }
+    if (this.phase !== 'pillFlow') {
+      AgentFillGL.prototype._updateValues.call(this, now);
+      return;
+    }
+    var t = this.phaseDuration > 0
+      ? clamp((now - this.phaseStart) / this.phaseDuration, 0, 1)
+      : 1;
+    if (t < LISTEN_SWEEP_PORTION) {
+      var sweepT = t / LISTEN_SWEEP_PORTION;
+      this.values.sweep = easeOutCubic(sweepT);
+      this.values.spread = 0;
+      this.values.intensity = easeListenIntensity(sweepT * 0.78);
+      this.values.fill = 0;
+      return;
+    }
+    var fillT = (t - LISTEN_SWEEP_PORTION) / (1 - LISTEN_SWEEP_PORTION);
+    this.values.sweep = 1;
+    if (fillT < TEST1_PILL_FLOW_SPREAD_SPLIT) {
+      var spreadT = fillT / TEST1_PILL_FLOW_SPREAD_SPLIT;
+      this.values.spread = lerp(
+        0,
+        TEST1_PILL_FLOW_SPREAD_MID,
+        easeListeningSpread(spreadT)
+      );
+    } else {
+      var genT = (fillT - TEST1_PILL_FLOW_SPREAD_SPLIT) / (1 - TEST1_PILL_FLOW_SPREAD_SPLIT);
+      this.values.spread = lerp(
+        TEST1_PILL_FLOW_SPREAD_MID,
+        TEST1_PILL_FLOW_SPREAD_END,
+        easeSmoothFill(genT)
+      );
+    }
+    this.values.intensity = lerp(
+      0.48,
+      1.0,
+      easeListenIntensity(0.62 + fillT * 0.38)
+    );
+    this.values.fill = 0;
+  };
+
+  Test1BottomPillFillGL.prototype._resize = function (force) {
+    AgentFillGL.prototype._resize.call(this, force);
+    var rect = this._fillRect();
+    if (!rect) return;
+    this.layout.compact = 1;
+    this.layout.virtAspect = rect.width / Math.max(rect.height, 1);
+    this.layout.radius = Math.min(rect.height * 0.5, rect.width * 0.12) / rect.height;
+  };
+
+  Test1BottomPillFillGL.prototype.setPhase = function (phaseName) {
+    if (!this.ready || prefersReducedMotion()) return;
+    if (phaseName === 'pillFlow') {
+      this.values.sweep = 0;
+      this.values.spread = 0;
+      this.values.intensity = 0;
+      this.values.fill = 0;
+      this.smoothAudio = 0;
+      if (this.shellEl) {
+        this.shellEl.style.setProperty('--test1-pill-bg-reveal', '-4%');
+        this.shellEl.classList.remove('test1-bottom-pill--grad-settled');
+      }
+    }
+    this._setPhaseTargets(phaseName);
+    if (phaseName !== 'idle') this._startLoop();
+    else this._stopLoop(true);
+  };
+
+  Test1BottomPillFillGL.prototype._setPhaseTargets = function (phaseName) {
+    var next = this._getPhaseConfig(phaseName);
+    this.phase = phaseName;
+    this.phaseStart = performance.now();
+    this.phaseFrom = {
+      spread: this.values.spread,
+      intensity: this.values.intensity,
+      fill: this.values.fill
+    };
+    this.phaseTo = {
+      spread: next.spread,
+      intensity: next.intensity,
+      fill: next.fill
+    };
+    this.phaseDuration = next.duration;
+    if (this.fillEl) {
+      if (phaseName === 'pillFlow' || phaseName === 'pillHold') {
+        this.fillEl.classList.add('p2-agent-fill--gl-active');
+        this.fillEl.classList.remove('p2-agent-fill--gl-fading');
+        if (phaseName === 'pillHold') {
+          this.fillEl.style.opacity = '1';
+        }
+      } else if (phaseName === 'pillGlFade') {
+        this.fillEl.classList.add('p2-agent-fill--gl-fading');
+        this.fillEl.classList.remove('p2-agent-fill--gl-active');
+        this.fillEl.style.setProperty('--test1-pill-gl-dissolve', '128%');
+        this.fillEl.style.opacity = '1';
+      } else {
+        this.fillEl.classList.remove('p2-agent-fill--gl-active');
+        this.fillEl.classList.remove('p2-agent-fill--gl-fading');
+      }
+    }
+    if (this.shellEl) {
+      if (phaseName === 'pillFlow') {
+        this.shellEl.classList.add('test1-bottom-pill--gl-fill');
+      } else if (phaseName === 'pillHold' || phaseName === 'pillGlFade') {
+        this._lockPillGradSettled();
+      } else if (phaseName === 'idle') {
+        this.shellEl.classList.remove('test1-bottom-pill--gl-fill');
+      }
+    }
+  };
+
+  Test1BottomPillFillGL.prototype._pillFlowFillT = function (now) {
+    if (this.phase !== 'pillFlow' || this.phaseDuration <= 0) return 1;
+    var t = clamp((now - this.phaseStart) / this.phaseDuration, 0, 1);
+    if (t <= LISTEN_SWEEP_PORTION) return 0;
+    return (t - LISTEN_SWEEP_PORTION) / (1 - LISTEN_SWEEP_PORTION);
+  };
+
+  Test1BottomPillFillGL.prototype._syncPillBgReveal = function (now) {
+    if (!this.shellEl) return;
+    var fillPct = 128;
+    if (this.phase === 'pillFlow') {
+      var fillT = this._pillFlowFillT(now);
+      var revealT = easeSmoothFill(fillT);
+      fillPct = TEST1_PILL_BG_REVEAL_START
+        + revealT * (TEST1_PILL_BG_REVEAL_END - TEST1_PILL_BG_REVEAL_START);
+    }
+    this.shellEl.style.setProperty('--test1-pill-bg-reveal', fillPct + '%');
+  };
+
+  Test1BottomPillFillGL.prototype._syncGlLayerOpacity = function (opacity) {
+    if (!this.fillEl) return;
+    var a = clamp(opacity, 0, 1);
+    this.fillEl.style.opacity = a < 0.004 ? '0' : String(a);
+  };
+
+  Test1BottomPillFillGL.prototype._syncGlDissolve = function (dissolveEase) {
+    if (!this.fillEl) return;
+    var retreat = TEST1_PILL_BG_REVEAL_END
+      - dissolveEase * (TEST1_PILL_BG_REVEAL_END - TEST1_PILL_BG_REVEAL_START);
+    this.fillEl.style.setProperty('--test1-pill-gl-dissolve', retreat + '%');
+  };
+
+  Test1BottomPillFillGL.prototype._lockPillGradSettled = function () {
+    if (!this.shellEl) return;
+    this.shellEl.classList.add('test1-bottom-pill--grad-settled');
+    this.shellEl.style.setProperty('--test1-pill-bg-reveal', '128%');
+  };
+
+  Test1BottomPillFillGL.prototype._finishPillSweepIdle = function () {
+    this.phase = 'idle';
+    if (this.fillEl) {
+      this.fillEl.classList.remove('p2-agent-fill--gl-active');
+      this.fillEl.classList.remove('p2-agent-fill--gl-fading');
+      this.fillEl.classList.remove('p2-agent-fill--gl-ready');
+      this.fillEl.style.removeProperty('opacity');
+      this.fillEl.style.removeProperty('--test1-pill-gl-dissolve');
+    }
+    if (this.shellEl) {
+      this.shellEl.classList.remove('test1-bottom-pill--gl-fill');
+      this.shellEl.classList.add('test1-bottom-pill--grad-settled');
+      this.shellEl.style.setProperty('--test1-pill-bg-reveal', '128%');
+    }
+    this._stopLoop(true);
+  };
+
+  Test1BottomPillFillGL.prototype._draw = function (now) {
+    AgentFillGL.prototype._draw.call(this, now);
+    if (this.phase === 'pillFlow') {
+      this._syncPillBgReveal(now);
+    }
+    if (this.phase === 'pillHold' || this.phase === 'pillGlFade') {
+      this._lockPillGradSettled();
+    }
+    if (this.phase === 'pillHold') {
+      this._syncGlLayerOpacity(1);
+    }
+    if (this.phase === 'pillGlFade' && this.phaseDuration > 0) {
+      var glFadeT = clamp((now - this.phaseStart) / this.phaseDuration, 0, 1);
+      var dissolveEase = easeInOutQuint(glFadeT);
+      this._syncGlDissolve(dissolveEase);
+      var opT = glFadeT < 0.5 ? 0 : (glFadeT - 0.5) / 0.5;
+      var opEase = easeInOutQuint(opT);
+      this._syncGlLayerOpacity(1.0 - opEase * 0.28);
+    }
+    if (this.phase === 'pillFlow' && this.phaseDuration > 0 && now - this.phaseStart >= this.phaseDuration) {
+      this._syncPillBgReveal(now);
+      this._setPhaseTargets('pillHold');
+    }
+    if (this.phase === 'pillHold' && this.phaseDuration > 0 && now - this.phaseStart >= this.phaseDuration) {
+      this._setPhaseTargets('pillGlFade');
+    }
+    if (this.phase === 'pillGlFade' && this.phaseDuration > 0 && now - this.phaseStart >= this.phaseDuration) {
+      this._finishPillSweepIdle();
+    }
+  };
+
+  Test1BottomPillFillGL.prototype.destroy = function () {
+    if (this.fillEl) {
+      this.fillEl.classList.remove('p2-agent-fill--gl-active');
+      this.fillEl.classList.remove('p2-agent-fill--gl-fading');
+      this.fillEl.classList.remove('p2-agent-fill--gl-ready');
+    }
+    AgentFillGL.prototype.destroy.call(this);
+    if (this.shellEl) {
+      this.shellEl.classList.remove('test1-bottom-pill--gl-fill');
+      this.shellEl.classList.add('test1-bottom-pill--grad-settled');
+      this.shellEl.style.setProperty('--test1-pill-bg-reveal', '128%');
+    }
+  };
+
+  Test1BottomPillFillGL.prototype.bind = function (canvas) {
+    this.destroy();
+    if (!canvas || prefersReducedMotion() || !isTest1Scope()) return false;
+
+    this.canvas = canvas;
+    this.fillEl = canvas.closest('.test1-bottom-pill__fill-gl');
+    this.shellEl = canvas.closest('.test1-bottom-pill');
+    if (!this.fillEl || !this.shellEl) return false;
+
+    var gl = canvas.getContext('webgl', {
+      alpha: true,
+      antialias: false,
+      premultipliedAlpha: true,
+      preserveDrawingBuffer: false
+    });
+    if (!gl) {
+      console.warn('[Test1BottomPillFillGL] WebGL unavailable');
+      return false;
+    }
+
+    var program = createProgram(gl, VERT_SRC, FRAG_SRC);
+    if (!program) return false;
+
+    var buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+      -1, -1, 1, -1, -1, 1, 1, 1
+    ]), gl.STATIC_DRAW);
+
+    var aPos = gl.getAttribLocation(program, 'a_pos');
+    gl.enableVertexAttribArray(aPos);
+    gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+    this.gl = gl;
+    this.program = program;
+    this.uniforms = {
+      origin: gl.getUniformLocation(program, 'u_origin'),
+      aspect: gl.getUniformLocation(program, 'u_aspect'),
+      radius: gl.getUniformLocation(program, 'u_radius'),
+      time: gl.getUniformLocation(program, 'u_time'),
+      spread: gl.getUniformLocation(program, 'u_spread'),
+      intensity: gl.getUniformLocation(program, 'u_intensity'),
+      fill: gl.getUniformLocation(program, 'u_fill'),
+      sweep: gl.getUniformLocation(program, 'u_sweep'),
+      audio: gl.getUniformLocation(program, 'u_audio'),
+      compact: gl.getUniformLocation(program, 'u_compact'),
+      virtAspect: gl.getUniformLocation(program, 'u_virtAspect'),
+      variant: gl.getUniformLocation(program, 'u_variant')
+    };
+
+    this.ready = true;
+    this.startTime = performance.now();
+    this._setPhaseTargets('idle');
+    this.fillEl.classList.add('p2-agent-fill--gl-ready');
+    this._resize(true);
+
+    var self = this;
+    if (typeof ResizeObserver !== 'undefined') {
+      this.resizeObserver = new ResizeObserver(function () {
+        self._resize(true);
+      });
+      this.resizeObserver.observe(this.fillEl);
+      if (this.shellEl && this.shellEl !== this.fillEl) {
+        this.resizeObserver.observe(this.shellEl);
+      }
+    }
+
+    canvas.addEventListener('webglcontextlost', function (e) {
+      e.preventDefault();
+      self.destroy();
+    }, false);
+
+    return true;
+  };
+
+  var test1PillInstance = null;
+
+  function bindTest1BottomPillCanvas() {
+    if (!isTest1Scope() || prefersReducedMotion()) return false;
+    if (test1PillInstance) {
+      test1PillInstance.destroy();
+      test1PillInstance = null;
+    }
+    var canvas = document.querySelector(
+      '#test1-bottom-pill .test1-bottom-pill__fill-gl-canvas'
+    );
+    if (!canvas) return false;
+    test1PillInstance = new Test1BottomPillFillGL();
+    return test1PillInstance.bind(canvas);
+  }
+
+  window.Test1BottomPillFillGL = {
+    start: function () {
+      if (!bindTest1BottomPillCanvas()) return;
+      test1PillInstance.setPhase('pillFlow');
+    },
+    stop: function () {
+      if (test1PillInstance) test1PillInstance.destroy();
+      test1PillInstance = null;
     }
   };
 })();

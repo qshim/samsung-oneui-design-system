@@ -207,7 +207,7 @@ const renderInsert = `    case 'test1-app-dock': {
       return '<div class="test1-home-widget test1-home-food">' +
         '<div class="test1-home-widget__bg" aria-hidden="true"></div>' +
         '<div class="test1-home-widget__inner">' +
-          '<span class="test1-home-widget__chip test1-home-widget__chip--food"><img class="test1-home-widget__chip-icon" src="/assets/test1/home/smartthings-icon.png" alt="" draggable="false" />SmartThings Food</span>' +
+          '<span class="test1-home-widget__chip test1-home-widget__chip--food"><img class="test1-home-widget__chip-icon" src="/assets/test1/home/smartthings-icon-new.png" alt="" draggable="false" />SmartThings Food</span>' +
           '<div class="test1-home-food__head">' +
             '<p class="test1-home-food__headline">구수한 두부 된장찌개</p>' +
             '<p class="test1-home-food__desc">냉장고 속 식재료로 저녁 메뉴를 추천합니다</p>' +

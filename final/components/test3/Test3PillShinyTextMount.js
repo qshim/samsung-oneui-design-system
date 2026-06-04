@@ -294,7 +294,7 @@ export function resetTest3PillShinyText() {
   }
 }
 
-export default function Test3PillShinyTextBridge() {
+export function Test3PillShinyTextBridge() {
   useEffect(function () {
     var canvas = document.getElementById('canvas');
     if (!canvas) return;

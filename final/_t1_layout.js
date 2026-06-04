@@ -5131,7 +5131,7 @@ window.renderAtomicForRole = function renderAtomicForRole(comp, rect) {
           '<div class="dot-steps21__pillLoadSpin" aria-hidden="true"></div>';
         var ppIconHtml =
           '<div class="dot-steps21__pillIcon" aria-hidden="true">' +
-            '<img class="dot-steps21__pillIconImg" src="/assets/test3-pace-route-icon.png" alt="" aria-hidden="true">' +
+            '<img class="dot-steps21__pillIconImg" src="/assets/test3/test3-running-icon-new.png" alt="" aria-hidden="true">' +
           '</div>';
         var ppCopyHtml =
           '<div class="dot-steps21__pillCopy">' +
@@ -5419,7 +5419,7 @@ window.renderAtomicForRole = function renderAtomicForRole(comp, rect) {
           '<div class="dot-w21__pillLoadSpin" aria-hidden="true"></div>';
         var plIconHtml =
           '<div class="dot-w21__pillIcon" aria-hidden="true">' +
-            '<img class="dot-w21__pillIconImg" src="/assets/test3-party-pace-icon.png" alt="" aria-hidden="true">' +
+            '<img class="dot-w21__pillIconImg" src="/assets/test3/test3-running-icon-new.png" alt="" aria-hidden="true">' +
           '</div>';
         var plCopyHtml =
           '<div class="dot-w21__pillCopy">' +

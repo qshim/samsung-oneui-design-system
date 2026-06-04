@@ -1,4 +1,4 @@
-﻿image.png  :root {
+image.png  :root {
     --pg-bg:     #0a0a0c;
     --panel:     rgba(23, 23, 26, 0.6);
     --panel-2:   rgba(35, 35, 40, 0.7);
@@ -2914,7 +2914,7 @@
   }
   @keyframes test3GoalShellCreamBg {
     0% {
-      background-color: var(--test3-goal-shell-black, #181818);
+      background-color: var(--test3-card-shell-cream, #FFFCF4);
     }
     100% {
       background-color: var(--test3-card-shell-cream, #FFFCF4);
@@ -3107,7 +3107,7 @@
     pointer-events: none;
   }
   #canvas[data-test-scope="test3"] #test3-goal .dot-goal__map {
-    background: #373737;
+    background: var(--test3-card-shell-cream, #FFFCF4);
     transform-origin: center center;
     position: relative;
     overflow: hidden;
@@ -3167,7 +3167,7 @@
     overflow: hidden;
   }
   #canvas[data-test-scope="test3"] #test3-goal .dot-goal__map-dark {
-    background: #373737;
+    background: var(--test3-card-shell-cream, #FFFCF4);
     opacity: 1;
     z-index: 1;
   }
@@ -3412,7 +3412,7 @@
     width: 100%;
     height: 100%;
     border-radius: inherit;
-    background: #373737;
+    background: var(--test3-card-shell-cream, #FFFCF4);
     /* Pan is currently disabled ??keep the map centered + static so
        the full circular pic is always visible without crops. If the
        slow-pan loop is re-enabled later, add `will-change: transform`
@@ -3708,7 +3708,7 @@
   #canvas[data-test-scope="test3"] #test3-goal.test3-goal-enter-ready:not(.test3-goal-copy-enter):not(.test3-goal-entrance-settled):not([data-test3-goal-expanded="1"]) .dot-goal,
   #canvas[data-test-scope="test3"] #test3-goal.test3-goal-enter.test3-goal-enter-ready:not(.test3-goal-copy-enter):not(.test3-goal-entrance-settled):not([data-test3-goal-expanded="1"]) .dot-goal {
     height: 100%;
-    background-color: var(--test3-goal-shell-black, #181818) !important;
+    background-color: var(--test3-card-shell-cream, #FFFCF4) !important;
     animation: none !important;
     border: none !important;
     box-shadow: none !important;
@@ -3771,52 +3771,41 @@
   #canvas[data-test-scope="test3"] #test3-goal.test3-goal-map-expanded .dot-goal__main--dark {
     animation: test3GoalMainDarkOut 520ms cubic-bezier(0.16, 1, 0.3, 1) 0ms forwards;
   }
-  #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter .dot-goal__main--light,
-  #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter.test3-goal-inner-rise .dot-goal__main--light,
-  #canvas[data-test-scope="test3"] #test3-goal.test3-goal-enter-ready.test3-goal-copy-enter .dot-goal__main--light {
+  /* Sequential entrance with down motion. */
+  #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter[data-test3-goal-content-ready="1"]:not(.test3-goal-entrance-settled) .dot-goal__main--light {
     opacity: 1;
     visibility: visible;
-    pointer-events: none;
-    flex: 1 1 auto;
-    min-height: 0;
-    justify-content: flex-end;
-    animation: none !important;
+    transform: none;
+    animation: none;
   }
-  /* Fallback only ??content-ready is set sync with copy-enter (no empty ivory hold). */
-  #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter:not([data-test3-goal-content-ready="1"]):not(.test3-goal-entrance-settled) .dot-goal__map-photo,
-  #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter:not([data-test3-goal-content-ready="1"]):not(.test3-goal-entrance-settled) .dot-goal__map-pin,
-  #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter:not([data-test3-goal-content-ready="1"]):not(.test3-goal-entrance-settled) .dot-goal__main--light,
-  #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter:not([data-test3-goal-content-ready="1"]):not(.test3-goal-entrance-settled) .dot-goal__main--light .dot-goal__title,
-  #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter:not([data-test3-goal-content-ready="1"]):not(.test3-goal-entrance-settled) .dot-goal__main--light .dot-goal__status,
-  #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter:not([data-test3-goal-content-ready="1"]):not(.test3-goal-entrance-settled) .dot-goal__main--light .dot-goal__location,
-  #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter:not([data-test3-goal-content-ready="1"]):not(.test3-goal-entrance-settled) .dot-goal__main--light .dot-goal__location-icon,
-  #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter:not([data-test3-goal-content-ready="1"]):not(.test3-goal-entrance-settled) .dot-goal__main--light .dot-goal__location span,
-  #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter:not([data-test3-goal-content-ready="1"]):not(.test3-goal-entrance-settled) .mlp-position-pulse,
-  #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter:not([data-test3-goal-content-ready="1"]):not(.test3-goal-entrance-settled) .mlp-map-compass,
-  #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter:not([data-test3-goal-content-ready="1"]):not(.test3-goal-entrance-settled) .dot-goal__map-seed,
-  #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter:not([data-test3-goal-content-ready="1"]):not(.test3-goal-entrance-settled) .dot-goal__map-seed--handoff {
-    opacity: 0 !important;
-    visibility: hidden !important;
-    transform: none !important;
-    transition: none !important;
-    animation: none !important;
-    pointer-events: none !important;
+  #canvas[data-test-scope="test3"] #test3-goal[data-test3-goal-content-ready="1"]:not(.test3-goal-entrance-settled) .dot-goal__map-photo {
+    opacity: 0;
+    visibility: visible;
+    animation: test3GoalDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both !important;
   }
-  /* Expanded chrome ??all layers at once after shell height finishes (no slide/stagger). */
-  #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter[data-test3-goal-content-ready="1"]:not(.test3-goal-entrance-settled) .dot-goal__map-photo,
-  #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter[data-test3-goal-content-ready="1"]:not(.test3-goal-entrance-settled) .dot-goal__map-pin,
-  #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter[data-test3-goal-content-ready="1"]:not(.test3-goal-entrance-settled) .dot-goal__main--light,
-  #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter[data-test3-goal-content-ready="1"]:not(.test3-goal-entrance-settled) .dot-goal__main--light .dot-goal__title,
-  #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter[data-test3-goal-content-ready="1"]:not(.test3-goal-entrance-settled) .dot-goal__main--light .dot-goal__status,
-  #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter[data-test3-goal-content-ready="1"]:not(.test3-goal-entrance-settled) .dot-goal__unit--expanded .dot-goal__location,
-  #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter[data-test3-goal-content-ready="1"]:not(.test3-goal-entrance-settled) .dot-goal__unit--expanded .dot-goal__location-icon,
-  #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter[data-test3-goal-content-ready="1"]:not(.test3-goal-entrance-settled) .dot-goal__unit--expanded .dot-goal__location span {
-    opacity: 1 !important;
-    visibility: visible !important;
-    transform: none !important;
-    animation: none !important;
-    transition: none !important;
+  #canvas[data-test-scope="test3"] #test3-goal[data-test3-goal-content-ready="1"]:not(.test3-goal-entrance-settled) .dot-goal__map-pin {
+    opacity: 0;
+    visibility: visible;
+    animation: test3GoalPinDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both !important;
   }
+  #canvas[data-test-scope="test3"] #test3-goal[data-test3-goal-content-ready="1"]:not(.test3-goal-entrance-settled) .dot-goal__main--light .dot-goal__title {
+    opacity: 0;
+    visibility: visible;
+    animation: test3GoalDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.7s both !important;
+  }
+  #canvas[data-test-scope="test3"] #test3-goal[data-test3-goal-content-ready="1"]:not(.test3-goal-entrance-settled) .dot-goal__main--light .dot-goal__status {
+    opacity: 0;
+    visibility: visible;
+    animation: test3GoalDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.8s both !important;
+  }
+  #canvas[data-test-scope="test3"] #test3-goal[data-test3-goal-content-ready="1"]:not(.test3-goal-entrance-settled) .dot-goal__main--light .dot-goal__location,
+  #canvas[data-test-scope="test3"] #test3-goal[data-test3-goal-content-ready="1"]:not(.test3-goal-entrance-settled) .dot-goal__main--light .dot-goal__location-icon,
+  #canvas[data-test-scope="test3"] #test3-goal[data-test3-goal-content-ready="1"]:not(.test3-goal-entrance-settled) .dot-goal__main--light .dot-goal__location span {
+    opacity: 0;
+    visibility: visible;
+    animation: test3GoalDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.9s both !important;
+  }
+  /* Conflicting rules removed */
   #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter:not(.test3-goal-inner-rise):not(.test3-goal-entrance-settled) .dot-goal__main--light .dot-goal__title .prox-char-once {
     opacity: 0;
     color: #4c5b17;
@@ -3867,7 +3856,6 @@
     opacity: 1 !important;
     visibility: visible !important;
     transform: none !important;
-    animation: none !important;
   }
   #canvas[data-test-scope="test3"] #test3-goal.test3-goal-entrance-settled .dot-goal__main--light,
   #canvas[data-test-scope="test3"] #test3-goal.test3-goal-map-expanded .dot-goal__main--light,
@@ -3875,7 +3863,26 @@
   #canvas[data-test-scope="test3"] #test3-goal[data-test3-goal-expanded="1"] .dot-goal__main--light {
     opacity: 1;
     visibility: visible;
-    animation: none !important;
+  }
+  /* Sequential music entrance with down motion. */
+  #canvas[data-test-scope="test3"] #test3-music[data-test3-music-settled="1"] .dot-music3__headerRow,
+  #canvas[data-test-scope="test3"] #test3-music[data-test3-music-settled="1"] .dot-music3__compactHeader,
+  #canvas[data-test-scope="test3"] #test3-music[data-test3-music-settled="1"] .dot-music3__title {
+    opacity: 0;
+    animation: test3GoalDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both !important;
+  }
+  #canvas[data-test-scope="test3"] #test3-music[data-test3-music-settled="1"] .dot-music3__bar {
+    opacity: 0;
+    animation: test3GoalDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.6s both !important;
+  }
+  #canvas[data-test-scope="test3"] #test3-music[data-test3-music-settled="1"] .dot-music3__subtitle,
+  #canvas[data-test-scope="test3"] #test3-music[data-test3-music-settled="1"] .dot-music3__timeRow {
+    opacity: 0;
+    animation: test3GoalDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) 1.1s both !important;
+  }
+  #canvas[data-test-scope="test3"] #test3-music[data-test3-music-settled="1"] .dot-music3__transport {
+    opacity: 0;
+    animation: test3GoalDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) 1.6s both !important;
   }
   #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter .dot-goal__map-slot,
   #canvas[data-test-scope="test3"] #test3-goal.test3-goal-entrance-settled .dot-goal__map-slot,
@@ -3892,12 +3899,12 @@
     visibility: visible !important;
   }
   #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter .dot-goal__map-slot {
-    opacity: 1 !important;
+    opacity: 1;
     visibility: visible !important;
     transform: none;
     transition:
       max-height var(--test3-goal-copy-in-ms, 520ms) cubic-bezier(0.16, 1, 0.3, 1),
-      opacity var(--test3-goal-copy-fade-ms, 560ms) cubic-bezier(0.22, 0.82, 0.24, 1) !important;
+      opacity var(--test3-goal-copy-fade-ms, 560ms) cubic-bezier(0.22, 0.82, 0.24, 1);
     animation: none !important;
   }
   #canvas[data-test-scope="test3"] #test3-goal.test3-goal-entrance-settled .dot-goal__map-slot,
@@ -3973,7 +3980,6 @@
     box-shadow: none !important;
   }
   /* Expanded map ??high-res Figma PNG (sharp); hide live tiles that look soft on retina. */
-  #canvas[data-test-scope="test3"] #test3-goal[data-test3-goal-content-ready="1"] .dot-goal__map-photo,
   #canvas[data-test-scope="test3"] #test3-goal.test3-goal-entrance-settled .dot-goal__map-photo,
   #canvas[data-test-scope="test3"] #test3-goal.test3-goal-map-expanded .dot-goal__map-photo,
   #canvas[data-test-scope="test3"] #test3-goal[data-test3-goal-map-ready="1"] .dot-goal__map-photo,
@@ -4009,14 +4015,30 @@
     visibility: visible !important;
     animation: none !important;
   }
-  #canvas[data-test-scope="test3"] #test3-goal[data-test3-goal-content-ready="1"] .dot-goal__main--light .dot-goal__title,
-  #canvas[data-test-scope="test3"] #test3-goal[data-test3-goal-content-ready="1"] .dot-goal__main--light .dot-goal__status,
-  #canvas[data-test-scope="test3"] #test3-goal[data-test3-goal-content-ready="1"] .dot-goal__main--light .dot-goal__location,
-  #canvas[data-test-scope="test3"] #test3-goal[data-test3-goal-content-ready="1"] .dot-goal__main--light .dot-goal__location-icon,
-  #canvas[data-test-scope="test3"] #test3-goal[data-test3-goal-content-ready="1"] .dot-goal__main--light .dot-goal__location span {
+  #canvas[data-test-scope="test3"] #test3-goal.test3-goal-entrance-settled .dot-goal__main--light .dot-goal__title,
+  #canvas[data-test-scope="test3"] #test3-goal.test3-goal-map-expanded .dot-goal__main--light .dot-goal__title,
+  #canvas[data-test-scope="test3"] #test3-goal[data-test3-goal-map-ready="1"] .dot-goal__main--light .dot-goal__title,
+  #canvas[data-test-scope="test3"] #test3-goal[data-test3-goal-expanded="1"] .dot-goal__main--light .dot-goal__title,
+  #canvas[data-test-scope="test3"] #test3-goal.test3-goal-entrance-settled .dot-goal__main--light .dot-goal__status,
+  #canvas[data-test-scope="test3"] #test3-goal.test3-goal-map-expanded .dot-goal__main--light .dot-goal__status,
+  #canvas[data-test-scope="test3"] #test3-goal[data-test3-goal-map-ready="1"] .dot-goal__main--light .dot-goal__status,
+  #canvas[data-test-scope="test3"] #test3-goal[data-test3-goal-expanded="1"] .dot-goal__main--light .dot-goal__status,
+  #canvas[data-test-scope="test3"] #test3-goal.test3-goal-entrance-settled .dot-goal__main--light .dot-goal__location,
+  #canvas[data-test-scope="test3"] #test3-goal.test3-goal-map-expanded .dot-goal__main--light .dot-goal__location,
+  #canvas[data-test-scope="test3"] #test3-goal[data-test3-goal-map-ready="1"] .dot-goal__main--light .dot-goal__location,
+  #canvas[data-test-scope="test3"] #test3-goal[data-test3-goal-expanded="1"] .dot-goal__main--light .dot-goal__location,
+  #canvas[data-test-scope="test3"] #test3-goal.test3-goal-entrance-settled .dot-goal__main--light .dot-goal__location-icon,
+  #canvas[data-test-scope="test3"] #test3-goal.test3-goal-map-expanded .dot-goal__main--light .dot-goal__location-icon,
+  #canvas[data-test-scope="test3"] #test3-goal[data-test3-goal-map-ready="1"] .dot-goal__main--light .dot-goal__location-icon,
+  #canvas[data-test-scope="test3"] #test3-goal[data-test3-goal-expanded="1"] .dot-goal__main--light .dot-goal__location-icon,
+  #canvas[data-test-scope="test3"] #test3-goal.test3-goal-entrance-settled .dot-goal__main--light .dot-goal__location span,
+  #canvas[data-test-scope="test3"] #test3-goal.test3-goal-map-expanded .dot-goal__main--light .dot-goal__location span,
+  #canvas[data-test-scope="test3"] #test3-goal[data-test3-goal-map-ready="1"] .dot-goal__main--light .dot-goal__location span,
+  #canvas[data-test-scope="test3"] #test3-goal[data-test3-goal-expanded="1"] .dot-goal__main--light .dot-goal__location span {
     opacity: 1 !important;
     visibility: visible !important;
     animation: none !important;
+    pointer-events: none !important;
   }
   #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter .dot-goal__map-leaflet,
   #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter .dot-goal__map-dark,
@@ -4078,7 +4100,6 @@
   #canvas[data-test-scope="test3"] #test3-goal[data-test3-goal-expanded="1"] .dot-goal__main--dark {
     opacity: 0;
     visibility: hidden;
-    display: none;
   }
   #canvas[data-test-scope="test3"] #test3-goal.test3-goal-entrance-settled .dot-goal__main--light,
   #canvas[data-test-scope="test3"] #test3-goal.test3-goal-map-expanded .dot-goal__main--light,
@@ -4253,7 +4274,7 @@
     57%, 100% { opacity: 1; pointer-events: none; visibility: visible; }
   }
   @keyframes test3MusicPlayerCopyIn {
-    0%, 56% { opacity: 0; transform: translateY(4px); visibility: hidden; }
+    0%, 56% { opacity: 0; transform: translateY(0); visibility: hidden; }
     57%, 100% { opacity: 1; transform: translateY(0); visibility: visible; }
   }
   @keyframes test3MusicPlayDiscIn {
@@ -4305,75 +4326,46 @@
     20% { opacity: 0.22; visibility: visible; }
     22%, 100% { opacity: 0; visibility: hidden; }
   }
+  @keyframes test3GoalPinDown {
+    0% { opacity: 0; transform: translate(-50%, -50%) translateY(-32px); }
+    100% { opacity: 1; transform: translate(-50%, -50%) translateY(0); }
+  }
+  @keyframes test3GoalDown {
+    0% { opacity: 0; transform: translateY(-32px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
   @keyframes test3MusicOrbMotion {
-    0%, 14% {
-      width: var(--test3-orb-size, 56px);
-      height: var(--test3-orb-size, 56px);
-      left: 13px;
-      top: 13px;
-      margin: 0;
-      border-radius: 50%;
-      opacity: 1;
-    }
-    14% {
-      animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    24%, 56% {
-      width: var(--test3-orb-size, 56px);
-      height: var(--test3-orb-size, 56px);
-      left: var(--test3-orb-x, 12px);
-      top: 13px;
-      margin: 0;
-      border-radius: 50%;
-      opacity: 1;
-    }
-    56% {
-      animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    57% {
-      width: var(--test3-orb-size, 56px);
-      height: var(--test3-orb-size, 56px);
-      left: var(--test3-orb-x, 12px);
-      top: 13px;
-      margin: 0;
-      border-radius: 50%;
-      opacity: 1;
-    }
-    62% {
-      width: 58px;
-      height: 58px;
+    0%, 57% {
+      width: 54px;
+      height: 54px;
       left: 14px;
-      top: 16px;
+      top: 14px;
       margin: 0;
       border-radius: 50%;
       opacity: 1;
     }
+    57% { animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }
     68%, 100% {
-      width: var(--test3-orb-size, 56px);
-      height: var(--test3-orb-size, 56px);
-      left: var(--test3-orb-x, 12px);
-      top: 13px;
+      width: 54px;
+      height: 54px;
+      left: 14px;
+      top: 14px;
       margin: 0;
       border-radius: 50%;
-      opacity: 1;
+      opacity: 0;
     }
   }
-  /* Orb body ??bottom-right linear gradient breathe (independent of 14s shell motion). */
+  /* Orb body shrinks and disappears as the background turns white (57% -> 68%). */
   @keyframes test3MusicOrbShrinkTimeline {
-    0%, 56% {
+    0%, 57% {
       opacity: 1;
       transform: scale(1);
       visibility: visible;
     }
-    57% {
-      opacity: 1;
-      transform: scale(1);
-      visibility: visible;
-      animation-timing-function: cubic-bezier(0.22, 0.82, 0.24, 1);
-    }
+    57% { animation-timing-function: cubic-bezier(0.22, 0.82, 0.24, 1); }
     68%, 100% {
       opacity: 0;
-      transform: scale(0.05);
+      transform: scale(0);
       visibility: hidden;
     }
   }
@@ -4575,8 +4567,9 @@
     animation: none !important;
   }
   #canvas[data-test-scope="test3"][data-test3-music-shift="1"] #test3-music {
-    --test3-orb-size: 56px;
-    --test3-orb-x: 12px;
+    --test3-orb-size: 52px;
+    --test3-orb-x: 15px;
+    --test3-orb-y: 15px;
     --test3-disc-size: 64px;
     --test3-disc-x: 16px;
     --test3-disc-y: 20px;
@@ -4589,6 +4582,9 @@
     animation:
       test3MusicSpawnIn 14s cubic-bezier(0.16, 1, 0.3, 1) both,
       test3MusicWrapperHeight 14s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  }
+  #canvas[data-test-scope="test3"][data-test3-music-shift="1"] #test3-music[data-test3-music-loading="1"]:not([data-test3-music-resolved="1"]) {
+    /* Base variables for the loading phase; size growth handled via keyframes. */
   }
   #canvas[data-test-scope="test3"][data-test3-music-shift="1"] #test3-music[data-test3-music-phase="playing"] {
     opacity: 1 !important;
@@ -4628,8 +4624,8 @@
       rgba(255, 255, 255, 1) 0deg,
       rgba(255, 255, 255, 1) 30deg,
       #FF9030 31deg,
-      #FF7F24 36deg,
-      #FF7F24 323deg,
+      #ED610F 36deg,
+      #ED610F 323deg,
       #FF9030 324deg,
       rgba(255, 255, 255, 1) 325deg,
       rgba(255, 255, 255, 1) 360deg
@@ -4655,7 +4651,7 @@
     border-radius: inherit;
     z-index: 0;
     pointer-events: none;
-    background-color: #FF7F24 !important;
+    background-color: #ED610F !important;
     background-image: none !important;
     mix-blend-mode: normal !important;
     opacity: 1 !important;
@@ -5119,13 +5115,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0 12px 0 calc(var(--test3-orb-x, 0px) + var(--test3-orb-size, 48px) + 12px);
+    padding: 0 12px 0 calc(var(--test3-orb-x, 0px) + var(--test3-orb-size, 56px) + 12px);
     pointer-events: none;
     text-align: center;
   }
   #canvas[data-test-scope="test3"][data-test3-music-shift="1"] #test3-music .dot-music1__searchLine {
     position: absolute;
-    left: calc(var(--test3-orb-x, 0px) + var(--test3-orb-size, 48px) + 12px);
+    left: calc(var(--test3-orb-x, 0px) + var(--test3-orb-size, 56px) + 12px);
     right: 12px;
     top: 50%;
     transform: translateY(-50%);
@@ -5408,7 +5404,7 @@
      Only after settle completes; crossfade rules own the handoff window. */
   #canvas[data-test-scope="test3"][data-test3-music-shift="1"] #test3-music[data-test3-music-phase="playing"]:not([data-test3-music-loading="1"]):not([data-music-state="lyrics"]):not([data-music-state="compact"]) .dot-music1__icon .dot-music3,
   #canvas[data-test-scope="test3"][data-test3-music-shift="1"] #test3-music[data-test3-music-settled="1"]:not([data-music-state="lyrics"]):not([data-music-state="compact"]) .dot-music1__icon .dot-music3 {
-    padding: var(--test3-music-pad-y, 22px) var(--test3-music-pad-x, 28px) var(--test3-music-pad-y-bottom, 14px) !important;
+    padding: 22px 24px var(--test3-music-pad-y-bottom, 14px) !important;
     gap: 0 !important;
     justify-content: flex-start !important;
     background: transparent !important;
@@ -6704,28 +6700,7 @@
     #canvas[data-test-scope="test3"] #test3-intro-run.test3-intro-run-exit .dot-running2__title-preview {
       animation: none !important;
     }
-    #canvas[data-test-scope="test3"] #test3-goal.test3-goal-enter-ready.test3-goal-copy-enter .dot-goal__map-slot,
-    #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter .dot-goal__main--light .dot-goal__title,
-    #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter .dot-goal__main--light .dot-goal__status,
-    #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter .dot-goal__main--light .dot-goal__location,
-    #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter .dot-goal__main--light .dot-goal__location span {
-      animation: none !important;
-      opacity: 1;
-      visibility: visible;
-      transform: none;
-    }
-    #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter.test3-goal-inner-rise .dot-goal__main--light .dot-goal__title,
-    #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter.test3-goal-inner-rise .dot-goal__main--light .dot-goal__status,
-    #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter.test3-goal-inner-rise .dot-goal__main--light .dot-goal__location,
-    #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter.test3-goal-inner-rise .dot-goal__main--light .dot-goal__location-icon,
-    #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter.test3-goal-inner-rise .dot-goal__main--light .dot-goal__location span,
-    #canvas[data-test-scope="test3"] #test3-goal.test3-goal-copy-enter.test3-goal-inner-rise .dot-goal__main--light .dot-goal__title .prox-char-once {
-      opacity: 1 !important;
-      visibility: visible !important;
-      transform: none !important;
-      transition: none !important;
-      animation: none !important;
-    }
+    /* Conflicting rules removed to allow sequential entrance */
     #canvas[data-test-scope="test3"] #test3-goal.test3-goal-enter-ready .dot-goal__map {
       animation: none !important;
       transform: none !important;
@@ -8886,7 +8861,7 @@
     width: 100% !important;
     height: 100% !important;
     min-height: var(--test3-music-lyrics-h, 367px) !important;
-    padding: 12px var(--test3-music-pad-x, 28px) 14px;
+    padding: 22px 24px 14px !important;
     gap: 0;
     justify-content: flex-start;
     align-items: stretch;
@@ -8901,7 +8876,7 @@
     width: 100% !important;
     height: 100% !important;
     min-height: 0 !important;
-    padding: var(--test3-music-pad-y, 22px) var(--test3-music-pad-x, 28px) var(--test3-music-pad-y-bottom, 14px);
+    padding: 22px 24px var(--test3-music-pad-y-bottom, 14px);
     gap: 0;
     justify-content: flex-start;
     align-items: stretch;
@@ -8916,7 +8891,7 @@
     width: 100% !important;
     height: 100% !important;
     min-height: 0 !important;
-    padding: 10px var(--test3-music-pad-x-compact, 14px) 8px;
+    padding: 22px 24px 10px !important;
     gap: 0;
     justify-content: flex-start;
     align-items: stretch;
@@ -9015,8 +8990,8 @@
     align-items: center;
     justify-content: space-between !important;
     width: 100%;
-    min-height: 14px;
-    margin: 0 0 7px;
+    min-height: 18px !important;
+    margin: 0 0 10px !important;
     flex-shrink: 0;
   }
   #canvas[data-test-scope="test3"] #test3-music[data-music-state="normal"] .dot-music3__headerRow,
@@ -9055,8 +9030,8 @@
     position: static !important;
     top: auto !important;
     left: auto !important;
-    width: 16px !important;
-    height: 16px !important;
+    width: 14px !important;
+    height: 14px !important;
     flex-shrink: 0 !important;
     background-image: url('/assets/test3-music-spotify-white.png') !important;
   }
@@ -9067,20 +9042,21 @@
   }
   #canvas[data-test-scope="test3"] #test3-music[data-music-state] .dot-music3__mediaPill,
   #canvas[data-test-scope="test3"] #test3-music[data-test3-music-phase="playing"] .dot-music3__mediaPill {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-left: auto;
-    padding: 3px 7px;
-    border-radius: 999px;
-    background: rgba(0, 0, 0, 0.32);
-    font-family: 'Pretendard', var(--font), -apple-system, BlinkMacSystemFont, sans-serif;
-    font-size: 8px;
-    font-weight: 500;
-    line-height: 1.4;
-    letter-spacing: -0.1px;
-    color: #FFFFFF;
-    white-space: nowrap;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-left: auto !important;
+    padding: 5px 8px !important;
+    border-radius: 999px !important;
+    background: rgba(0, 0, 0, 0.32) !important;
+    font-family: 'Pretendard', var(--font), -apple-system, BlinkMacSystemFont, sans-serif !important;
+    font-size: 7.66px !important;
+    font-weight: 500 !important;
+    line-height: 1.35 !important;
+    letter-spacing: -0.1px !important;
+    color: #FFFFFF !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
   }
   #canvas[data-test-scope="test3"] #test3-music[data-music-state] .dot-music3__top,
   #canvas[data-test-scope="test3"] #test3-music[data-test3-music-phase="playing"] .dot-music3__top {
@@ -9295,8 +9271,9 @@
     margin-left: auto;
     background: var(--test3-music-media-pill-bg, #C6C6AA) !important;
     color: #FFFFFF !important;
-    padding: var(--test3-music-media-pill-pad-y, 5px) var(--test3-music-media-pill-pad-x, 8px) !important;
+    padding: 5px 8px !important;
     line-height: 1.35 !important;
+    font-size: 7.66px !important;
   }
   #canvas[data-test-scope="test3"] #test3-music[data-music-state="lyrics"] .dot-music3__top {
     display: flex !important;
@@ -9351,7 +9328,7 @@
     background: #C6C3A7 !important;
   }
   #canvas[data-test-scope="test3"] #test3-music[data-music-state="lyrics"] .dot-music3__bar .dot-music__barTrack {
-    background: #5BB8F0 !important;
+    background: #77DCF1 !important;
   }
   #canvas[data-test-scope="test3"] #test3-music[data-music-state="lyrics"] .dot-music3__bar .dot-music__barTrack::after {
     background: #4C5B17 !important;
@@ -9499,10 +9476,10 @@
   #canvas[data-test-scope="test3"] #test3-music[data-music-state="compact"] .dot-music3__bar .dot-music__barTrack,
   #canvas[data-test-scope="test3"] #test3-music[data-test3-music-settled="1"]:not([data-music-state="lyrics"]) .dot-music3__bar .dot-music__barTrack,
   #canvas[data-test-scope="test3"] #test3-music[data-test3-music-phase="playing"]:not([data-music-state="lyrics"]):not([data-test3-music-loading="1"]) .dot-music3__bar .dot-music__barTrack {
-    background: #5BB8F0 !important;
+    background: #77DCF1 !important;
   }
   #canvas[data-test-scope="test3"] #test3-music[data-music-state="lyrics"] .dot-music3__bar .dot-music__barTrack {
-    background: #5BB8F0 !important;
+    background: #77DCF1 !important;
   }
   #canvas[data-test-scope="test3"] #test3-music[data-music-state="normal"] .dot-music3__bar .dot-music__barTrack::after,
   #canvas[data-test-scope="test3"] #test3-music[data-music-state="compact"] .dot-music3__bar .dot-music__barTrack::after,
@@ -9528,7 +9505,7 @@
     z-index: 2;
   }
   #canvas[data-test-scope="test3"] #test3-music[data-music-state="compact"] .dot-music1__icon .dot-music3 {
-    padding: 10px var(--test3-music-pad-x-compact, 14px) 8px;
+    padding: 22px 24px 10px !important;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -9771,7 +9748,7 @@
   #canvas[data-test-scope="test3"] #test3-music[data-music-state="compact"] .dot-music3__bar .dot-music__barTrack,
   #canvas[data-test-scope="test3"] #test3-music[data-test3-music-settled="1"]:not([data-music-state="lyrics"]) .dot-music3__bar .dot-music__barTrack,
   #canvas[data-test-scope="test3"] #test3-music[data-test3-music-phase="playing"]:not([data-music-state="lyrics"]):not([data-test3-music-loading="1"]) .dot-music3__bar .dot-music__barTrack {
-    background: #5BB8F0 !important;
+    background: #77DCF1 !important;
   }
   #canvas[data-test-scope="test3"] #test3-music[data-music-state="normal"] .dot-music3__bar .dot-music__barTrack::after,
   #canvas[data-test-scope="test3"] #test3-music[data-music-state="compact"] .dot-music3__bar .dot-music__barTrack::after,
@@ -10140,7 +10117,7 @@
     background: #C6C3A7 !important;
   }
   #canvas[data-test-scope="test3"][data-test3-music-shift="1"] #test3-music[data-test3-music-settling="1"]:not([data-music-state="lyrics"]) .dot-music3__bar .dot-music__barTrack {
-    background: #5BB8F0 !important;
+    background: #77DCF1 !important;
   }
   #canvas[data-test-scope="test3"][data-test3-music-shift="1"] #test3-music[data-test3-music-settling="1"]:not([data-music-state="lyrics"]) .dot-music3__bar .dot-music__barTrack::after {
     background: #4C5B17 !important;
@@ -10167,7 +10144,7 @@
     background: #C6C3A7 !important;
   }
   #canvas[data-test-scope="test3"][data-test3-music-shift="1"] #test3-music[data-test3-music-settling="1"][data-music-state="lyrics"] .dot-music3__bar .dot-music__barTrack {
-    background: #5BB8F0 !important;
+    background: #77DCF1 !important;
   }
   #canvas[data-test-scope="test3"][data-test3-music-shift="1"] #test3-music[data-test3-music-settling="1"][data-music-state="lyrics"] .dot-music3__bar .dot-music__barTrack::after {
     background: #4C5B17 !important;
@@ -10216,7 +10193,7 @@
     animation: none !important;
   }
   #canvas[data-test-scope="test3"][data-test3-music-shift="1"] #test3-music[data-music-state="normal"][data-test3-music-settled="1"] .dot-music1__icon .dot-music3 {
-    padding: var(--test3-music-pad-y, 22px) var(--test3-music-pad-x, 28px) var(--test3-music-pad-y-bottom, 14px) !important;
+    padding: 22px 24px var(--test3-music-pad-y-bottom, 14px) !important;
     gap: 0 !important;
     animation: none !important;
   }
@@ -10408,7 +10385,7 @@
     animation: none !important;
   }
   #canvas[data-test-scope="test3"][data-test3-music-shift="1"] #test3-music[data-music-state="compact"] .dot-music1__icon .dot-music3 {
-    padding: 10px var(--test3-music-pad-x-compact, 14px) 8px !important;
+    padding: 22px 24px 10px !important;
     gap: 0 !important;
     width: 100% !important;
     height: 168px !important;
@@ -10490,7 +10467,7 @@
     justify-content: flex-start !important;
     align-items: stretch !important;
     overflow: hidden !important;
-    padding: 10px var(--test3-music-pad-x-compact, 14px) 8px !important;
+    padding: 22px 24px 10px !important;
     width: 100% !important;
     height: 168px !important;
     min-height: 168px !important;
@@ -10661,7 +10638,7 @@
   #canvas[data-test-scope="test3"] #test3-music[data-test3-music-settled="1"]:not([data-music-state="lyrics"]):not([data-music-state="compact"]) .dot-music1__icon .dot-music3,
   #canvas[data-test-scope="test3"][data-test3-music-shift="1"] #test3-music[data-test3-music-phase="playing"]:not([data-test3-music-loading="1"]):not([data-music-state="lyrics"]):not([data-music-state="compact"]) .dot-music1__icon .dot-music3,
   #canvas[data-test-scope="test3"][data-test3-music-shift="1"] #test3-music[data-test3-music-settled="1"]:not([data-music-state="lyrics"]):not([data-music-state="compact"]) .dot-music1__icon .dot-music3 {
-    padding: var(--test3-music-pad-y, 22px) var(--test3-music-pad-x, 28px) var(--test3-music-pad-y-bottom, 14px) !important;
+    padding: 22px 24px var(--test3-music-pad-y-bottom, 14px) !important;
     gap: 0 !important;
     justify-content: flex-start !important;
   }
@@ -10676,8 +10653,8 @@
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    min-height: 14px;
-    margin: 0 0 7px;
+    min-height: 18px !important;
+    margin: 0 0 10px !important;
     flex-shrink: 0;
     position: relative;
     z-index: 3;
@@ -12116,6 +12093,10 @@
   .dot-icon11--orange {
     background: #FF7F24;
     --dot-mask-bg: #FF7F24;
+  }
+  #canvas[data-test-scope="test3"] .dot-icon11--orange {
+    background: #ED610F;
+    --dot-mask-bg: #ED610F;
   }
   .dot-icon11__layer {
     width: 82px;

@@ -560,23 +560,27 @@
 
       slot.classList.remove('p2-reveal-waiting');
       slot.classList.add('p2-reveal-swap', 'p2-seq-color', 'p2-seq-color-active');
+      if (typeof window.mirrorTest2SlotPhaseToShell === 'function') {
+        window.mirrorTest2SlotPhaseToShell(slot);
+      }
       if (result) result.classList.add('p2-crossfade-out');
+      if (isTest2 && hasContactList) {
+        var flowShellContact = document.getElementById('p2-area');
+        if (flowShellContact) flowShellContact.classList.add('p2-agent-shell--flow-handoff');
+        if (window.P2AgentFillGL) window.P2AgentFillGL.setPhase('idle');
+        void slot.offsetWidth;
+        slot.classList.add('p2-seq-title');
+        if (typeof window.beginTest2ContactListReveal === 'function') {
+          window.beginTest2ContactListReveal(slot);
+        }
+        return;
+      }
       if (isTest2 && window.P2AgentFillGL) {
         var flowShell = document.getElementById('p2-area');
         if (flowShell) flowShell.classList.add('p2-agent-shell--flow-handoff');
         window.P2AgentFillGL.setPhase('hollowReveal');
       }
       void slot.offsetWidth;
-
-      if (isTest2 && hasContactList) {
-        if (typeof window.prepareTest2ContactListShellExpand === 'function') {
-          window.prepareTest2ContactListShellExpand(slot);
-        } else if (typeof window.applyTest2ContactListShellHeight === 'function') {
-          window.applyTest2ContactListShellHeight(slot);
-        }
-        slot.classList.add('p2-seq-title');
-        return;
-      }
 
       setTimeout(function () {
         slot.classList.add('p2-seq-title');
@@ -643,6 +647,29 @@
       var slot = document.getElementById('p2-slot');
       var defaults = document.getElementById('p2-default-widgets');
       var el = document.getElementById('p2-result');
+      var canvas = document.getElementById('canvas');
+      var isTest2Mount = window.__mlpTestConfig && window.__mlpTestConfig.id === 'test2';
+      var shell = document.getElementById('p2-area');
+      var fromFinalRenew =
+        isTest2Mount &&
+        shell &&
+        shell.classList.contains('p2-contact-voice-renew');
+
+      if (fromFinalRenew && typeof window.beginTest2MountShrinkFromFinal === 'function') {
+        window.beginTest2MountShrinkFromFinal(function () {
+          mountResolvedComponent(component, attempt);
+        });
+        return;
+      }
+
+      if (isTest2Mount) {
+        if (typeof window.endTest2VoiceRenewChrome === 'function') {
+          window.endTest2VoiceRenewChrome();
+        }
+        if (typeof window.resetTest2P2LayoutForNewUtterance === 'function') {
+          window.resetTest2P2LayoutForNewUtterance(canvas);
+        }
+      }
       if (!slot || !defaults) return;
 
       // If atomics haven't loaded yet (first render race), retry briefly.
@@ -759,79 +786,101 @@
       var userText = String(utt || '').trim();
       if (!userText) return;
       var isTest2 = window.__mlpTestConfig && window.__mlpTestConfig.id === 'test2';
+      var renewShell = document.getElementById('p2-area');
+      var fromFinalContact =
+        isTest2 &&
+        ((renewShell && renewShell.classList.contains('p2-contact-voice-renew')) ||
+          (canvas && canvas.getAttribute('data-p2-voice-renew') === '1') ||
+          (typeof window.hasTest2P2ContactListMounted === 'function' &&
+            window.hasTest2P2ContactListMounted()) ||
+          (typeof window.isTest2P2FinalContactLayout === 'function' &&
+            window.isTest2P2FinalContactLayout()));
 
-      if (isTest2) {
-        var agentInput = document.querySelector('.p2-agent-input');
-        if (agentInput) {
-          if (typeof window.setTest2InputDisplayText === 'function') {
-            window.setTest2InputDisplayText(agentInput, userText);
-          } else {
-            agentInput.textContent = userText;
-          }
-          agentInput.classList.add('p2-agent-input--glow');
+      if (fromFinalContact && typeof window.beginTest2GeneratingFromFinalContact === 'function') {
+        window.beginTest2GeneratingFromFinalContact(canvas, el, userText);
+      } else {
+        if (isTest2 && typeof window.resetTest2P2LayoutForNewUtterance === 'function') {
+          window.resetTest2P2LayoutForNewUtterance(canvas);
         }
-        var loadingSubEarly = el.querySelector('.p2-result-loading__sub');
-        if (loadingSubEarly) loadingSubEarly.textContent = userText;
-        if (canvas) canvas.classList.add('p2-generating');
-        el.classList.add('is-loading');
-        if (window.P2AgentFillGL) window.P2AgentFillGL.setPhase('generating');
-        if (typeof window.syncTest2LoadingPresentation === 'function') {
+        if (typeof window.endTest2VoiceRenewChrome === 'function') {
+          window.endTest2VoiceRenewChrome();
+        }
+
+        if (isTest2) {
+          var agentInput = document.querySelector('.p2-agent-input');
+          if (agentInput) {
+            if (typeof window.setTest2InputDisplayText === 'function') {
+              window.setTest2InputDisplayText(agentInput, userText);
+            } else {
+              agentInput.textContent = userText;
+            }
+            agentInput.classList.add('p2-agent-input--glow');
+          }
+          var loadingSubEarly = el.querySelector('.p2-result-loading__sub');
+          if (loadingSubEarly) loadingSubEarly.textContent = userText;
+          if (canvas) canvas.classList.add('p2-generating');
+          el.classList.add('is-loading');
+          if (window.P2AgentFillGL) window.P2AgentFillGL.setPhase('generating');
+          if (typeof window.syncTest2LoadingPresentation === 'function') {
+            window.syncTest2LoadingPresentation(el);
+          }
+        }
+
+        resetP2AreaHeight();
+        clearP2DefaultRevealState();
+
+        // Restore default widgets if a previous swap hid them
+        if (defaults) {
+          defaults.style.display = 'block';
+          defaults.style.opacity = '1';
+          defaults.style.pointerEvents = 'auto';
+        }
+
+        // Reset visual state so we never end up with an empty black card.
+        el.classList.remove('has-swap', 'is-resolving');
+        if (slot) {
+          slot.style.transition = 'opacity 0.3s ease';
+          slot.style.opacity = '0';
+          slot.style.pointerEvents = 'none';
+          slot.style.display = 'none';
+          slot.style.clipPath = 'none';
+          slot.classList.remove('p2-reveal-waiting', 'p2-reveal-swap', 'p2-reveal-visible', 'p2-seq-color', 'p2-seq-color-active', 'p2-seq-title', 'p2-seq-done');
+          slot.style.removeProperty('--p2-reveal-h');
+          setTimeout(function () { slot.innerHTML = ''; }, 300);
+        }
+      }
+
+      if (!fromFinalContact) {
+        // Ensure loading overlay exists (handles hot-reload / older DOM)
+        var loadingLayer = el.querySelector('.p2-result-loading');
+        if (!loadingLayer) {
+          loadingLayer = document.createElement('div');
+          loadingLayer.className = 'p2-result-loading';
+          loadingLayer.setAttribute('aria-hidden', 'true');
+          loadingLayer.innerHTML =
+            '<div class="p2-result-loading__bg"></div>' +
+            '<div class="p2-result-loading__shimmer"></div>' +
+            '<div class="p2-result-loading__content">' +
+              '<div class="p2-result-loading__title">상황에 맞는 UI를<br>구성하는 중…</div>' +
+              '<div class="p2-result-loading__sub"></div>' +
+            '</div>';
+          el.insertBefore(loadingLayer, el.firstChild);
+        }
+
+        // optimistic UI: show "thinking" state (crossfade overlay, keep base card intact)
+        var loadingSub = el.querySelector('.p2-result-loading__sub');
+        if (loadingSub) loadingSub.textContent = isTest2 ? userText : ('“' + userText.slice(0, 20) + '”');
+        if (!isTest2) {
+          el.classList.remove('is-loading');
+          void el.offsetWidth;
+          requestAnimationFrame(function () {
+            el.classList.add('is-loading');
+          });
+          if (canvas) canvas.classList.add('p2-generating');
+          if (window.P2AgentFillGL) window.P2AgentFillGL.setPhase('generating');
+        } else if (isTest2 && typeof window.syncTest2LoadingPresentation === 'function') {
           window.syncTest2LoadingPresentation(el);
         }
-      }
-
-      resetP2AreaHeight();
-      clearP2DefaultRevealState();
-
-      // Restore default widgets if a previous swap hid them
-      if (defaults) {
-        defaults.style.display = 'block';
-        defaults.style.opacity = '1';
-        defaults.style.pointerEvents = 'auto';
-      }
-
-      // Reset visual state so we never end up with an empty black card.
-      el.classList.remove('has-swap', 'is-resolving');
-      if (slot) {
-        slot.style.transition = 'opacity 0.3s ease';
-        slot.style.opacity = '0';
-        slot.style.pointerEvents = 'none';
-        slot.style.display = 'none';
-        slot.style.clipPath = 'none';
-        slot.classList.remove('p2-reveal-waiting', 'p2-reveal-swap', 'p2-reveal-visible', 'p2-seq-color', 'p2-seq-color-active', 'p2-seq-title', 'p2-seq-done');
-        slot.style.removeProperty('--p2-reveal-h');
-        setTimeout(function () { slot.innerHTML = ''; }, 300);
-      }
-
-      // Ensure loading overlay exists (handles hot-reload / older DOM)
-      var loadingLayer = el.querySelector('.p2-result-loading');
-      if (!loadingLayer) {
-        loadingLayer = document.createElement('div');
-        loadingLayer.className = 'p2-result-loading';
-        loadingLayer.setAttribute('aria-hidden', 'true');
-        loadingLayer.innerHTML =
-          '<div class="p2-result-loading__bg"></div>' +
-          '<div class="p2-result-loading__shimmer"></div>' +
-          '<div class="p2-result-loading__content">' +
-            '<div class="p2-result-loading__title">상황에 맞는 UI를<br>구성하는 중…</div>' +
-            '<div class="p2-result-loading__sub"></div>' +
-          '</div>';
-        el.insertBefore(loadingLayer, el.firstChild);
-      }
-
-      // optimistic UI: show "thinking" state (crossfade overlay, keep base card intact)
-      var loadingSub = el.querySelector('.p2-result-loading__sub');
-      if (loadingSub) loadingSub.textContent = isTest2 ? userText : ('“' + userText.slice(0, 20) + '”');
-      if (!isTest2) {
-        el.classList.remove('is-loading');
-        void el.offsetWidth;
-        requestAnimationFrame(function () {
-          el.classList.add('is-loading');
-        });
-        if (canvas) canvas.classList.add('p2-generating');
-        if (window.P2AgentFillGL) window.P2AgentFillGL.setPhase('generating');
-      } else if (typeof window.syncTest2LoadingPresentation === 'function') {
-        window.syncTest2LoadingPresentation(el);
       }
       
       // Start generating animation for chord
@@ -846,15 +895,33 @@
           setTimeout(resolve, isTest2 ? 340 : 1500);
         });
 
+        if (
+          fromFinalContact &&
+          window.P2AgentFillGL &&
+          typeof window.P2AgentFillGL.waitForPhaseProgress === 'function'
+        ) {
+          try {
+            await window.P2AgentFillGL.waitForPhaseProgress('generating', 0.42, 3200);
+          } catch (_) { /* noop */ }
+        }
+
         applyTheme(resolved && resolved.themeKey);
         // Weather-like requests can also shift the wallpaper mood.
         applyBackgroundMood(canvas, resolved && resolved.backgroundKey);
         
         if (resolved && resolved.component) {
-          if (canvas) canvas.classList.remove('p2-generating');
-          generating = false;
-          if (window.P2AgentFillGL && !isTest2) {
-            window.P2AgentFillGL.setPhase('settling');
+          var deferGeneratingOff =
+            isTest2 &&
+            fromFinalContact &&
+            typeof window.beginTest2MountShrinkFromFinal === 'function';
+          if (canvas && !deferGeneratingOff) {
+            canvas.classList.remove('p2-generating');
+          }
+          if (!deferGeneratingOff) {
+            generating = false;
+            if (window.P2AgentFillGL && !isTest2) {
+              window.P2AgentFillGL.setPhase('settling');
+            }
           }
 
           // Staged reveal: keep loading card through expand, morph at phase 3
@@ -863,9 +930,18 @@
       } catch (e) {
         console.error('setResultFromUtterance failed:', e);
         el.classList.remove('is-loading');
+        if (typeof window.resetTest2LoadingChromeState === 'function') {
+          window.resetTest2LoadingChromeState(el);
+        }
         if (canvas) canvas.classList.remove('p2-generating');
         generating = false;
         if (window.P2AgentFillGL) window.P2AgentFillGL.setPhase('idle');
+        if (isTest2 && typeof window.setTest2AgentInputGlow === 'function') {
+          window.setTest2AgentInputGlow(false);
+        }
+        if (typeof window.endTest2VoiceRenewChrome === 'function') {
+          window.endTest2VoiceRenewChrome();
+        }
       } finally {
         // No-op, handled above
       }
@@ -876,15 +952,61 @@
       if (!canvas) return;
 
       function bindP2FillGl() {
-        if (window.P2AgentFillGL) window.P2AgentFillGL.ensureBound();
+        if (window.__test2FillGlBindSuspended) return;
+        if (!(window.__mlpTestConfig && window.__mlpTestConfig.id === 'test2')) return;
+        var contactSlot = document.getElementById('p2-slot');
+        var renewShell = document.getElementById('p2-area');
+        var voiceRenew =
+          renewShell && renewShell.classList.contains('p2-contact-voice-renew');
+        if (
+          contactSlot &&
+          (contactSlot.classList.contains('p2-contact-reveal-active') ||
+            contactSlot.classList.contains('p2-seq-done')) &&
+          !voiceRenew
+        ) {
+          return;
+        }
+        if (window.P2AgentFillGL && window.P2AgentFillGL.ensureBound()) {
+          if (fillGlMo) {
+            try { fillGlMo.disconnect(); } catch (_) {}
+            fillGlMo = null;
+          }
+        }
       }
+
+      window.__stopP2ChordAnimation = function () {
+        generating = false;
+        listening = false;
+        if (chordRaf) cancelAnimationFrame(chordRaf);
+        chordRaf = null;
+        try { canvas.classList.remove('p2-listening', 'p2-generating'); } catch (_) {}
+        if (window.P2AgentFillGL && typeof window.P2AgentFillGL.setPhase === 'function') {
+          window.P2AgentFillGL.setPhase('idle');
+        }
+      };
 
       bindP2FillGl();
       if (typeof MutationObserver !== 'undefined') {
-        var mo = new MutationObserver(function () {
-          bindP2FillGl();
+        var fillGlBindRaf = 0;
+        var fillGlMo = null;
+        fillGlMo = new MutationObserver(function () {
+          if (fillGlBindRaf) return;
+          fillGlBindRaf = requestAnimationFrame(function () {
+            fillGlBindRaf = 0;
+            bindP2FillGl();
+          });
         });
-        mo.observe(canvas, { childList: true, subtree: true });
+        fillGlMo.observe(canvas, { childList: true, subtree: true });
+        window.__teardownP2FillGlObserver = function () {
+          if (fillGlMo) {
+            try { fillGlMo.disconnect(); } catch (_) {}
+            fillGlMo = null;
+          }
+          if (fillGlBindRaf) {
+            cancelAnimationFrame(fillGlBindRaf);
+            fillGlBindRaf = 0;
+          }
+        };
       } else {
         var bindAttempts = 0;
         var bindTimer = setInterval(function () {
@@ -910,13 +1032,22 @@
       function startListening() {
         console.log('startListening called');
         if (listening) return;
+        var isTest2Scope = window.__mlpTestConfig && window.__mlpTestConfig.id === 'test2';
+        var onFinalContact =
+          isTest2Scope &&
+          ((typeof window.hasTest2P2ContactListMounted === 'function' &&
+            window.hasTest2P2ContactListMounted()) ||
+            (typeof window.isTest2P2FinalContactLayout === 'function' &&
+              window.isTest2P2FinalContactLayout()));
         listening = true;
         canvas.classList.add('p2-listening');
         chordTime = 0;
         formationLerp = 0;
         currentVolume = 0;
 
-        if (window.P2AgentFillGL) {
+        if (onFinalContact && typeof window.beginTest2VoiceFromFinalContact === 'function') {
+          window.beginTest2VoiceFromFinalContact(canvas);
+        } else if (window.P2AgentFillGL) {
           window.P2AgentFillGL.ensureBound();
           window.P2AgentFillGL.setPhase('listening');
         }

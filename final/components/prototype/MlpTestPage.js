@@ -2,7 +2,7 @@ import Head from "next/head";
 import Script from "next/script";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import Test3PillShinyTextBridge from "../test3/Test3PillShinyTextMount";
+import { Test3PillShinyTextBridge } from "../test3/Test3PillShinyTextMount";
 
 const PHONE_OFFSET_Y = 36;
 const PHONE_W = 388;
@@ -143,7 +143,8 @@ function TestScripts({ testId }) {
       <Script src="/app/design-doc.js?v=2" strategy="beforeInteractive" />
       <Script src="/app/interaction-state.js?v=2" strategy="beforeInteractive" />
       <Script src="/app/dot-pair-rain.js?v=1" strategy="beforeInteractive" />
-      <Script src="/app/surface-layout.js?v=mlp-test3-music-ambient-2" strategy="beforeInteractive" />
+      <Script src="/app/surface-layout.js?v=mlp-test1-lock-shortcut-57-1" strategy="beforeInteractive" />
+      <Script src="/app/surface-layout.js?v=mlp-test2-shrink-flow-1" strategy="beforeInteractive" />
       <Script src="/app/settings.js?v=2" strategy="beforeInteractive" />
       <Script src="/app/canvas.js?v=2" strategy="beforeInteractive" />
       <Script src="/app/rules-renderer.js?v=2" strategy="beforeInteractive" />
@@ -154,7 +155,7 @@ function TestScripts({ testId }) {
       <Script src="/app/main.js?v=2" strategy="beforeInteractive" />
       <Script src="/app/p2-agent-fill-gl.js?v=36" strategy="beforeInteractive" />
       <Script src="/app/p2-galaxy-star.js?v=11" strategy="beforeInteractive" />
-      <Script src="/prototype-logic.js?v=mlp-test-split-3" strategy="lazyOnload" />
+      <Script src="/prototype-logic.js?v=mlp-test2-loading-handoff-1" strategy="lazyOnload" />
     </>
   );
 }
@@ -301,6 +302,18 @@ export default function MlpTestPage({
   // calling setCardRowId inside the effect would re-fire it and the
   // cleanup would cancel our queued rAFs before they fire.
   const cardRowIdRef = useRef(null);
+
+  // ─── Entry Sequence ───
+  // When switching tests, the mobile frame slides up from below with opacity.
+  // Delay entry by 2 seconds per user request.
+  const [isEntering, setIsEntering] = useState(false);
+
+  useEffect(() => {
+    setIsEntering(false);
+    const timer = setTimeout(() => setIsEntering(true), 1000);
+    return () => clearTimeout(timer);
+  }, [testId]);
+
   useEffect(() => { cardRowIdRef.current = cardRowId; }, [cardRowId]);
   // Ref to the card DOM node — we toggle .is-snapping imperatively to
   // avoid React batching it with the state-driven .is-visible flip.
@@ -587,6 +600,19 @@ export default function MlpTestPage({
       ro.observe(rightRef.current);
     }
 
+    const onPageShow = (ev) => {
+      if (testId !== "test2" || !ev.persisted) return;
+      if (typeof window.resetTest2P2Runtime === "function") {
+        window.resetTest2P2Runtime(document.getElementById("canvas"));
+      }
+      if (typeof window.generateSurfaceScenario === "function") {
+        window.generateSurfaceScenario(initialSurfaceType);
+      }
+    };
+    if (testId === "test2") {
+      window.addEventListener("pageshow", onPageShow);
+    }
+
     let tries = 0;
     const timer = setInterval(() => {
       tries += 1;
@@ -604,6 +630,12 @@ export default function MlpTestPage({
 
     return () => {
       clearInterval(timer);
+      if (testId === "test2") {
+        window.removeEventListener("pageshow", onPageShow);
+        if (typeof window.resetTest2P2Runtime === "function") {
+          window.resetTest2P2Runtime(document.getElementById("canvas"));
+        }
+      }
       window.removeEventListener("resize", handleResize);
       if (ro) {
         try { ro.disconnect(); } catch (e) {}
@@ -667,40 +699,7 @@ export default function MlpTestPage({
             background-size: cover !important;
             background-position: center center !important;
             background-repeat: no-repeat !important;
-          }
-          .page-nav {
-            position: absolute !important;
-            top: 24px !important;
-            left: 0 !important;
-            right: 0 !important;
-            padding: 0 40px !important;
-            display: flex !important;
-            justify-content: flex-end !important;
-            align-items: center !important;
-            z-index: 2000 !important;
-            pointer-events: none !important;
-          }
-          .nav-btn {
-            /* Container-less style per user direction: just text, no
-               background pill, no border. Hover bumps the opacity for
-               a subtle feedback signal. */
-            pointer-events: auto !important;
-            background: transparent !important;
-            border: none !important;
-            color: rgba(255, 255, 255, 0.65) !important;
-            padding: 4px 0 !important;
-            font-size: 13px !important;
-            font-weight: 500 !important;
-            letter-spacing: 0.2px !important;
-            cursor: pointer !important;
-            transition: color 0.2s ease !important;
-            backdrop-filter: none !important;
-            text-decoration: none !important;
-            display: inline-flex !important;
-            align-items: center !important;
-          }
-          .nav-btn:hover {
-            color: #ffffff !important;
+            transition: background-image 0.8s ease-in-out !important;
           }
           /* Hide Next.js dev mode indicator (the floating "N" badge
              that appears at the bottom-left in development) — per
@@ -732,6 +731,7 @@ export default function MlpTestPage({
             background-position: center center !important;
             background-repeat: no-repeat !important;
             position: relative !important;
+            transition: background-image 0.8s ease-in-out !important;
           }
           .mlp-left {
             width: 120px !important;
@@ -745,7 +745,7 @@ export default function MlpTestPage({
             left: 80px !important;
             top: 0 !important;
             bottom: 0 !important;
-            z-index: 10 !important;
+            z-index: 6000 !important;
           }
           /* Flex slot grows with the 1.8× badge so gap: 24px is kept
              between slots and neighbours never overlap. */
@@ -759,14 +759,9 @@ export default function MlpTestPage({
             align-items: center !important;
             justify-content: center !important;
             position: relative !important;
-            transition: width 0.52s cubic-bezier(0.34, 1.56, 0.64, 1),
-                        height 0.52s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
           }
           .persona-slot:has(.persona-circle:not(.is-disabled):hover),
-          .persona-slot:has(.persona-circle:not(.is-disabled).is-hovered),
-          .persona-slot:has(.persona-circle:not(.is-disabled).is-active:not([data-avatar-key="test1"]):not([data-avatar-key="test2"])) {
-            width: calc(var(--persona-badge-size) * var(--persona-hover-scale)) !important;
-            height: calc(var(--persona-badge-size) * var(--persona-hover-scale)) !important;
+          .persona-slot:has(.persona-circle:not(.is-disabled).is-hovered) {
             z-index: 4 !important;
           }
           .persona-circle {
@@ -945,8 +940,7 @@ export default function MlpTestPage({
             transform: none !important;
           }
           .persona-circle:not(.is-disabled):hover,
-          .persona-circle:not(.is-disabled).is-hovered,
-          .persona-circle:not(.is-disabled).is-active:not([data-avatar-key="test1"]):not([data-avatar-key="test2"]) {
+          .persona-circle:not(.is-disabled).is-hovered {
             /* Enlarged state — 1.8× scale; the parent .persona-slot grows
                in flex layout by the same factor so gap: 24px between
                slots is preserved and neighbours never overlap. */
@@ -958,50 +952,28 @@ export default function MlpTestPage({
                "avatar gradient wheel motion should not repeat. once
                when mouse is hovered. it should play back if the mouse
                cursor moves out of the region and hovered again."
-                 personaCircleHoverSpin: 8 s forwards (one lifecycle —
+                 personaCircleHoverSpin: 2 s forwards (one lifecycle —
                    grow-in / hold / shrink-out, hold end state).
-                 personaCircleHoverRotate: 5 iterations × 1.6 s = 8 s
+                 personaCircleHoverRotate: 1 iteration × 2 s = 2 s
                    (FINITE — matches the spin lifetime exactly, so
                    rotation also stops when the lifecycle completes).
                When the user un-hovers, the rules stop matching and
                the animations are reset. Re-hovering restarts both
                from frame 0 — fresh playback every time. */
             animation:
-              personaCircleHoverSpin 8s linear 1 forwards,
-              personaCircleHoverRotate 1.6s linear 5 forwards;
+              personaCircleHoverSpin 2s linear 1 forwards,
+              personaCircleHoverRotate 2s linear 1 forwards;
           }
           .persona-circle:not(.is-disabled).is-active:not([data-avatar-key="test1"])::before {
-            /* INITIAL state of active badge — rotates on page load as
-               a "look here, this scenario is yours" signal. Same
-               animation as hover (infinite spin + rotate). The
-               animation continues UNTIL the user has acknowledged the
-               badge stack by hovering at least one badge (see the
-               .has-interacted override below), after which the active
-               badge becomes static when un-hovered.
-
-               Persona 1 (test1) is excluded — its ring only appears
-               on hover, never at rest.
-
-               Per user direction: "when the scenario is played... when
-               mouse is not hovered, the enlarged batch should not
-               display the rotation movement AFTER the first hover
-               interaction." */
-            animation:
-              personaCircleHoverSpin 8s linear infinite,
-              personaCircleHoverRotate 1.6s linear infinite;
+            /* INITIAL state of active badge — no stroke per user direction. */
+            animation: none;
+            opacity: 0;
           }
           .mlp-left.has-interacted .persona-circle:not(.is-disabled).is-active:not([data-avatar-key="test1"])::before {
             /* AFTER the user has hovered any badge at least once, the
-               active badge falls back to a quiet STATIC state when
-               un-hovered. User has demonstrated awareness of the badge
-               stack; the rotation stops competing with the phone UI
-               for attention. Hover on the active badge (rule below)
-               still re-engages rotation. */
+               active badge stays invisible when un-hovered. */
             animation: none;
-            opacity: 1;
-            padding: 3.8px;
-            filter: saturate(1.3) brightness(1) contrast(1.1);
-            transform: rotate(0deg);
+            opacity: 0;
           }
           /* When the user explicitly HOVERS the active badge, restore
              rotation — per user direction "when hovered, it should
@@ -1011,12 +983,11 @@ export default function MlpTestPage({
           .persona-circle:not(.is-disabled).is-active.is-hovered::before,
           .mlp-left.has-interacted .persona-circle:not(.is-disabled).is-active:hover::before,
           .mlp-left.has-interacted .persona-circle:not(.is-disabled).is-active.is-hovered::before {
-            /* Same one-shot 8 s lifecycle as the non-active hover rule —
-               rotation runs 5 iterations then stops, matching the spin
-               window so no infinite repeat. Re-hover restarts. */
+            /* Same one-shot 2s lifecycle as the non-active hover rule —
+               rotation runs 1 iteration then stops. Re-hover restarts. */
             animation:
-              personaCircleHoverSpin 8s linear 1 forwards,
-              personaCircleHoverRotate 1.6s linear 5 forwards;
+              personaCircleHoverSpin 2s linear 1 forwards,
+              personaCircleHoverRotate 2s linear 1 forwards;
           }
           /* Glow highlight runs alongside the base spin.
                • personaCircleHoverGlowSpin — 1.6s/turn linear loop
@@ -1135,14 +1106,12 @@ export default function MlpTestPage({
             87.5%  { opacity: 1; padding: 5px; }
             100%   { opacity: 0; padding: 0; }
           }
-          /* Other badges (not the hovered one) shift away on the Y axis
-             to give the profile card room to slide in. Badges above the
-             hovered one nudge UP (-1), badges below nudge DOWN (+1). */
+          /* Other badges (not the hovered one) stay in place. */
           .mlp-left.is-hovering .persona-circle[data-hover-offset="-1"] {
-            transform: translateY(-22px) !important;
+            transform: none !important;
           }
           .mlp-left.is-hovering .persona-circle[data-hover-offset="1"] {
-            transform: translateY(22px) !important;
+            transform: none !important;
           }
           /* Persona profile card — slides in to the right of the
              hovered badge with a tinted backdrop, bio, and interest
@@ -1156,16 +1125,13 @@ export default function MlpTestPage({
              --hover-idx (0/1/2) picks which row to align to. */
           .persona-profile-card {
             position: absolute;
-            /* Hidden rest position is 18px ABOVE the hovered badge's
+            /* Hidden rest position is 1px BELOW the hovered badge's
                row. When the .is-visible class is added below, top
                retargets to the badge's actual posY and the top
-               transition slides the card down through that 18px gap.
-               Travel is bounded to exactly 18px regardless of which
-               badge is hovered or whether the card was just visible
-               on another badge — each appear/move is a constrained
-               18px slide rather than the previous full 100px
-               column-slide. */
-            top: calc(50% - 138px + var(--hover-idx, 0) * 100px - 8px - 18px);
+               transition slides the card UP through that 1px gap.
+               Travel is bounded to exactly 1px — an extremely slight,
+               refined nudge up. DIRECTION: BOTTOM -> TOP. */
+            top: calc(50% - 138px + var(--hover-idx, 0) * 100px - 8px);
             /* Pushed 30px farther right per UX direction (was 100%+8px).
                The card now sits 38px off the badge column rather than
                hugging it — gives the rotating glow on the hovered badge
@@ -1191,20 +1157,19 @@ export default function MlpTestPage({
             color: #f3f3f5;
             opacity: 0;
             pointer-events: none;
-            /* translateY removed — the 18px vertical travel is handled
+            /* translateY removed — the 1px vertical travel is handled
                entirely by the top property now (see the rest-position
                above and the .is-visible override below). Avoids
                stacking two simultaneous vertical motions.
-
-               Both states transition top over 360ms so hover-IN slides
-               18px down and hover-OUT slides 18px up (symmetric). The
+               
+               Both states transition top over 220ms so hover-IN slides
+               1px up and hover-OUT slides 1px down (symmetric). The
                cross-badge row swap is silenced by .is-snapping which
                is briefly applied while --hover-idx jumps from row A to
                row B — without it, top would animate the full 100px
                column-slide. See React effect above for sequencing. */
             transition:
-              opacity 220ms cubic-bezier(0.2, 0, 0, 1),
-              top 360ms cubic-bezier(0.2, 0, 0, 1);
+              opacity 220ms cubic-bezier(0.2, 0, 0, 1);
             z-index: 30;
           }
           .persona-profile-card.is-visible {
@@ -1214,8 +1179,8 @@ export default function MlpTestPage({
                not from card-level opacity. */
             opacity: 1;
             /* Visible position is the badge row's actual top — same calc
-               as the hidden state but WITHOUT the -18px offset. The
-               top transition above handles the 18px slide down. */
+               as the hidden state but WITHOUT the +1px offset. The
+               top transition above handles the 1px slide up. */
             top: calc(50% - 138px + var(--hover-idx, 0) * 100px - 8px);
             pointer-events: auto;
           }
@@ -1301,10 +1266,10 @@ export default function MlpTestPage({
             padding: 21.733px 29.635px;
             gap: 0;
             border-radius: 24.58px;
-            background: #282a2c;
-            -webkit-backdrop-filter: none;
-                    backdrop-filter: none;
-            border: none;
+            background: rgba(40, 42, 44, 0.8);
+            -webkit-backdrop-filter: blur(12px);
+                    backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
             box-shadow: 0 20px 60px -20px rgba(0, 0, 0, 0.45);
           }
           .persona-profile-card--test2 .persona-profile-card__head {
@@ -1365,7 +1330,9 @@ export default function MlpTestPage({
             display: block;
           }
           .persona-profile-card--test2.is-visible .persona-profile-card__bio {
-            animation: personaCardTextRise 320ms cubic-bezier(0.2, 0, 0.05, 1) 540ms both;
+            animation: none !important;
+            opacity: 1 !important;
+            transform: none !important;
           }
           /* test1 (지수) — Figma 5502:17167 */
           .persona-profile-card--test1 {
@@ -1376,10 +1343,10 @@ export default function MlpTestPage({
             padding: 21.74px 34.587px 21.74px 29.646px;
             gap: 0;
             border-radius: 24.588px;
-            background: #282a2c;
-            -webkit-backdrop-filter: none;
-                    backdrop-filter: none;
-            border: none;
+            background: rgba(40, 42, 44, 0.8);
+            -webkit-backdrop-filter: blur(12px);
+                    backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
             box-shadow: 0 20px 60px -20px rgba(0, 0, 0, 0.45);
           }
           .persona-profile-card--test1 .persona-profile-card__head {
@@ -1440,7 +1407,7 @@ export default function MlpTestPage({
             display: block;
           }
           .persona-profile-card--test1.is-visible .persona-profile-card__bio {
-            animation: personaCardTextRise 320ms cubic-bezier(0.2, 0, 0.05, 1) 540ms both;
+            animation: personaCardTextRise 220ms cubic-bezier(0.2, 0, 0.05, 1) 200ms both;
           }
           /* test3 (유진) — Figma 5502:16328 */
           .persona-profile-card--test3 {
@@ -1451,10 +1418,10 @@ export default function MlpTestPage({
             padding: 21.733px 34.574px 21.733px 29.635px;
             gap: 0;
             border-radius: 24.58px;
-            background: #282a2c;
-            -webkit-backdrop-filter: none;
-                    backdrop-filter: none;
-            border: none;
+            background: rgba(40, 42, 44, 0.8);
+            -webkit-backdrop-filter: blur(12px);
+                    backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
             box-shadow: 0 20px 60px -20px rgba(0, 0, 0, 0.45);
           }
           .persona-profile-card--test3 .persona-profile-card__head {
@@ -1515,42 +1482,24 @@ export default function MlpTestPage({
             display: block;
           }
           .persona-profile-card--test3.is-visible .persona-profile-card__bio {
-            animation: personaCardTextRise 320ms cubic-bezier(0.2, 0, 0.05, 1) 540ms both;
+            animation: none !important;
+            opacity: 1 !important;
+            transform: none !important;
           }
-          /* Staggered text reveal with COUNTER-MOTION per user
-             direction "카드들은 위에서 아래로 내려오니 역방향으로
-             아래에서 위로 올라가게": the card itself slides DOWN (18px
-             top-property slide from -18 above its target), but each
-             text line INSIDE the card starts 10 px BELOW its resting
-             position and rises UP into place. The opposite vertical
-             motion between the container and its contents produces
-             the "묘한 모션감/공간감" the user asked for — the panel
-             falls in from above while the content floats up to fill it.
-             Cascade: ~0.1s interval between elements (name → age →
-             bio → each interest tag). The fill-mode "both" holds each
-             element at the 0% keyframe (opacity 0 + translateY(10px))
-             DURING its delay, so the card does not render with text
-             snapping into existence mid-fade. */
-          .persona-profile-card.is-visible .persona-profile-card__name {
-            animation: personaCardTextRise 320ms cubic-bezier(0.2, 0, 0.05, 1) 0ms both;
-          }
-          .persona-profile-card.is-visible .persona-profile-card__age {
-            animation: personaCardTextRise 320ms cubic-bezier(0.2, 0, 0.05, 1) 100ms both;
-          }
-          .persona-profile-card.is-visible .persona-profile-card__bio {
-            animation: personaCardTextRise 320ms cubic-bezier(0.2, 0, 0.05, 1) 200ms both;
-          }
-          .persona-profile-card.is-visible .persona-profile-card__tag:nth-child(1) {
-            animation: personaCardTextRise 320ms cubic-bezier(0.2, 0, 0.05, 1) 300ms both;
-          }
-          .persona-profile-card.is-visible .persona-profile-card__tag:nth-child(2) {
-            animation: personaCardTextRise 320ms cubic-bezier(0.2, 0, 0.05, 1) 380ms both;
-          }
-          .persona-profile-card.is-visible .persona-profile-card__tag:nth-child(3) {
-            animation: personaCardTextRise 320ms cubic-bezier(0.2, 0, 0.05, 1) 460ms both;
+          /* Staggered text reveal removed to ensure "fixed" appearance. */
+          .persona-profile-card.is-visible .persona-profile-card__name,
+          .persona-profile-card.is-visible .persona-profile-card__age,
+          .persona-profile-card.is-visible .persona-profile-card__bio,
+          .persona-profile-card.is-visible .persona-profile-card__tag:nth-child(1),
+          .persona-profile-card.is-visible .persona-profile-card__tag:nth-child(2),
+          .persona-profile-card.is-visible .persona-profile-card__tag:nth-child(3),
+          .persona-profile-card--test2.is-visible .persona-profile-card__bio {
+            animation: none !important;
+            opacity: 1 !important;
+            transform: none !important;
           }
           @keyframes personaCardTextRise {
-            0%   { opacity: 0; transform: translateY(10px); }
+            0%   { opacity: 0; transform: translateY(0); }
             100% { opacity: 1; transform: translateY(0);   }
           }
           /* Respect reduced-motion: show a static ring (no spin) and
@@ -1596,7 +1545,24 @@ export default function MlpTestPage({
             padding: 0 !important;
             transition: width 0.2s ease-out, height 0.2s ease-out !important;
             margin: 0 auto !important;
-            transform: translateY(var(--offsetY, 0px)) !important;
+            transform: translateY(var(--offsetY, 0px));
+            opacity: 0;
+            pointer-events: none;
+          }
+          .mlp-test-page .canvas-wrap.is-entering {
+            opacity: 1;
+            pointer-events: auto;
+            animation: mobileEntryUp 0.8s cubic-bezier(0.2, 0, 0, 1) forwards;
+          }
+          @keyframes mobileEntryUp {
+            from {
+              opacity: 0;
+              transform: translateY(calc(var(--offsetY, 0px) + 80px));
+            }
+            to {
+              opacity: 1;
+              transform: translateY(var(--offsetY, 0px));
+            }
           }
           .mlp-test-page .canvas-frame.mlp-phone {
             width: ${PHONE_W}px !important;
@@ -1633,10 +1599,6 @@ export default function MlpTestPage({
       </Head>
 
       <main className="app-shell mlp-test-page" data-mlp-test={testId}>
-        <nav className="page-nav">
-          <Link href="/theme" className="nav-btn">Theme</Link>
-        </nav>
-
         <div className="mlp-workspace">
           <aside className={`mlp-left${shouldOffsetStack ? " is-hovering" : ""}${hasInteracted ? " has-interacted" : ""}`}>
             {TESTS.map((test, idx) => {
@@ -1648,7 +1610,9 @@ export default function MlpTestPage({
               const onMouseEnter = test.disabled ? undefined : () => {
                 setHoveredId(test.id);
                 setHasInteracted(true);
-                playPersonaVideoToEnd(test.id);
+                if (test.id !== testId) {
+                  playPersonaVideoToEnd(test.id);
+                }
               };
               const onMouseLeave = test.disabled ? undefined : () => {
                 setPersonaVideoFrame(
@@ -1743,7 +1707,11 @@ export default function MlpTestPage({
 
           <section className="mlp-right" ref={rightRef}>
             {mounted && (
-              <div className="canvas-wrap" id="canvasWrap" style={{ "--scale": scale, "--offsetY": `${PHONE_OFFSET_Y}px` }}>
+              <div
+                className={`canvas-wrap${isEntering ? " is-entering" : ""}`}
+                id="canvasWrap"
+                style={{ "--scale": scale, "--offsetY": `${PHONE_OFFSET_Y}px` }}
+              >
                 <div className="canvas-frame mlp-phone" id="canvasFrame">
                   <div
                     className="canvas-inner"

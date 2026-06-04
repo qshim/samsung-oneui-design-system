@@ -15,10 +15,13 @@
   var REST_FRAME = 0;
   var REST_PLATEAU_START = Math.floor(LOOP_FRAMES * 0.75);
   var SETTLE_SCALE_MS = 720;
-  var PAUSE_SLOT_BASE_X = 1.2;
+  var PAUSE_SLOT_BASE_X = 1;
+  var PAUSE_SLOT_BASE_Y = 1.2;
   var PAUSE_SLOT_FINAL_X = 3;
+  var PAUSE_SLOT_FINAL_Y = 2;
+  var PAUSE_SLOT_BASE_SCALE = 0.99;
   var PAUSE_SLOT_FINAL_SCALE = 1.07;
-  var PAUSE_SLOT_EASING = 'cubic-bezier(0.42, 0, 0.18, 1)';
+  var PAUSE_SLOT_EASING = 'cubic-bezier(0.33, 1, 0.68, 1)';
 
   function vec(x, y) { return { x: x, y: y }; }
   function vecCopy(v) { return vec(v.x, v.y); }
@@ -316,6 +319,20 @@
     }
   };
 
+  Test1GalaxyAiLogo.prototype._applySlotBaseTransform = function (slot) {
+    if (!slot) return;
+    slot.style.transformOrigin = '20% center';
+    slot.style.transform =
+      'translate3d(' + PAUSE_SLOT_BASE_X + 'px, ' + PAUSE_SLOT_BASE_Y + 'px, 0) scale(' + PAUSE_SLOT_BASE_SCALE + ')';
+  };
+
+  Test1GalaxyAiLogo.prototype._applySlotFinalTransform = function (slot) {
+    if (!slot) return;
+    slot.style.transformOrigin = '20% center';
+    slot.style.transform =
+      'translate3d(' + PAUSE_SLOT_FINAL_X + 'px, ' + PAUSE_SLOT_FINAL_Y + 'px, 0) scale(' + PAUSE_SLOT_FINAL_SCALE + ')';
+  };
+
   Test1GalaxyAiLogo.prototype._clearPauseDomScale = function () {
     var canvas = this.canvas;
     if (!canvas) return;
@@ -364,15 +381,15 @@
     slot.setAttribute('data-test1-ai-logo-paused', '1');
     canvas.setAttribute('data-test1-ai-logo-paused', '1');
     slot.style.overflow = 'visible';
-    slot.style.transformOrigin = '20% center';
     slot.style.willChange = 'transform';
+    this._applySlotBaseTransform(slot);
 
     this._pauseAnim = slot.animate([
       {
-        transform: 'translate3d(' + PAUSE_SLOT_BASE_X + 'px, 2px, 0) scale(1)'
+        transform: 'translate3d(' + PAUSE_SLOT_BASE_X + 'px, ' + PAUSE_SLOT_BASE_Y + 'px, 0) scale(' + PAUSE_SLOT_BASE_SCALE + ')'
       },
       {
-        transform: 'translate3d(' + PAUSE_SLOT_FINAL_X + 'px, 2px, 0) scale(' + PAUSE_SLOT_FINAL_SCALE + ')'
+        transform: 'translate3d(' + PAUSE_SLOT_FINAL_X + 'px, ' + PAUSE_SLOT_FINAL_Y + 'px, 0) scale(' + PAUSE_SLOT_FINAL_SCALE + ')'
       }
     ], {
       duration: SETTLE_SCALE_MS,
@@ -381,6 +398,7 @@
     });
 
     this._pauseAnim.onfinish = function () {
+      try { self._pauseAnim.commitStyles(); } catch (_) {}
       self._pauseAnim = null;
       self._finishPause();
     };
@@ -395,7 +413,10 @@
     this.draw();
     if (this.canvas) this.canvas.setAttribute('data-test1-ai-logo-paused', 'done');
     var slot = this.canvas && this.canvas.closest('.test1-bottom-pill__ai-logo-slot');
-    if (slot) slot.style.willChange = '';
+    if (slot) {
+      slot.style.willChange = '';
+      this._applySlotFinalTransform(slot);
+    }
     this._haltLoop();
   };
 
@@ -550,6 +571,9 @@
     inst.offsetX = layout.offsetX;
     inst.offsetY = layout.offsetY;
     inst._clearPauseDomScale();
+    if (slot && slot.closest('.test1-bottom-pill')) {
+      inst._applySlotBaseTransform(slot);
+    }
     inst.start();
     if (global.ResizeObserver && slot && !inst.fixedLayout) {
       inst._resizeObs = new global.ResizeObserver(function () {
