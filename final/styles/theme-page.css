@@ -19389,9 +19389,10 @@
     pointer-events: none;
   }
 
-  /* test1 — left/right shortcuts: 57px PNG (circle + glyph baked in) */
+  /* test1 — lock shortcuts: test2 Figma glyphs on teal disc (test1 colors) */
   #canvas[data-test-scope="test1"] {
-    --test1-lock-shortcut-icon-size: 57px;
+    --test1-lock-shortcut-disc-size: 57px;
+    --test1-lock-shortcut-disc-bg: #155e74;
   }
   #canvas[data-test-scope="test1"] .test1-lock-shortcut-l,
   #canvas[data-test-scope="test1"] .test1-lock-shortcut-r {
@@ -19399,31 +19400,49 @@
     width: 100%;
     height: 100%;
     min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    pointer-events: none;
     isolation: isolate;
   }
   #canvas[data-test-scope="test1"] .test1-lock-shortcut-l__disc,
   #canvas[data-test-scope="test1"] .test1-lock-shortcut-r__disc {
-    display: none !important;
+    width: var(--test1-lock-shortcut-disc-size);
+    height: var(--test1-lock-shortcut-disc-size);
+    min-width: var(--test1-lock-shortcut-disc-size);
+    min-height: var(--test1-lock-shortcut-disc-size);
+    max-width: var(--test1-lock-shortcut-disc-size);
+    max-height: var(--test1-lock-shortcut-disc-size);
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    background: var(--test1-lock-shortcut-disc-bg);
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+    pointer-events: none;
   }
   #canvas[data-test-scope="test1"] .test1-lock-shortcut-l__glyph,
-  #canvas[data-test-scope="test1"] .test1-lock-shortcut-r__glyph,
-  #canvas[data-test-scope="test1"] .test1-lock-shortcut-l__icon,
-  #canvas[data-test-scope="test1"] .test1-lock-shortcut-r__icon {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: var(--test1-lock-shortcut-icon-size) !important;
-    height: var(--test1-lock-shortcut-icon-size) !important;
-    min-width: var(--test1-lock-shortcut-icon-size);
-    min-height: var(--test1-lock-shortcut-icon-size);
-    max-width: var(--test1-lock-shortcut-icon-size) !important;
-    max-height: var(--test1-lock-shortcut-icon-size) !important;
-    transform: translate(-50%, -50%);
+  #canvas[data-test-scope="test1"] .test1-lock-shortcut-r__glyph {
     display: block;
     flex-shrink: 0;
-    object-fit: contain;
-    object-position: center;
     pointer-events: none;
+  }
+  #canvas[data-test-scope="test1"] .test1-lock-shortcut-l--phone .test1-lock-shortcut-l__glyph {
+    width: auto;
+    height: 26px;
+    max-width: 11px;
+    max-height: 28px;
+  }
+  #canvas[data-test-scope="test1"] .test1-lock-shortcut-r--camera .test1-lock-shortcut-r__glyph {
+    width: 22px;
+    height: auto;
+    max-width: 24px;
+    max-height: 19px;
   }
 
   /* test1 — shortcuts visible for full flow; entry stagger handled by data-test-entry */
@@ -20170,11 +20189,9 @@
     min-height: 0;
   }
 
-  /* coda — shortcut PNG matches center pill height (57px) */
+  /* coda — shortcut disc matches center pill height (57px) */
   #canvas[data-test-scope="test1"][data-test1-coda-run] .test1-lock-shortcut-l__disc,
-  #canvas[data-test-scope="test1"][data-test1-coda-run] .test1-lock-shortcut-r__disc,
-  #canvas[data-test-scope="test1"][data-test1-coda-run] .test1-lock-shortcut-l__icon,
-  #canvas[data-test-scope="test1"][data-test1-coda-run] .test1-lock-shortcut-r__icon {
+  #canvas[data-test-scope="test1"][data-test1-coda-run] .test1-lock-shortcut-r__disc {
     width: var(--test1-coda-shortcut-size) !important;
     height: var(--test1-coda-shortcut-size) !important;
     min-width: var(--test1-coda-shortcut-size) !important;
@@ -20253,9 +20270,7 @@
   }
 
   #canvas[data-test-scope="test1"][data-test1-coda-run][data-test1-coda-done]:not([data-test1-reveal-all]) .test1-lock-shortcut-l__disc,
-  #canvas[data-test-scope="test1"][data-test1-coda-run][data-test1-coda-done]:not([data-test1-reveal-all]) .test1-lock-shortcut-r__disc,
-  #canvas[data-test-scope="test1"][data-test1-coda-run][data-test1-coda-done]:not([data-test1-reveal-all]) .test1-lock-shortcut-l__icon,
-  #canvas[data-test-scope="test1"][data-test1-coda-run][data-test1-coda-done]:not([data-test1-reveal-all]) .test1-lock-shortcut-r__icon {
+  #canvas[data-test-scope="test1"][data-test1-coda-run][data-test1-coda-done]:not([data-test1-reveal-all]) .test1-lock-shortcut-r__disc {
     width: var(--test1-coda-shortcut-size) !important;
     height: var(--test1-coda-shortcut-size) !important;
     min-width: var(--test1-coda-shortcut-size) !important;
@@ -20286,11 +20301,9 @@
     min-height: 0;
   }
 
-  /* coda — shortcut PNG matches center pill height (57px) */
+  /* coda — shortcut disc matches center pill height (57px) */
   #canvas[data-test-scope="test1"][data-test1-coda-run] .test1-lock-shortcut-l__disc,
-  #canvas[data-test-scope="test1"][data-test1-coda-run] .test1-lock-shortcut-r__disc,
-  #canvas[data-test-scope="test1"][data-test1-coda-run] .test1-lock-shortcut-l__icon,
-  #canvas[data-test-scope="test1"][data-test1-coda-run] .test1-lock-shortcut-r__icon {
+  #canvas[data-test-scope="test1"][data-test1-coda-run] .test1-lock-shortcut-r__disc {
     width: var(--test1-coda-shortcut-size) !important;
     height: var(--test1-coda-shortcut-size) !important;
     min-width: var(--test1-coda-shortcut-size) !important;
@@ -20387,9 +20400,7 @@
   }
 
   #canvas[data-test-scope="test1"][data-test1-coda-run][data-test1-coda-done]:not([data-test1-reveal-all]) .test1-lock-shortcut-l__disc,
-  #canvas[data-test-scope="test1"][data-test1-coda-run][data-test1-coda-done]:not([data-test1-reveal-all]) .test1-lock-shortcut-r__disc,
-  #canvas[data-test-scope="test1"][data-test1-coda-run][data-test1-coda-done]:not([data-test1-reveal-all]) .test1-lock-shortcut-l__icon,
-  #canvas[data-test-scope="test1"][data-test1-coda-run][data-test1-coda-done]:not([data-test1-reveal-all]) .test1-lock-shortcut-r__icon {
+  #canvas[data-test-scope="test1"][data-test1-coda-run][data-test1-coda-done]:not([data-test1-reveal-all]) .test1-lock-shortcut-r__disc {
     width: var(--test1-coda-shortcut-size) !important;
     height: var(--test1-coda-shortcut-size) !important;
     min-width: var(--test1-coda-shortcut-size) !important;

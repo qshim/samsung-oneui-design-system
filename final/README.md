@@ -28,6 +28,11 @@ git clone https://github.com/qshim/mlp-prototype.git
 cd mlp-prototype
 ```
 
+> 특정 브랜치(예: `prototype-0604-hj`)를 받으려면:
+> ```bash
+> git clone -b prototype-0604-hj https://github.com/qshim/mlp-prototype.git
+> ```
+
 ### 2. Install dependencies
 
 이 프로젝트는 **Yarn 4**(Berry) + **Corepack**을 사용합니다. Node 18 이상 필요.
