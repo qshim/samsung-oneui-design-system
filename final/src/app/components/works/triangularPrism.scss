@@ -1,0 +1,110 @@
+:root {
+  // --cotetriangle: 1200px;
+  // --translationDistance: 346px;
+
+  --cotetriangle: 100vw;
+  --translationDistance: 28.8688vw;
+  // --cotetriangle: 50vw;
+  // --translationDistance: 14.43vw;
+}
+
+.scene {
+  position: relative;
+  width: var(--cotetriangle);
+  grid-row: 2/3;
+  grid-column: 2/3;
+  // 투시제거
+  // -webkit-perspective: 5px;
+  //         perspective: 5px;
+}
+
+.triangle {
+  width: inherit;
+  height: inherit;
+  position: relative;
+  -webkit-transform-style: preserve-3d;
+  transform-style: preserve-3d;
+  -webkit-animation: rotateTriangle 12s linear infinite;
+  animation: rotateTriangle 12s linear infinite;
+}
+
+.triangle-face {
+  width: inherit;
+  height: inherit;
+  position: absolute;
+  // background: red;
+  // border: solid white 2px;
+}
+
+.triangle-face-front {
+  // background: rgb(144, 255, 75);
+  // color: rgb(144, 255, 75);
+  // background: url('https://picsum.photos/id/133/200/200');
+  -webkit-transform: translate3d(0, 0, var(--translationDistance));
+  transform: translate3d(0, 0, var(--translationDistance));
+}
+
+.triangle-face-left {
+  // background: rgb(15, 15, 19);
+  // color: rgb(255, 255, 255);
+  // background: rgb(144, 255, 75);
+  // background: url('https://picsum.photos/id/677/200/200');
+  -webkit-transform: rotateY(-120deg)
+    translate3d(0, 0, var(--translationDistance));
+  transform: rotateY(-120deg) translate3d(0, 0, var(--translationDistance));
+}
+
+.triangle-face-right {
+  // background: rgb(15, 15, 19);
+  // color: rgb(255, 255, 255);
+  // background: rgb(230, 233, 220);
+  // background: rgb(144, 255, 75);
+  // background: url('https://picsum.photos/id/600/200/200');
+  -webkit-transform: rotateY(120deg)
+    translate3d(0, 0, var(--translationDistance));
+  transform: rotateY(120deg) translate3d(0, 0, var(--translationDistance));
+}
+
+@-webkit-keyframes rotateTriangle {
+  0% {
+    -webkit-transform: rotateY(0deg);
+    transform: rotateY(0deg);
+  }
+  7%,
+  34% {
+    -webkit-transform: rotateY(120deg);
+    transform: rotateY(120deg);
+  }
+  40%,
+  67% {
+    -webkit-transform: rotateY(240deg);
+    transform: rotateY(240deg);
+  }
+  73%,
+  100% {
+    -webkit-transform: rotateY(360deg);
+    transform: rotateY(360deg);
+  }
+}
+
+@keyframes rotateTriangle {
+  0% {
+    -webkit-transform: rotateY(0deg);
+    transform: rotateY(0deg);
+  }
+  7%,
+  34% {
+    -webkit-transform: rotateY(120deg);
+    transform: rotateY(120deg);
+  }
+  40%,
+  67% {
+    -webkit-transform: rotateY(240deg);
+    transform: rotateY(240deg);
+  }
+  73%,
+  100% {
+    -webkit-transform: rotateY(360deg);
+    transform: rotateY(360deg);
+  }
+}

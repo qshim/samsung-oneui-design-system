@@ -1,0 +1,18 @@
+@font-face {
+  font-family: 'pretendardB';
+  src: url('/fonts/Pretendard-Bold.subset.woff2') format('woff2'), url('/fonts/Pretendard-Bold.subset.woff') format('woff');;
+  font-weight: bold;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'pretendardR';
+  src: url('/fonts/Pretendard-Regular.subset.woff2') format('woff2'), url('/fonts/Pretendard-Regular.subset.woff') format('woff');;
+  font-weight: Regular;
+  font-style: normal;
+}
+
+
+span.ml-ko {
+  font-family: 'pretendardB', sans-serif;
+}

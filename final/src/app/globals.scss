@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+// 배경색 js로 조정
+:root {
+  // --background: #0f0f13;
+  // --foreground: #fff;
+  --font-inter: "Inter", sans-serif;
+  --rounded-radius: 9999px;
+}
+
+.dynamic-rounded {
+  border-radius: var(--rounded-radius);
+}
+
+.transition-bg {
+  transition: background-color 2s ease-in-out;
+}
+
+.program_set{
+  font-feature-settings: 'ss01' 1, 'ss02' 1, 'ss12' 1, 'ss09' 1, 'ss13' 1, 'ss14' 1, 'ss15' 1, 'ss06' 1, 'ss08' 1, 'ss10' 1, 'ss11' 1;
+}
+
+* {
+  word-break: keep-all;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (max-width: 640px) {
+  html{
+    font-size: 14px;
+  }
+}
+

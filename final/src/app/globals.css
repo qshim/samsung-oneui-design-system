@@ -1,0 +1,181 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global styles */
+* {
+  word-break: keep-all;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* Default gutters (Windows baseline) */
+  --siteGutter: 1rem; /* matches px-4 */
+  --siteMax: 80rem;
+  --siteMaxWide: calc(80rem + 60px); /* works/people baseline */
+}
+
+/* About Pretendard tuning (Windows rendering) */
+.about-text-tuning {
+  font-synthesis: none;
+  text-rendering: geometricPrecision;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes pulsePurple {
+  0% { color: #fff; }
+  50% { color: #5d009c; }
+  100% { color: #fff; }
+}
+
+
+@keyframes charReveal {
+  0% {
+    opacity: 0;
+    color: #000;
+  }
+  100% {
+    opacity: 1;
+    color: #000;
+  }
+}
+
+@keyframes colorTransition {
+  0% {
+    color: #000;
+  }
+  100% {
+    color: #fff;
+  }
+}
+
+@keyframes textWave {
+  0% { 
+    color: black;
+  }
+  18% { 
+    color: black;
+  }
+  38% { 
+    color: white;
+  }
+  80% { 
+    color: white;
+  }
+  100% { 
+    color: black;
+  }
+}
+
+@keyframes gradientBorder {
+  0% {
+    border-image-source: linear-gradient(to right, #a778e8, #fff);
+  }
+  25% {
+    border-image-source: linear-gradient(to right, #fff, #a778e8);
+  }
+  50% {
+    border-image-source: linear-gradient(to left, #a778e8, #fff);
+  }
+  75% {
+    border-image-source: linear-gradient(to left, #fff, #a778e8);
+  }
+  100% {
+    border-image-source: linear-gradient(to right, #a778e8, #fff);
+  }
+}
+
+.blinking-cursor::after {
+  content: '|';
+  animation: blink 1s step-end infinite;
+  color: #fff;
+}
+
+.char-reveal {
+  display: inline-block;
+  animation: charReveal 0.8s forwards;
+}
+
+.char-reveal.visible {
+  animation: colorTransition 1s forwards;
+}
+
+.char-reveal.wave {
+  animation: textWave 8s ease-in-out infinite;
+}
+
+.wave-text {
+  display: inline-block;
+  color: black;
+  animation: textWave 18s ease-in-out infinite;
+  opacity: 1;
+  animation-play-state: paused;
+  /* Avoid tight inline-block line boxes clipping descenders (g, j, p, y). */
+  padding-bottom: 0.1em;
+}
+
+.wave-text.active {
+  animation-play-state: running;
+}
+
+.first-part {
+  color: white;
+  opacity: 1;
+}
+
+.gradient-border {
+  border-bottom: 2px solid #fff;
+  /* Removed gradient/background for plain white underline */
+}
+
+.char-reveal {
+  opacity: 0;
+  color: black;
+  display: inline-block;
+  transition: color 1s ease-in-out, opacity 1s ease-in-out;
+}
+
+.char-reveal.visible {
+  opacity: 1;
+  color: white;
+}
+
+.char-reveal.wave {
+  animation: waveColor 2s ease-in-out forwards;
+}
+
+@keyframes waveColor {
+  0% {
+    color: black;
+  }
+  100% {
+    color: white;
+  }
+}
+
+.first-item {
+  position: relative;
+  animation: firstItemReveal 1.5s ease-out forwards;
+}
+
+@keyframes firstItemReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
